@@ -37,6 +37,14 @@ jobs:
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: node cli/om.js doctor
       - run: npm test
+        if: runner.os != 'Windows'
+        env:
+          SRM_LANG: en
+      # npm test, two files at a time: on GitHub's Windows runner (4 cores, no GPU) three at a time, each with its
+      # browsers, and now and then a Chrome stopped answering screenshots mid-render (a different render test each run)
+      - name: npm test (Windows)
+        if: runner.os == 'Windows'
+        run: node --import ./test/setup.mjs --test --test-concurrency=2 "test/*.test.js"
         env:
           SRM_LANG: en
 
