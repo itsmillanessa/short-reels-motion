@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="es-MX" data-composition-variables='[
+  {"id":"kicker","type":"string","label":"Gancho · texto chico de arriba","default":"MI OPINIÓN HONESTA","group":"Gancho"},
+  {"id":"hook1","type":"string","label":"Gancho · línea 1","default":"¿VALE LA PENA","group":"Gancho"},
+  {"id":"hook2","type":"string","label":"Gancho · línea 2 (con fondo de color)","default":"PAGAR LA IA?","group":"Gancho"},
+  {"id":"hookEnd","type":"number","label":"Gancho · se va en el segundo (con narración: la palabra de hookWord)","default":2.8,"min":0.6,"max":60,"step":0.1,"group":"Gancho"},
+  {"id":"hookWord","type":"string","label":"Gancho · se va al decir esta palabra (vacío = usa el segundo)","default":"","group":"Gancho"},
+  {"id":"clip","type":"string","label":"Video · archivo (en assets/)","default":"assets/cara.mp4","group":"Video"},
+  {"id":"clipStart","type":"number","label":"Video · empieza en el segundo","default":0,"min":0,"max":600,"step":0.1,"group":"Video"},
+  {"id":"name","type":"string","label":"Rótulo · tu nombre (vacío = no sale)","default":"Tu nombre","group":"Rótulo"},
+  {"id":"role","type":"string","label":"Rótulo · lo que haces","default":"Creador de contenido de IA","group":"Rótulo"},
+  {"id":"nameAt","type":"number","label":"Rótulo · aparece en el segundo","default":0.8,"min":0,"max":60,"step":0.1,"group":"Rótulo"},
+  {"id":"nameFor","type":"number","label":"Rótulo · dura (s)","default":2.4,"min":0.8,"max":10,"step":0.1,"group":"Rótulo"},
+  {"id":"labels","type":"string","label":"Palabras clave · JSON [{at o word, text}] (*palabra* = color de acento)","default":"[{\"at\":3.6,\"text\":\"*GRATIS* ALCANZA PARA EMPEZAR\"},{\"at\":6.0,\"text\":\"PAGA SI LA USAS *DIARIO*\"},{\"at\":8.2,\"text\":\"PRUEBA *UN MES* Y DECIDE\"}]","group":"Palabras clave"},
+  {"id":"captions","type":"boolean","label":"Subtítulos de tu voz (salen cuando hay narración: srm voice)","default":true,"group":"Subtítulos"},
+  {"id":"endAt","type":"number","label":"Cierre · empieza en el segundo (con narración: la palabra de endWord)","default":10.2,"min":1,"max":120,"step":0.1,"group":"Cierre"},
+  {"id":"endWord","type":"string","label":"Cierre · empieza al decir esta palabra (vacío = usa el segundo)","default":"","group":"Cierre"},
+  {"id":"handle","type":"string","label":"Cierre · tu @usuario","default":"@tu_usuario","group":"Cierre"},
+  {"id":"cta","type":"string","label":"Cierre · texto de abajo","default":"SÍGUEME PARA MÁS","group":"Cierre"},
+  {"id":"endHold","type":"number","label":"Cierre · dura (s)","default":1.6,"min":0.6,"max":6,"step":0.1,"group":"Cierre"},
+  {"id":"cover","type":"boolean","label":"Portada en los 2 primeros cuadros (para elegirla en TikTok)","default":true,"group":"Portada"},
+  {"id":"coverTitle","type":"string","label":"Portada · título","default":"¿VALE LA PENA PAGAR LA IA?","group":"Portada"},
+  {"id":"ground","type":"color","label":"Fondo (portada y cierre)","default":"#0F1012","group":"Colores"},
+  {"id":"ink","type":"color","label":"Texto","default":"#F4F1EA","group":"Colores"},
+  {"id":"accent","type":"color","label":"Acento","default":"#FFD23F","group":"Colores"},
+  {"id":"accentInk","type":"color","label":"Texto sobre el acento","default":"#0F1012","group":"Colores"}
+]'>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080, height=1920">
+<title>Short Reels Motion · Cara a cámara</title>
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/om.js"></script>
+<script src="vendor/srm.js"></script>
+<style id="om-fonts">
+@font-face { font-family: "Inter"; src: url("assets/fonts/Inter-var.woff") format("woff"); font-weight: 100 900; font-style: normal; }
+</style>
+<style>
+  :root { --ground: #0F1012; --ink: #F4F1EA; --accent: #FFD23F; --accentInk: #0F1012; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: var(--ground); }
+  #film { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--ground); color: var(--ink); font-family: "Inter", sans-serif; }
+  #film * { box-sizing: border-box; }
+  .cara { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  /* scrims: the text reads over any footage */
+  .scrim-top { position: absolute; left: 0; right: 0; top: 0; height: 760px; background: linear-gradient(#000000a6, #0000004d 55%, transparent); }
+  .scrim-bottom { position: absolute; left: 0; right: 0; bottom: 0; height: 900px; background: linear-gradient(transparent, #00000059 40%, #000000b3); }
+  .dim { position: absolute; inset: 0; background: var(--ground); opacity: 0; }
+  .flash { position: absolute; inset: 0; background: var(--accent); opacity: 0; pointer-events: none; z-index: 40; }
+  section { position: absolute; inset: 0; visibility: hidden; }
+  #s-hook { visibility: visible; }                                   /* painted before any seek: frame 0 is the poster */
+  h1, h2, p { margin: 0; }
+
+  /* Safe area of the feeds (srm check warns about it): text lives between y 230 and 1480 and left of x 920 below y 760.
+     The hook sits on top (above most faces), name, key words and captions in the band under the face. */
+  .kick { position: absolute; left: 80px; top: 270px; padding: 8px 14px; background: var(--accent); color: var(--accentInk); font-weight: 800; font-size: 30px; letter-spacing: .14em; white-space: nowrap; }
+  .hook { position: absolute; left: 80px; width: 840px; font-weight: 900; letter-spacing: -.045em; line-height: .95; white-space: nowrap; text-shadow: 0 6px 30px #000000b3; }
+  .hook1 { top: 345px; font-size: 104px; }
+  .hook2 { top: 460px; font-size: 104px; }
+  .pillw { position: relative; display: inline-block; padding: .02em .14em .06em; color: var(--accentInk); isolation: isolate; text-shadow: none; }
+  .pillw .pill { position: absolute; inset: 0; background: var(--accent); z-index: -1; }
+
+  .tag { position: absolute; left: 80px; top: 1110px; padding: 18px 26px 20px; border-left: 10px solid var(--accent); background: #0f1012d9; }
+  .tag b { display: block; font-weight: 900; font-size: 58px; letter-spacing: -.03em; line-height: 1; }
+  .tag span { display: block; margin-top: 8px; font-weight: 600; font-size: 32px; color: var(--ink); opacity: .78; }
+  .label { position: absolute; left: 80px; max-width: 840px; top: 1120px; padding: 14px 24px 18px; background: #0f1012e0; font-weight: 900; font-size: 64px; line-height: 1.02; letter-spacing: -.03em; }
+  .label em { font-style: normal; color: var(--accent); }
+  .cap { position: absolute; left: 80px; width: 840px; top: 1330px; text-align: center; font-weight: 900; font-size: 58px; line-height: 1.08; letter-spacing: -.02em; color: #fff; text-shadow: 0 3px 0 #000, 0 0 18px #000000cc; }
+
+  /* closing: over the footage, dimmed */
+  .handle { position: absolute; left: 80px; width: 850px; top: 820px; text-align: center; font-weight: 900; font-size: 112px; letter-spacing: -.045em; white-space: nowrap; }
+  .cta { position: absolute; left: 80px; width: 850px; top: 980px; text-align: center; font-weight: 800; font-size: 36px; letter-spacing: .18em; color: var(--accent); }
+
+  /* cover: the first two frames, for TikTok's "pick a frame" */
+  #s-cover { z-index: 50; background: var(--ground); }
+  .cvTitle { position: absolute; left: 80px; width: 840px; top: 640px; font-size: 140px; line-height: .92; font-weight: 900; letter-spacing: -.05em; }
+  .cvHandle { position: absolute; left: 80px; width: 850px; top: 1300px; text-align: center; font-size: 56px; font-weight: 900; color: var(--accent); }
+</style>
+</head>
+<body>
+<!--
+  Cara a cámara (short-cara): the creator talking to camera, full screen, with the graphics of a talking-head short on top.
+  Hook in a box on top from frame 0 → name tag → key words landing on the spoken word → captions of the voice in short
+  phrases (for people watching without sound) → closing card over the dimmed footage.
+
+  Bring the recording: a vertical video in assets/ (H.264, 30 fps), set `clip`, then take its voice and words with
+  `srm voice <dir> --audio assets/<video>.mp4` (the video stays muted; its voice becomes the film's narration track).
+  With narration every key word can anchor to a word: {"word":"diario","text":"…"}; captions appear on their own.
+  Keep text inside the safe area (srm check warns when it is not): key words y 1120–1260, captions y 1330–1460.
+-->
+<div id="film" data-composition-id="film" data-width="1080" data-height="1920" data-platforms="tiktok,reels,shorts">
+  <video id="cara" class="cara" src="assets/cara.mp4" data-var-src="clip" data-om-id="video" muted playsinline></video>
+  <div class="scrim-top" id="scrimTop"></div>
+  <div class="scrim-bottom"></div>
+  <div class="dim" id="dim"></div>
+
+  <section id="s-hook" data-om-id="gancho">
+    <p class="kick" id="kick" data-om-id="kicker" data-var-text="kicker"></p>
+    <h1 class="hook hook1" id="hook1" data-om-id="hook1" data-var-text="hook1"></h1>
+    <h1 class="hook hook2" id="hook2" data-om-id="hook2"><span class="pillw"><span class="pill" id="pill2"></span><span id="hook2t"></span></span></h1>
+  </section>
+
+  <section id="s-talk" data-om-id="charla">
+    <div class="tag" id="tag" data-om-id="rotulo"><b id="tagName"></b><span id="tagRole"></span></div>
+    <div id="labels"></div>
+    <div id="caps"></div>
+  </section>
+
+  <section id="s-end" data-om-id="cierre">
+    <p class="handle" id="handle" data-om-id="handle" data-var-text="handle"></p>
+    <p class="cta" id="cta" data-om-id="cta" data-var-text="cta"></p>
+  </section>
+
+  <section id="s-cover" data-om-id="portada">
+    <h1 class="cvTitle" id="cvTitle" data-var-text="coverTitle"></h1>
+    <p class="cvHandle" id="cvHandle"></p>
+  </section>
+
+  <div class="flash" id="flash"></div>
+</div>
+
+<script>
+  const V = OM.vars();
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+  const json = (s, fallback) => { try { const v = JSON.parse(s); return Array.isArray(v) ? v : fallback; } catch (e) { console.warn('[short-cara] JSON: ' + e.message); return fallback; } };
+  for (const k of ['ground', 'ink', 'accent', 'accentInk']) document.documentElement.style.setProperty('--' + k, V[k]);
+  OM.music({ product: 'explainer', bpm: 104 });
+
+  // ---- content
+  $('#hook2t').textContent = V.hook2;
+  $('#cvHandle').textContent = V.handle;
+  $('#tagName').textContent = V.name; $('#tagRole').textContent = V.role;
+  const labels = json(V.labels, []);
+  $('#labels').innerHTML = labels.map((l, i) => `<p class="label" id="lb${i}" data-om-id="clave-${i + 1}">${esc(l.text || '').replace(/\*([^*]+)\*/g, '<em>$1</em>')}</p>`).join('');
+  // captions: the narration's words in short phrases (≤ 3 words, a new phrase after a pause or a punctuation mark)
+  const said = (OM.words ? OM.words() : []).filter((w) => w && String(w.word).trim());
+  const phrases = [];
+  for (const w of said) {
+    const last = phrases[phrases.length - 1], prev = last && last.words[last.words.length - 1];
+    if (!last || last.words.length >= 3 || w.start - prev.end > 0.35 || /[.,;:?!¿¡…]$/.test(String(prev.text || prev.word))) phrases.push({ words: [w] });
+    else last.words.push(w);
+  }
+  if (V.captions) $('#caps').innerHTML = phrases.map((p, i) => `<p class="cap" id="cp${i}">${esc(p.words.map((w) => w.text || w.word).join(' '))}</p>`).join('');
+  const cara = $('#cara');
+  cara.setAttribute('data-start', '0');
+  cara.setAttribute('data-media-start', String(V.clipStart || 0));
+
+  // ---- timing: seconds, or the narration's words when there is one
+  const tHook = SRM.when({ word: V.hookWord, at: V.hookEnd });
+  const lbs = labels.map((l, i) => ({ el: '#lb' + i, at: SRM.when(l, tHook + 0.6 + i * 2) })).sort((a, b) => a.at - b.at);
+  const tEnd = Math.max(tHook + 1, SRM.when({ word: V.endWord, at: V.endAt }));
+  const tl = gsap.timeline({ paused: true });
+  tl.set(['#s-end', '#tag', '.label', '.cap'], { autoAlpha: 0 }, 0);
+
+  // cover (2 frames): painted before any seek, like the hook (a set at t=0 is not applied when frame 0 is asked for)
+  const c0 = V.cover ? 2 / 30 : 0;
+  if (V.cover) { const cv = $('#s-cover'); cv.style.visibility = 'visible'; cv.style.opacity = '1'; tl.set(cv, { autoAlpha: 0 }, c0); }
+
+  // hook: on screen from the first frame, in a box over the top of the footage
+  tl.addLabel('scene:gancho', 0);
+  tl.set('#s-hook', { autoAlpha: 1 }, 0);
+  tl.fromTo('#hook1', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0); OM.sfx('impact', c0, { gain: 0.55 });
+  tl.fromTo('#hook2', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0 + 0.08);
+  tl.fromTo('#pill2', { scaleX: 0.6 }, { scaleX: 1, duration: 0.4, ease: 'expo.out', immediateRender: false, transformOrigin: '0 50%' }, c0 + 0.08);
+  tl.fromTo('#kick', { x: -24 }, { x: 0, duration: 0.4, ease: 'power3.out', immediateRender: false }, c0);
+  SRM.whipOut(tl, '#s-hook', tHook);
+  tl.to('#scrimTop', { autoAlpha: 0.35, duration: 0.4 }, tHook);
+
+  // the talk: name tag, then one key word at a time, captions all along
+  tl.addLabel('scene:charla', tHook);
+  tl.set('#s-talk', { autoAlpha: 1 }, 0);
+  if (String(V.name).trim()) {
+    const n0 = Math.max(c0 + 0.1, V.nameAt), n1 = Math.min(n0 + V.nameFor, lbs.length ? lbs[0].at - 0.1 : tEnd);
+    tl.fromTo('#tag', { autoAlpha: 0, x: -60 }, { autoAlpha: 1, x: 0, duration: 0.4, ease: 'expo.out', immediateRender: false }, n0); OM.sfx('pop', n0, { gain: 0.4 });
+    tl.to('#tag', { autoAlpha: 0, x: -40, duration: 0.22, ease: 'power2.in' }, Math.max(n0 + 0.5, n1 - 0.22)); tl.set('#tag', { autoAlpha: 0 }, n1);
+  }
+  lbs.forEach((l, i) => {
+    const until = Math.min(i + 1 < lbs.length ? lbs[i + 1].at : tEnd, tEnd, l.at + 2.6);
+    SRM.slam(tl, l.el, l.at, { scale: 1.15, dur: 0.3, sound: 'pop', gain: 0.5 });
+    tl.to(l.el, { autoAlpha: 0, duration: 0.12 }, Math.max(l.at + 0.4, until - 0.12)); tl.set(l.el, { autoAlpha: 0 }, until);
+  });
+  phrases.forEach((p, i) => {
+    const el = '#cp' + i; if (!V.captions || !$(el)) return;
+    const a = p.words[0].start, b = Math.min(i + 1 < phrases.length ? phrases[i + 1].words[0].start : p.words[p.words.length - 1].end + 0.4, tEnd);
+    if (b <= a) return;
+    tl.set(el, { autoAlpha: 1 }, a); tl.fromTo(el, { y: 16 }, { y: 0, duration: 0.14, ease: 'power2.out', immediateRender: false }, a); tl.set(el, { autoAlpha: 0 }, b);
+  });
+
+  // closing: the footage dims, the handle lands
+  tl.addLabel('scene:cierre', tEnd);
+  tl.set('#s-talk', { autoAlpha: 0 }, tEnd);
+  tl.to('#dim', { opacity: 0.72, duration: 0.3, ease: 'power2.out' }, tEnd - 0.1);
+  tl.set('#s-end', { autoAlpha: 1 }, tEnd);
+  SRM.slam(tl, '#handle', tEnd + 0.02, { scale: 1.3 });
+  SRM.flash(tl, tEnd + 0.02);
+  SRM.kickIn(tl, '#cta', tEnd + 0.4);
+  tl.to({}, { duration: V.endHold }, tEnd + 0.4);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines['film'] = tl;
+</script>
+</body>
+</html>

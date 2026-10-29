@@ -683,13 +683,18 @@ function whisperCli() {
   return [found, '/opt/homebrew/bin/whisper-cli', '/usr/local/bin/whisper-cli', join(LEGACY, 'whisper', 'whisper.cpp', 'build', 'bin', 'whisper-cli')].find((p) => p && existsSync(p));
 }
 
+// The language whisper listens for: --lang, else the script's, else whisper's own detection.
+export const recordingLang = (text, opts = {}) => opts.lang || (text ? (HAN.test(text) ? 'zh' : isSpanish(text) ? 'es' : 'en') : 'auto');
+
 function fromRecording(file, text, keep, tmp, opts, log) {
   if (!existsSync(file)) throw new OmError(`no such recording: ${file}`);
   const wav = join(tmp, 'voice.wav');
   ffmpeg(['-i', file, '-vn', '-ac', '1', '-ar', '48000', '-c:a', 'pcm_s16le', wav], `reading ${extname(file) || 'the recording'}`);
   const duration = probe(wav);
-  const zh = text ? HAN.test(text) : opts.lang ? /^zh/i.test(opts.lang) : true;
-  const lang = opts.lang || (zh ? 'zh' : 'en');
+  // The recording's language: --lang wins; otherwise the script's (Chinese, Spanish, English); with no script, whisper
+  // detects it. (It used to assume Chinese without a script and English otherwise: a Spanish recording came back
+  // translated, with words that are not in it.) The English-only model is only for English.
+  const lang = recordingLang(text, opts);
   const model = opts.model || (lang === 'en' ? 'small.en' : 'small');
   const modelPath = firstFile(join(CACHE, 'whisper', 'models', `ggml-${model}.bin`), join(LEGACY, 'whisper', 'models', `ggml-${model}.bin`)) || join(CACHE, 'whisper', 'models', `ggml-${model}.bin`);
   const asr = opts.asr === true ? 'on' : opts.asr === false ? 'off' : String(opts.asr || 'auto');

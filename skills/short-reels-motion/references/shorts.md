@@ -84,7 +84,7 @@ Pide las grabaciones **antes** de construir. Lo que llega del teléfono necesita
 | Formato | Plantilla | Notas |
 |---|---|---|
 | Tip o tutorial de una app | `short-pantalla` | Vertical nativa. Grabación arriba, textos clave en la banda segura, toques y zoom en coordenadas 0–1 de la pantalla |
-| Cara a cámara con rótulos | `talking-head` → `srm fork <dir> <dir>-9x16 --size 1080x1920` | Lee [talking-head.md](talking-head.md) §6 |
+| Cara a cámara | `short-cara` | Vertical nativa. Tu video a pantalla completa, gancho en recuadro arriba, rótulo con tu nombre, palabras clave y subtítulos de tu voz. La voz sale del video: `srm voice <dir> --audio assets/<video>.mp4`. Para capas transparentes sobre tu edición: `talking-head` ([talking-head.md](talking-head.md)) |
 | Historia o chiste con personaje | `storytime` → fork a 1080×1920 | El personaje se configura en el grupo «Personaje» (piel, pelo, ropa, accesorio, barba, tatuajes…) |
 | Frases con tipografía, sin material | `short-tipografia` | Vertical nativa. Cada frase es un golpe (`fx`: slam, rise, count, strike); `*acento*`, `~tachado~`; el tamaño se ajusta solo |
 | Datos y cifras | `finance-chart` → fork | Una sola anotación por gráfica |

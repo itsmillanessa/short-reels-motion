@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   splitSentences, tokenize, weight, placeWords, placeSentence, wordsOf, parseSilences, speechIntervals,
-  sentenceSpans, alignChars, charTimes, asrChars, captionLines, toSrt, cueTerms, cueMatches, missingCues, applyVoice, pickVoice, isSpanish,
+  sentenceSpans, alignChars, charTimes, asrChars, captionLines, toSrt, cueTerms, cueMatches, missingCues, applyVoice, pickVoice, isSpanish, recordingLang,
 } from '../cli/lib/voice.js';
 
 const SCRIPT = 'huashu-motion，一句话出片。你只要说出想法，Agent就把画面做出来。\n哪里不满意，指着画面改，它当场重做！改完一键导出，配音和字幕都对齐。';
@@ -234,4 +234,12 @@ test('tokenize keeps accented words whole (Spanish, German), so a cue can anchor
   assert.deepEqual(words('Sígueme para más trucos.'), ['Sígueme', 'para', 'más', 'trucos']);
   assert.deepEqual(words('El año pasado, über café'), ['El', 'año', 'pasado', 'über', 'café']);
   assert.deepEqual(words('GPT-4.1 cuesta 20% menos'), ['GPT-4.1', 'cuesta', '20%', 'menos']);
+});
+
+test('a recording is transcribed in its own language: never assumed Chinese or English for a Spanish voice', () => {
+  assert.equal(recordingLang(null), 'auto', 'no script: whisper detects it');
+  assert.equal(recordingLang('Hola, esta es mi opinión honesta sobre la inteligencia artificial.'), 'es');
+  assert.equal(recordingLang('Hello, this is my honest opinion about it'), 'en');
+  assert.equal(recordingLang('你好，这是我的看法'), 'zh');
+  assert.equal(recordingLang('Olá, tudo bem', { lang: 'pt' }), 'pt', '--lang wins');
 });

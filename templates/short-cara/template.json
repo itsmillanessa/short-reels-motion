@@ -1,0 +1,18 @@
+{
+  "title": "Cara a cámara (vertical)",
+  "summary": "Short vertical 9:16 sobre tu video hablando a cámara: gancho en un recuadro arriba desde el cuadro 0, tu nombre en un rótulo, palabras clave que caen en la palabra dicha, subtítulos de tu voz por frases cortas (para quien ve sin sonido) y cierre con tu @usuario sobre tu video. Todo el texto dentro de las zonas seguras.",
+  "best_for": [
+    "opiniones y consejos hablando a cámara",
+    "noticias rápidas o reacciones",
+    "presentarte o presentar un tema",
+    "videos donde la voz es tu propia grabación"
+  ],
+  "aspect": "9:16",
+  "copy": {
+    "templates/blank/vendor": "vendor",
+    "runtime/srm-motion.js": "vendor/srm.js",
+    "fonts/Inter-var.woff": "assets/fonts/Inter-var.woff",
+    "fonts/OFL.txt": "assets/fonts/OFL.txt",
+    "fonts/LICENSES.md": "assets/fonts/LICENSES.md"
+  }
+}
