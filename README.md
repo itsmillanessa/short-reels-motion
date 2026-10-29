@@ -57,13 +57,12 @@ ln -sfn "$PWD/skills/short-reels-motion" ~/.claude/skills/short-reels-motion
 ## Cómo se usa
 
 ```sh
-srm new mi-reel --template kinetic-type     # arranca un proyecto (srm templates lista las 12)
-srm fork mi-reel mi-reel-9x16 --size 1080x1920
-srm voice mi-reel-9x16 --audio voz.m4a      # tu grabación, alineada palabra por palabra
-srm sound mi-reel-9x16                      # música y efectos, bajo la voz
-srm studio mi-reel-9x16                     # editor en el navegador: C para comentar, S para zonas seguras
-srm check mi-reel-9x16                      # texto cortado, tapado o bajo los botones de las apps
-srm render mi-reel-9x16                     # MP4 listo para subir
+srm new mi-reel --template short-pantalla   # vertical desde el inicio (srm templates lista las 13)
+srm voice mi-reel --audio voz.m4a      # tu grabación, alineada palabra por palabra
+srm sound mi-reel                      # música y efectos, bajo la voz
+srm studio mi-reel                     # editor en el navegador: C para comentar, S para zonas seguras
+srm check mi-reel                      # texto cortado, tapado o bajo los botones de las apps
+srm render mi-reel                     # MP4 listo para subir
 ```
 
 Lo normal es no escribir estos comandos: se los pides a tu agente y él los corre.
@@ -92,8 +91,11 @@ un elemento. Las medidas están en `cli/lib/safezones.js`; las apps las mueven d
 - [x] Plantillas y fuentes en español; firma apagada por defecto
 - [x] Personaje propio y configurable (piel, pelo, ropa, accesorio) en la plantilla `storytime`
 - [ ] Videos demo propios (`srm demo` todavía abre los del motor original)
-- [ ] 5 plantillas verticales: tipografía, pantalla del celular, cara a cámara, lista, antes/después
-- [ ] Librería de movimientos para shorts y kit de marca (`kit.json`)
+- [x] Plantilla vertical `short-pantalla`: grabación del celular con gancho, textos clave, toques, zoom y cierre
+- [ ] 4 plantillas verticales más: tipografía, cara a cámara, lista, antes/después
+- [x] Librería de movimientos para shorts (`runtime/srm-motion.js` → `vendor/srm.js`)
+- [x] La narración reconoce palabras con acento («Sígueme», «más») como anclas
+- [ ] Kit de marca (`kit.json`)
 - [ ] Ingesta de grabaciones del celular; portada y exportación por plataforma
 - [ ] ElevenLabs como opción de voz; Kokoro en un paso
 - [ ] Skill «director de shorts»; instalador para Mac y Windows

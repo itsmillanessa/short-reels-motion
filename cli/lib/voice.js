@@ -44,7 +44,10 @@ export function splitSentences(text) {
 }
 
 const segmenter = new Intl.Segmenter('zh', { granularity: 'word' });
-const LATIN = /[A-Za-z0-9](?:[A-Za-z0-9.'’+_-]*[A-Za-z0-9%+])?%?/g;
+// A word written with spaces around it: letters of any alphabet but Chinese, Japanese and Korean (those go through the
+// segmenter), digits, and the marks of accented letters. "Sígueme", "más", "año" and "über" stay one word each.
+const SPACED = "(?:(?![\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}\\p{Script=Hangul}])[\\p{L}\\p{N}])";
+const LATIN = new RegExp(`${SPACED}(?:(?:${SPACED}|\\p{M}|[.'’+_-])*(?:${SPACED}|\\p{M}|[%+]))?%?`, 'gu');
 
 // Tokens of one sentence: words (Chinese by Intl.Segmenter, Latin/number runs kept whole, `keep`
 // terms never split) and the punctuation/space between them.

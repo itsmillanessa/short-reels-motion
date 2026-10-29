@@ -228,3 +228,10 @@ test('applyVoice ignores tags quoted inside HTML comments', () => {
   assert.equal(a.html.match(/<audio id="om-voice" src=/g).length, 1);
   assert.equal(applyVoice(a.html, { src: 'assets/voice.wav', duration: 3, sentences: SENTENCES }).html, a.html);
 });
+
+test('tokenize keeps accented words whole (Spanish, German), so a cue can anchor to them', () => {
+  const words = (s) => tokenize(s).filter((t) => t.word).map((t) => t.text);
+  assert.deepEqual(words('Sígueme para más trucos.'), ['Sígueme', 'para', 'más', 'trucos']);
+  assert.deepEqual(words('El año pasado, über café'), ['El', 'año', 'pasado', 'über', 'café']);
+  assert.deepEqual(words('GPT-4.1 cuesta 20% menos'), ['GPT-4.1', 'cuesta', '20%', 'menos']);
+});

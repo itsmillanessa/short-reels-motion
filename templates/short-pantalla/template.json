@@ -1,0 +1,18 @@
+{
+  "title": "Pantalla del celular (vertical)",
+  "summary": "Short vertical 9:16 sobre una grabación de pantalla del celular: gancho grande en el cuadro 1, la grabación entra y se reproduce arriba, un texto clave a la vez en la banda de abajo, toques y zoom sobre la parte que importa, y cierre con tu @usuario. Todo el texto queda dentro de las zonas seguras de TikTok, Reels y Shorts.",
+  "best_for": [
+    "tutoriales de apps en el celular",
+    "tips de IA mostrando la app real",
+    "reels y TikToks de «cómo hago X»",
+    "demos de producto en vertical"
+  ],
+  "aspect": "9:16",
+  "copy": {
+    "templates/blank/vendor": "vendor",
+    "runtime/srm-motion.js": "vendor/srm.js",
+    "fonts/Inter-var.woff": "assets/fonts/Inter-var.woff",
+    "fonts/OFL.txt": "assets/fonts/OFL.txt",
+    "fonts/LICENSES.md": "assets/fonts/LICENSES.md"
+  }
+}

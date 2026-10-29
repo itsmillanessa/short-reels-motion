@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="es-MX" data-composition-variables='[
+  {"id":"kicker","type":"string","label":"Gancho · texto chico de arriba","default":"ESTO TE AHORRA 20 MINUTOS","group":"Gancho"},
+  {"id":"hook1","type":"string","label":"Gancho · línea 1","default":"¿NO SABES","group":"Gancho"},
+  {"id":"hook2","type":"string","label":"Gancho · línea 2 (con fondo de color)","default":"QUÉ COCINAR?","group":"Gancho"},
+  {"id":"hook3","type":"string","label":"Gancho · línea 3 (vacío = no sale)","default":"PREGÚNTALE ASÍ","group":"Gancho"},
+  {"id":"clip","type":"string","label":"Grabación · archivo (en assets/)","default":"assets/pantalla.mp4","group":"Grabación"},
+  {"id":"clipStart","type":"number","label":"Grabación · empieza en el segundo","default":0,"min":0,"max":600,"step":0.1,"group":"Grabación"},
+  {"id":"phoneAt","type":"number","label":"Grabación · entra en el segundo (con narración: la palabra de phoneWord)","default":2.2,"min":0.3,"max":60,"step":0.1,"group":"Grabación"},
+  {"id":"phoneWord","type":"string","label":"Grabación · entra al decir esta palabra (vacío = usa el segundo)","default":"","group":"Grabación"},
+  {"id":"points","type":"string","label":"Textos clave · JSON [{at o word, text}] (*palabra* = color de acento)","default":"[{\"at\":2.9,\"text\":\"ESCRÍBELE *LO QUE TIENES*\"},{\"at\":5.0,\"text\":\"TE DA *LA RECETA*\"},{\"at\":6.6,\"text\":\"PASO POR PASO\"}]","group":"Textos clave"},
+  {"id":"taps","type":"string","label":"Toques · JSON [{at o word, x, y}] (x, y de 0 a 1 sobre la pantalla)","default":"[{\"at\":4.25,\"x\":0.92,\"y\":0.93}]","group":"Toques y zoom"},
+  {"id":"zooms","type":"string","label":"Zoom · JSON [{at o word, x, y, scale, hold}]","default":"[{\"at\":5.5,\"x\":0.12,\"y\":0.38,\"scale\":1.35,\"hold\":1.0}]","group":"Toques y zoom"},
+  {"id":"endAt","type":"number","label":"Cierre · empieza en el segundo (con narración: la palabra de endWord)","default":8.0,"min":1,"max":120,"step":0.1,"group":"Cierre"},
+  {"id":"endWord","type":"string","label":"Cierre · empieza al decir esta palabra (vacío = usa el segundo)","default":"","group":"Cierre"},
+  {"id":"handle","type":"string","label":"Cierre · tu @usuario","default":"@tu_usuario","group":"Cierre"},
+  {"id":"cta","type":"string","label":"Cierre · texto de abajo","default":"SÍGUEME PARA MÁS TRUCOS","group":"Cierre"},
+  {"id":"endHold","type":"number","label":"Cierre · dura (s)","default":1.6,"min":0.6,"max":6,"step":0.1,"group":"Cierre"},
+  {"id":"cover","type":"boolean","label":"Portada en los 2 primeros cuadros (para elegirla en TikTok)","default":false,"group":"Portada"},
+  {"id":"coverTitle","type":"string","label":"Portada · título","default":"QUÉ COCINAR CON LO QUE TIENES","group":"Portada"},
+  {"id":"ground","type":"color","label":"Fondo","default":"#0F1012","group":"Colores"},
+  {"id":"ink","type":"color","label":"Texto","default":"#F4F1EA","group":"Colores"},
+  {"id":"accent","type":"color","label":"Acento","default":"#FFD23F","group":"Colores"},
+  {"id":"accentInk","type":"color","label":"Texto sobre el acento","default":"#0F1012","group":"Colores"}
+]'>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080, height=1920">
+<title>Short Reels Motion · Pantalla del celular</title>
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/om.js"></script>
+<script src="vendor/srm.js"></script>
+<style id="om-fonts">
+@font-face { font-family: "Inter"; src: url("assets/fonts/Inter-var.woff") format("woff"); font-weight: 100 900; font-style: normal; }
+</style>
+<style>
+  :root { --ground: #0F1012; --ink: #F4F1EA; --accent: #FFD23F; --accentInk: #0F1012; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: var(--ground); }
+  #film { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--ground); color: var(--ink); font-family: "Inter", sans-serif; }
+  #film * { box-sizing: border-box; }
+  .light { position: absolute; inset: 0; background: radial-gradient(800px 600px at 50% 22%, #ffffff0c, transparent 72%); }
+  .flash { position: absolute; inset: 0; background: var(--accent); opacity: 0; pointer-events: none; z-index: 40; }
+  section { position: absolute; inset: 0; visibility: hidden; }
+  #s-hook { visibility: visible; }                                   /* painted before any seek: frame 0 is the poster */
+  #hook3 { visibility: hidden; }
+  h1, h2, p { margin: 0; }
+
+  /* Safe area of the feeds (srm check, S in the studio): text lives between y 230 and 1480 and left of x 920 below y 760 (the hook sits mid-frame: it is also the poster). */
+  .kick { position: absolute; left: 80px; top: 600px; font-weight: 800; font-size: 34px; letter-spacing: .2em; color: var(--accent); white-space: nowrap; }
+  .hook { position: absolute; left: 80px; width: 920px; font-weight: 900; letter-spacing: -.045em; line-height: .95; white-space: nowrap; }
+  .hook1 { top: 690px; font-size: 112px; }
+  .hook2 { top: 815px; font-size: 112px; }
+  .hook3 { top: 990px; font-size: 64px; letter-spacing: -.02em; color: var(--ink); opacity: .9; }
+  .pillw { position: relative; display: inline-block; padding: .02em .14em .06em; color: var(--accentInk); isolation: isolate; }
+  .pillw .pill { position: absolute; inset: 0; background: var(--accent); z-index: -1; }
+
+  /* the phone: the real screen recording, framed; it sits high so the band below stays free for the key texts */
+  .phone { position: absolute; left: 80px; top: 240px; width: 920px; height: 1440px; transform: scale(.72); transform-origin: 50% 0; }
+  .screen { position: absolute; inset: 0; overflow: hidden; background: #000; border-radius: 46px; border: 10px solid #26272b; box-shadow: 0 40px 120px #000a; }
+  .screen video { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .tapdot { position: absolute; left: 0; top: 0; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; background: #fff; opacity: 0; box-shadow: 0 0 0 6px #ffffff40; z-index: 30; }
+  .ripple { position: absolute; left: 0; top: 0; width: 180px; height: 180px; margin: -90px 0 0 -90px; border-radius: 50%; border: 8px solid var(--accent); opacity: 0; z-index: 30; }
+
+  /* the band under the phone: one key text at a time */
+  .point { position: absolute; left: 80px; width: 840px; top: 1300px; font-weight: 900; font-size: 76px; line-height: 1.02; letter-spacing: -.035em; text-align: left; }
+  .point em { font-style: normal; color: var(--accent); }
+
+  /* closing */
+  .handle { position: absolute; left: 80px; width: 850px; top: 820px; text-align: center; font-weight: 900; font-size: 112px; letter-spacing: -.045em; white-space: nowrap; }
+  .cta { position: absolute; left: 80px; width: 850px; top: 980px; text-align: center; font-weight: 800; font-size: 36px; letter-spacing: .18em; color: var(--accent); }
+
+  /* cover: the first two frames, for TikTok's "pick a frame" */
+  #s-cover { z-index: 50; background: var(--ground); }
+  .cvTitle { position: absolute; left: 80px; width: 840px; top: 640px; font-size: 140px; line-height: .92; font-weight: 900; letter-spacing: -.05em; }
+  .cvHandle { position: absolute; left: 80px; width: 850px; top: 1300px; text-align: center; font-size: 56px; font-weight: 900; color: var(--accent); }
+</style>
+</head>
+<body>
+<!--
+  Pantalla del celular (short-pantalla): a phone screen recording in the middle of a vertical short, graphics on top.
+  Hook in frame 1 → the recording slides in and plays → one key text at a time in the band under it, taps and a push-in
+  on the part that matters → closing card with the creator's handle.
+
+  Bring the recording: put it in assets/ (H.264, 30 fps; srm will add `srm clip` to cut and clean phone recordings) and set
+  the `clip` variable. Cut the dead time (loading, thinking) out of the file: dead time on the phone is dead time here.
+  With narration (srm voice), every step can anchor to a word: {"word":"receta","text":"…"} instead of {"at":5.0,…}.
+  Coordinates of taps and zooms are 0–1 of the screen (x from the left, y from the top), so they survive a new recording size.
+
+  Keep text inside the safe area (srm check warns, S in the studio shows it): the band under the phone is y 1300–1480.
+-->
+<div id="film" data-composition-id="film" data-width="1080" data-height="1920" data-platforms="tiktok,reels,shorts">
+  <div class="light"></div>
+
+  <section id="s-hook" data-om-id="gancho">
+    <p class="kick" id="kick" data-om-id="kicker" data-var-text="kicker"></p>
+    <h1 class="hook hook1" id="hook1" data-om-id="hook1" data-var-text="hook1"></h1>
+    <h1 class="hook hook2" id="hook2" data-om-id="hook2"><span class="pillw"><span class="pill" id="pill2"></span><span id="hook2t"></span></span></h1>
+    <h2 class="hook hook3" id="hook3" data-om-id="hook3" data-var-text="hook3"></h2>
+  </section>
+
+  <section id="s-screen" data-om-id="pantalla">
+    <div class="phone" id="phone" data-om-id="celular">
+      <div class="screen" id="screen"><video id="rec" src="assets/pantalla.mp4" data-var-src="clip" muted playsinline></video></div>
+    </div>
+    <div id="points"></div>
+    <div class="tapdot" id="tapdot"></div>
+    <div class="ripple" id="ripple"></div>
+  </section>
+
+  <section id="s-end" data-om-id="cierre">
+    <p class="handle" id="handle" data-om-id="handle" data-var-text="handle"></p>
+    <p class="cta" id="cta" data-om-id="cta" data-var-text="cta"></p>
+  </section>
+
+  <section id="s-cover" data-om-id="portada">
+    <h1 class="cvTitle" id="cvTitle" data-var-text="coverTitle"></h1>
+    <p class="cvHandle" id="cvHandle"></p>
+  </section>
+
+  <div class="flash" id="flash"></div>
+</div>
+
+<script>
+  const V = OM.vars();
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+  const json = (s, fallback) => { try { const v = JSON.parse(s); return Array.isArray(v) ? v : fallback; } catch (e) { console.warn('[short-pantalla] JSON: ' + e.message); return fallback; } };
+  for (const k of ['ground', 'ink', 'accent', 'accentInk']) document.documentElement.style.setProperty('--' + k, V[k]);
+  OM.music({ product: 'explainer', bpm: 112 });
+
+  // ---- content
+  $('#hook2t').textContent = V.hook2;
+  $('#cvHandle').textContent = V.handle;
+  const points = json(V.points, []), taps = json(V.taps, []), zooms = json(V.zooms, []);
+  $('#points').innerHTML = points.map((p, i) => `<p class="point" id="pt${i}" data-om-id="texto-${i + 1}">${esc(p.text || '').replace(/\*([^*]+)\*/g, '<em>$1</em>')}</p>`).join('');
+  const rec = $('#rec');
+  rec.setAttribute('data-media-start', String(V.clipStart || 0));
+
+  // ---- timing: seconds, or the narration's words when there is one
+  const tPhone = SRM.when({ word: V.phoneWord, at: V.phoneAt });
+  const tEnd = Math.max(tPhone + 1, SRM.when({ word: V.endWord, at: V.endAt }));
+  const tl = gsap.timeline({ paused: true });
+  tl.set(['#s-screen', '#s-end', '#s-cover'], { autoAlpha: 0 }, 0);
+  tl.set(['#hook3', '#handle', '#cta', '.point'], { autoAlpha: 0 }, 0);
+
+  // cover (2 frames)
+  const c0 = V.cover ? 2 / 30 : 0;
+  if (V.cover) { tl.set('#s-cover', { autoAlpha: 1 }, 0); tl.set('#s-cover', { autoAlpha: 0 }, c0); }
+
+  // hook: the big promise is there from the first frame
+  tl.addLabel('scene:gancho', 0);
+  tl.set('#s-hook', { autoAlpha: 1 }, 0);
+  // the whole promise is on screen from the first frame (it is the poster feeds show); it only settles into place
+  tl.set(['#hook1', '#hook2', '#kick'], { autoAlpha: 1 }, c0);
+  tl.fromTo('#hook1', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0); OM.sfx('impact', c0, { gain: 0.6 });
+  tl.fromTo('#hook2', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0 + 0.08);
+  tl.fromTo('#pill2', { scaleX: 0.6 }, { scaleX: 1, duration: 0.4, ease: 'expo.out', immediateRender: false, transformOrigin: '0 50%' }, c0 + 0.08);
+  tl.fromTo('#kick', { x: -24 }, { x: 0, duration: 0.4, ease: 'power3.out', immediateRender: false }, c0);
+  if (String(V.hook3).trim()) SRM.kickIn(tl, '#hook3', c0 + 1.2);
+  SRM.whipOut(tl, '#s-hook', tPhone);
+
+  // the recording: slides in, plays from tPhone
+  tl.addLabel('scene:pantalla', tPhone);
+  rec.setAttribute('data-start', tPhone.toFixed(3));
+  rec.setAttribute('data-duration', Math.max(0.5, tEnd - tPhone).toFixed(3));
+  tl.set('#s-screen', { autoAlpha: 1 }, tPhone);
+  tl.fromTo('#phone', { y: 900, rotation: 4 }, { y: 0, rotation: 0, duration: 0.55, ease: OM.spring ? OM.spring(0.12) : 'expo.out', immediateRender: false }, tPhone);
+  OM.sfx('thud', tPhone + 0.2, { gain: 0.55 });
+  tl.fromTo('#screen', { scale: 1 }, { scale: 1.03, duration: Math.max(0.5, tEnd - tPhone - 0.6), ease: 'none', immediateRender: false }, tPhone + 0.6);   // never quite still
+
+  // key texts: each one from its time to the next (or to the closing)
+  const pts = points.map((p, i) => ({ el: '#pt' + i, at: SRM.when(p, tPhone + 0.6 + i * 1.6) })).sort((a, b) => a.at - b.at);
+  pts.forEach((p, i) => {
+    const until = Math.min(i + 1 < pts.length ? pts[i + 1].at : tEnd, tEnd);
+    SRM.slam(tl, p.el, p.at, { scale: 1.12, dur: 0.28, sound: 'pop', gain: 0.45 });
+    tl.to(p.el, { autoAlpha: 0, duration: 0.1 }, Math.max(p.at + 0.3, until - 0.1));
+    tl.set(p.el, { autoAlpha: 0 }, until);
+  });
+
+  // taps and zooms, placed on the screen (0–1 of its width and height)
+  const phone = { x: 80 + 920 * 0.14, y: 240, w: 920 * 0.72, h: 1440 * 0.72 };
+  for (const tp of taps) SRM.tap(tl, SRM.when(tp), phone.x + phone.w * Number(tp.x ?? 0.5), phone.y + phone.h * Number(tp.y ?? 0.5));
+  for (const z of zooms) SRM.zoom(tl, '#rec', SRM.when(z), { fx: Number(z.x ?? 0.5), fy: Number(z.y ?? 0.5), scale: Number(z.scale ?? 1.6), hold: Number(z.hold ?? 1) });
+
+  // closing: the phone leaves, the handle lands
+  SRM.whipOut(tl, '#s-screen', tEnd);
+  tl.addLabel('scene:cierre', tEnd);
+  tl.set('#s-end', { autoAlpha: 1 }, tEnd);
+  SRM.slam(tl, '#handle', tEnd + 0.02, { scale: 1.3 });
+  SRM.flash(tl, tEnd + 0.02);
+  SRM.kickIn(tl, '#cta', tEnd + 0.4);
+  tl.to({}, { duration: V.endHold }, tEnd + 0.4);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines['film'] = tl;
+</script>
+</body>
+</html>
