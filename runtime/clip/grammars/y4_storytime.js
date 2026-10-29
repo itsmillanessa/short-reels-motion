@@ -157,7 +157,7 @@ function insert(c, t, ctx, shot) {
     // 顶栏：三个圆点、标题、计数器（砸出那一刻停在 data.count）
     c.fillStyle = '#2A2D3A'; c.fillRect(sx, sy, sw, 64 * u);
     ['#FF5F57', '#FEBC2E', '#28C840'].forEach((col, i) => { c.fillStyle = col; c.beginPath(); c.arc(sx + 42 * u + i * 34 * u, sy + 32 * u, 10 * u, 0, 7); c.fill(); });
-    TY.text(c, d.app || 'AI助手', sx + sw / 2, sy + 44 * u, { size: 30 * u, fam: 'PuHui-Bold', color: '#9AA3B8' });
+    TY.text(c, d.app || CLIP.tr('AI助手'), sx + sw / 2, sy + 44 * u, { size: 30 * u, fam: 'PuHui-Bold', color: '#9AA3B8' });
     if (d.count != null && t > T_SEND + 0.1) { const N = +d.count, k = slam >= 0 ? N : Math.min(N - 1, Math.floor(Math.pow(clamp((t - T_SEND - 0.15) / Math.max(0.2, T_HIT - T_SEND - 0.15)), 2.4) * (N - 1)));
       TY.text(c, `${k}${d.unit || ''}`, sx + sw - 30 * u, sy + 44 * u, { size: 32 * u, fam: 'PuHui-Bold', color: slam >= 0 ? '#FFCB6B' : '#9AA3B8', align: 'right' });
       const cw = TY.width(c, `${N}${d.unit || ''}`, 32 * u, 'PuHui-Bold'); CLIP.mark(c, 'counter', sx + sw - 30 * u - cw - 10 * u, sy + 8 * u, cw + 20 * u, 48 * u); }

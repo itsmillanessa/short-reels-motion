@@ -37,9 +37,52 @@ const FACES = C.FACES = {
 };
 C.fontDir = 'assets/fonts/';
 
+// ---------- language of what the runtime writes ----------
+// The grammars came with Chinese region names (what the studio shows when you point), notes drawn on the frame and
+// problem messages. C.tr turns them into the film's language: <html lang="…"> (zh keeps the original, en English,
+// anything else, or no lang, Spanish). The grammar files stay as upstream wrote them; this table is the one place to add a string.
+const LANG = (() => { const l = (document.documentElement.lang || 'es').toLowerCase(); return l.startsWith('zh') ? 'zh' : l.startsWith('en') ? 'en' : 'es'; })();
+const WORDS = {
+  '标题': ['Título', 'Title'], '公式': ['Fórmula', 'Formula'], '曲线与坐标系': ['Curva y ejes', 'Curve and axes'], '（截图）': ['(captura)', '(screenshot)'],
+  '大数字': ['Número grande', 'Big number'], '截图上的框': ['Recuadro sobre la captura', 'Box on the screenshot'], '副标题（指标与单位）': ['Subtítulo (indicador y unidad)', 'Subtitle (measure and unit)'],
+  '来源': ['Fuente', 'Source'], '角标': ['Etiqueta de esquina', 'Corner badge'], '标注': ['Anotación', 'Annotation'], '标题条': ['Barra de título', 'Title strip'],
+  '荧光笔＋红圈': ['Marcatextos y círculo rojo', 'Highlighter and red circle'], '角色': ['Personaje', 'Character'], '桌上的电脑': ['La computadora del escritorio', 'The computer on the desk'],
+  '电脑屏幕特写': ['Primer plano de la pantalla', 'Screen close-up'], '他打的那一行': ['La línea que escribe', 'The line being typed'], '砸出来的大字': ['La palabra que cae de golpe', 'The word that slams in'],
+  '右上角计数器': ['Contador de la esquina', 'Corner counter'], '中心星球': ['Planeta central', 'Central planet'], '进度轨': ['Barra de progreso', 'Progress track'], '荧光笔': ['Marcatextos', 'Highlighter'],
+  '纵轴未从 0 开始': ['el eje vertical no empieza en 0', 'the vertical axis does not start at 0'], '示意数据': ['Datos ilustrativos', 'Illustrative data'],
+  '来源：示意数据': ['Fuente: datos ilustrativos', 'Source: illustrative data'], 'AI助手': ['Asistente de IA', 'AI assistant'],
+  'om-cues 不是合法 JSON，口播锚点没生效': ['om-cues no es JSON válido: los anclajes a la narración no se aplicaron', 'om-cues is not valid JSON: the narration anchors were not applied'],
+  'spec 缺 grammar': ['al spec le falta grammar', 'the spec has no grammar'], 'spec.duration 必须 > 0': ['spec.duration debe ser > 0', 'spec.duration must be > 0'],
+  '动画没能启动：': ['La animación no pudo arrancar: ', 'The animation could not start: '],
+};
+const PATTERNS = [
+  [/^第 (\d+) 个标题$/, ['Título $1', 'Title $1']], [/^第 (\d+) 条要点$/, ['Punto $1', 'Point $1']], [/^第 (\d+) 条标题$/, ['Titular $1', 'Headline $1']],
+  [/^第 (\d+) 张图$/, ['Imagen $1', 'Picture $1']], [/^第 (\d+) 张索引卡$/, ['Ficha $1', 'Index card $1']], [/^第 (\d+) 张卡$/, ['Tarjeta $1', 'Card $1']], [/^第 (\d+) 张卡（截图）$/, ['Tarjeta $1 (captura)', 'Card $1 (screenshot)']],
+  [/^第 (\d+) 句的气泡$/, ['Globo de la frase $1', 'Speech bubble $1']], [/^第 (\d+) 个节点$/, ['Nodo $1', 'Node $1']],
+  [/^第 (\d+) 页主词$/, ['Palabra principal, página $1', 'Main word, page $1']], [/^第 (\d+) 页辅句$/, ['Frase de apoyo, página $1', 'Supporting line, page $1']],
+  [/^第 (\d+) 页小标签$/, ['Etiqueta, página $1', 'Label, page $1']], [/^(\d+) 根柱$/, ['$1 barras', '$1 bars']], [/^(\d+) 个数据点$/, ['$1 puntos de datos', '$1 data points']],
+  [/^(\d+) 根 K 线$/, ['$1 velas', '$1 candles']],
+  [/^第 (\d+) 根柱(.*)$/, ['Barra $1$2', 'Bar $1$2']], [/^第 (\d+) 个数据点(.*)$/, ['Punto $1$2', 'Point $1$2']], [/^第 (\d+) 根 K 线(.*)$/, ['Vela $1$2', 'Candle $1$2']],
+  [/^变量 (.+) 不是合法 JSON，先用默认值（(.*)）$/, ['la variable $1 no es JSON válido; se usa el valor por defecto ($2)', 'variable $1 is not valid JSON; using the default ($2)']],
+  [/^spec 引用了没声明的变量 (.+)$/, ['el spec usa la variable $1, que no está declarada', 'the spec uses variable $1, which is not declared']],
+  [/^没有加载语法 (\S+)：index\.html 要引入 (\S+)$/, ['no se cargó la gramática $1: index.html debe incluir $2', 'grammar $1 is not loaded: index.html must include $2']],
+  [/^第 (\S+) 秒画不出来：(.*)$/, ['el segundo $1 no se pudo dibujar: $2', 'second $1 could not be drawn: $2']],
+  [/^图片加载失败：(.+)（路径相对 index\.html）$/, ['no se pudo cargar la imagen $1 (la ruta es relativa a index.html)', 'image $1 failed to load (the path is relative to index.html)']],
+  [/^cue「(.+)」(?:第 (\d+) 次)?不在配音里，(\S+) 用自带的 at=(\S+)$/, ['la palabra «$1» no está en la narración; $3 usa su propio at=$4', 'the word "$1" is not in the narration; $3 keeps its own at=$4']],
+  [/^hitWord「(.+)」不在配音里，用自带的 hit$/, ['hitWord «$1» no está en la narración; se usa su propio hit', 'hitWord "$1" is not in the narration; using its own hit']],
+];
+C.lang = LANG;
+C.tr = (s) => {
+  if (LANG === 'zh' || typeof s !== 'string' || !/\p{Script=Han}/u.test(s)) return s;
+  const k = LANG === 'en' ? 1 : 0;
+  if (WORDS[s]) return WORDS[s][k];
+  for (const [re, out] of PATTERNS) if (re.test(s)) return s.replace(re, out[k]);
+  return s;
+};
+
 // ---------- problems the author should see: listed on the frame itself, not only in the console ----------
 const problems = C.problems = [];
-C.problem = (msg) => { if (!problems.includes(msg)) { problems.push(msg); console.warn('[clip] ' + msg); } };
+C.problem = (msg) => { msg = C.tr(msg); if (!problems.includes(msg)) { problems.push(msg); console.warn('[clip] ' + msg); } };
 // A variable that holds JSON (data series, rects, palettes). Broken JSON → the template default, and a note on the frame.
 C.json = (value, fallback, name) => {
   if (value == null || value === '') return fallback;
@@ -181,7 +224,7 @@ C.mount = function ({ id = 'film', canvas = 'c', tl = gsap.timeline({ paused: tr
     if (!ready) return null;
     if (drawnT == null || Math.abs(t - drawnT) > 1e-4) frame(t);   // the box of the frame being asked about
     return hits.get(r.id) || null;
-  }, r.label);
+  }, C.tr(r.label));
 
   // ---------- async boot: fonts, images, layout. The engine holds capture until this resolves ----------
   const hold = (p) => { if (window.OM && window.OM.ready) return window.OM.ready(p); window.__hf = window.__hf || {}; window.__hf.buildReady = window.__hf.buildReady || {}; window.__hf.buildReady['clip:' + id] = p; return p; };

@@ -29,8 +29,23 @@ const FPS = 30;
 async function api(path, body) {
   const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-OM-Token': BOOT.csrf }, body: JSON.stringify(body || {}) });
   const j = await r.json().catch(() => ({}));
+  if (r.status === 403 && /studio token/.test(j.error || '')) restarted();
   if (!r.ok) { const e = new Error(j.error || r.statusText); e.status = r.status; throw e; }
   return j;
+}
+
+// The studio was restarted (om studio again): this page holds the old run's token and every edit would get a 403.
+// Keep the note being written, reload, and say why; the draft comes back the next time the composer opens.
+const DRAFT = 'srm.draft';
+function restarted() {
+  if (restarted.done) return;
+  restarted.done = true;
+  try {
+    const text = $('#composer-text')?.value.trim();
+    if (text) sessionStorage.setItem(DRAFT, text);
+    sessionStorage.setItem('srm.reloaded', '1');
+  } catch { /* private window */ }
+  location.reload();
 }
 
 function toast(html, { bad = false, ms = 3600 } = {}) {
@@ -61,7 +76,9 @@ async function boot() {
   layout();
   loadPlayer();
   renderVars(); renderComments(); renderStatus();
+  try { if (sessionStorage.getItem('srm.reloaded')) { sessionStorage.removeItem('srm.reloaded'); toast(esc(t('studio.reloaded'))); } } catch { /* private window */ }
   const es = new EventSource('/api/events');
+  es.addEventListener('hello', (e) => { try { if (JSON.parse(e.data).boot !== BOOT.boot) restarted(); } catch { /* an old server without boot ids */ } });
   es.addEventListener('source', (e) => onSource(JSON.parse(e.data)));
   es.addEventListener('inbox', (e) => { S.comments = JSON.parse(e.data).comments; renderComments(); renderStatus(); renderPins(); renderMarks(); });
   es.addEventListener('render', (e) => onRender(JSON.parse(e.data)));
@@ -358,7 +375,9 @@ function openComposer(e, x, y, hit) {
   const left = Math.min(Math.max(12, e.clientX - stage.left + 12), stage.width - 332);
   const top = Math.min(Math.max(12, e.clientY - stage.top + 12), stage.height - c.offsetHeight - 12);
   Object.assign(c.style, { left: left + 'px', top: top + 'px' });
-  const ta = $('#composer-text'); ta.value = ''; ta.focus();
+  const ta = $('#composer-text'); ta.value = '';
+  try { const d = sessionStorage.getItem(DRAFT); if (d) { ta.value = d; sessionStorage.removeItem(DRAFT); } } catch { /* private window */ }
+  ta.focus();
 }
 function closeComposer() { $('#composer').hidden = true; draft = null; }
 async function sendComment() {

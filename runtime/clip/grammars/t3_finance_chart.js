@@ -39,7 +39,7 @@ return {
     while (ticks[ticks.length - 1] < hi + pad * 0.5) ticks.push(+(ticks[ticks.length - 1] + step).toFixed(10));
     while (ticks[0] > (zeroBased ? lo : lo - pad * 0.5)) ticks.unshift(+(ticks[0] - step).toFixed(10));
     const titleSz = (ctx.portrait ? 64 : 58) * u, t = TY.fit(c, d.title || '', W - 2 * m, titleSz, 'PuHui-Bold', { maxLines: ctx.portrait ? 3 : 2, weight: '700 ' });
-    const sub = (d.unit || '') + (!zeroBased ? (d.unit ? '　' : '') + '纵轴未从 0 开始' : '');
+    const sub = (d.unit || '') + (!zeroBased ? (d.unit ? '　' : '') + CLIP.tr('纵轴未从 0 开始') : '');
     // 副标题、来源行：放不下先缩一点，再折两行（竖屏长口径会出画）；来源行要让开右下角标
     const fsz = ctx.portrait ? 1.2 : 1, subF = TY.fit(c, sub, W - 2 * m, 32 * u * fsz, 'PuHui-Medium', { maxLines: 2, min: 0.8 });
     c.font = `700 ${28 * u}px "PuHui-Medium"`; const badgeW = d.badge ? c.measureText(d.badge).width + 28 + 30 * u : 0;

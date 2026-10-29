@@ -126,7 +126,7 @@ CH.callout = (c, lt, t0, { x, y, tx, ty, lines = [], col = '#121212', dotCol = '
 // ---------- 版式 ----------
 CH.tag = (c, x, y, w = 64, h = 14, col = '#e3120b') => { c.fillStyle = col; c.fillRect(x, y, w, h); };
 // 「示意数据」角标：右下圆角框。虚构数据每一镜都要有
-CH.demoBadge = (c, text = '示意数据', { x = W - 40, y = 1040, font = '600 24px sans-serif', col = '#7a7a7a', box = 'rgba(0,0,0,.06)' } = {}) => {
+CH.demoBadge = (c, text = CLIP.tr('示意数据'), { x = W - 40, y = 1040, font = '600 24px sans-serif', col = '#7a7a7a', box = 'rgba(0,0,0,.06)' } = {}) => {
   c.save(); c.font = font; c.textAlign = 'right'; c.textBaseline = 'middle';
   const w = c.measureText(text).width + 28; c.fillStyle = box; c.beginPath(); c.roundRect(x - w, y - 22, w, 44, 8); c.fill();
   c.strokeStyle = col; c.globalAlpha = 0.5; c.lineWidth = 1.5; c.stroke(); c.globalAlpha = 1;
@@ -134,7 +134,7 @@ CH.demoBadge = (c, text = '示意数据', { x = W - 40, y = 1040, font = '600 24
 };
 // 经济学人式整页版式（每镜都画）：白底 → 顶部细红线从左画出 → 左上红色小旗 → 标题 → 副标题（单位/口径）→ 左下来源 → 右下「示意数据」。
 // lt = 本镜时间（版式 0.6s 内全部到位，之后才出坐标系）。badge 传 false 不画角标（真实数据时）。
-CH.frame = (c, lt, { title, sub, source = '来源：示意数据', badge = '示意数据', bg = '#FFFFFF', red = '#E3120B', ink = '#0C0C0C', subCol = '#4F5B61', srcCol = '#7c868b',
+CH.frame = (c, lt, { title, sub, source = CLIP.tr('来源：示意数据'), badge = CLIP.tr('示意数据'), bg = '#FFFFFF', red = '#E3120B', ink = '#0C0C0C', subCol = '#4F5B61', srcCol = '#7c868b',
   font = '"NotoSansSC"', x = 90 } = {}) => {
   c.fillStyle = bg; c.fillRect(0, 0, W, H);
   const p = MO.quintOut(MO.seg(lt, 0, 0.45));

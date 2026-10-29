@@ -21,6 +21,7 @@ const STATIC = {
 
 export function startStudio(project, { port = 4848, host = '127.0.0.1', lang = process.env.OM_LANG } = {}) {
   const csrf = randomBytes(16).toString('hex');
+  const boot = randomBytes(6).toString('hex'); // which run of the studio a page belongs to: a page from an earlier run reloads itself
   const clients = new Set();
   let renderJob = null;
 
@@ -115,13 +116,13 @@ export function startStudio(project, { port = 4848, host = '127.0.0.1', lang = p
       }
 
       if (path === '/') {
-        const html = readFileSync(join(PKG, 'studio/index.html'), 'utf8').replace('<!--OM_BOOT-->', `<script>window.OM_BOOT=${JSON.stringify({ csrf, lang: lang || undefined })}</script>`);
+        const html = readFileSync(join(PKG, 'studio/index.html'), 'utf8').replace('<!--OM_BOOT-->', `<script>window.OM_BOOT=${JSON.stringify({ csrf, boot, lang: lang || undefined })}</script>`);
         return send(res, 200, html, TYPES['.html']);
       }
       if (path === '/api/state') return send(res, 200, state());
       if (path === '/api/events') {
         res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
-        res.write(`event: hello\ndata: {}\n\n`);
+        res.write(`event: hello\ndata: ${JSON.stringify({ boot })}\n\n`);
         clients.add(res);
         req.on('close', () => clients.delete(res));
         return;
