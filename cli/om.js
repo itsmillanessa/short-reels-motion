@@ -48,7 +48,8 @@ const HELP = `Short Reels Motion ${VERSION} — shorts, reels and TikToks made b
   om samples [build [ids…]]      the real-instrument pack (piano, strings, drums…; CC0/CC-BY, ~55 MB): status, or build it once
   om share [dir] [--from s] [--to s]   after a render: a ≤10 MB GIF (opening + end frame) and share.md (post, README header)
   om export html [dir] [--out folder] [--title …] [--desc …]   share page (player, Remix prompt, source.zip) for any static host
-  om doctor                     check Node, FFmpeg and the renderer
+  om doctor                     check Node, FFmpeg and the renderer (and what is optional: whisper, Kokoro, the skill)
+  om kit [set key=value… | import <file>]   the creator's kit: handle, cta, colours, lang, platforms, voice, speed, character.* — every new project starts with it
 
 Docs: skills/short-reels-motion/SKILL.md`;
 
@@ -123,7 +124,18 @@ async function main() {
       try { meta = JSON.parse(readFileSync(join(tpl, 'template.json'), 'utf8')); } catch {}
       for (const [from, to] of Object.entries(meta.copy || {})) cpSync(join(PKG, from), join(dir, to), { recursive: true });
       cpSync(join(PKG, 'runtime', 'om.js'), join(dir, 'vendor', 'om.js')); // OM.clock / OM.region / OM.cue, ready when needed
-      return out(`created ${dir}\nnext: om studio ${pos[0]}`);
+      // the creator's kit (srm kit): their handle, colours, language, narrator… on every new project
+      let kitNote = '';
+      if (!flags['no-kit']) {
+        const { readKit, applyKit, kitFile } = await import('./lib/kit.js');
+        const kit = readKit();
+        if (Object.keys(kit).length) {
+          const index = join(dir, 'index.html'), r = applyKit(readFileSync(index, 'utf8'), kit);
+          if (r.applied.length) writeFileSync(index, r.html);
+          kitNote = `\nkit     ${r.applied.length ? r.applied.join(', ') : 'nothing this template uses'} (${kitFile()})${r.skipped.length ? `\n        skipped: ${r.skipped.join('; ')}` : ''}`;
+        }
+      }
+      return out(`created ${dir}${kitNote}\nnext: srm studio ${pos[0]}`);
     }
 
     case 'templates': {
@@ -331,6 +343,11 @@ async function main() {
     }
     case 'voice': {
       const { voice } = await import('./lib/voice.js');
+      // the kit's voice and speed when no flag says otherwise (a generated voice; a recording keeps its own pace)
+      const { readKit } = await import('./lib/kit.js');
+      const kit = readKit();
+      if (!flags.voice && kit.voice && !flags.audio) { if (/^elevenlabs:/i.test(kit.voice)) process.stderr.write('kit voice is an ElevenLabs voice: generate the audio there and pass it with --audio\n'); else flags.voice = kit.voice; }
+      if (flags.speed == null && kit.speed && !flags.audio) flags.speed = kit.speed;
       return out(await voice(openProject(pos[0] || '.'), flags, (l) => process.stderr.write(l + '\n')));
     }
 
@@ -353,6 +370,26 @@ async function main() {
     }
 
     case 'doctor': return doctor();
+
+    case 'kit': {
+      const { readKit, setKit, importKit, kitFile, KEYS, CHARACTER } = await import('./lib/kit.js');
+      const sub = pos[0];
+      if (sub === 'set') {
+        const pairs = Object.fromEntries(pos.slice(1).filter((p) => p.includes('=')).map((p) => [p.slice(0, p.indexOf('=')), p.slice(p.indexOf('=') + 1)]));
+        if (!Object.keys(pairs).length) throw new OmError('usage: srm kit set key=value [key=value…]  (an empty value removes the key)');
+        setKit(pairs);
+        return out(`kit: ${Object.keys(pairs).join(', ')} → ${kitFile()}`);
+      }
+      if (sub === 'import') {
+        if (!pos[1]) throw new OmError('usage: srm kit import <kit.json>');
+        const kit = importKit(resolve(pos[1]));
+        return out(`kit imported → ${kitFile()}\n${JSON.stringify(kit, null, 2)}`);
+      }
+      if (sub) throw new OmError('usage: srm kit · srm kit set key=value… · srm kit import <file>');
+      const kit = readKit();
+      if (!Object.keys(kit).length) return out(`no kit yet (${kitFile()})\nsrm kit set handle=@your_handle accent=#E4007C cta="SÍGUEME PARA MÁS" lang=es-MX\nkeys: ${Object.keys(KEYS).join(', ')}, character.<${CHARACTER.join('|')}>`);
+      return out(`${kitFile()}\n${JSON.stringify(kit, null, 2)}`);
+    }
 
     default: throw new OmError(`unknown command "${cmd}"\n\n${HELP}`);
   }

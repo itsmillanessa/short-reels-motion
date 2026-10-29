@@ -29,6 +29,8 @@ Si `srm` no está en el PATH, este skill trae `bin/srm` (corre el CLI que viene 
 
 ```sh
 srm doctor                                # la primera vez: Node, Chrome, FFmpeg, voces
+srm kit                                   # la marca del creador: @usuario, colores, cierre, idioma, voz, su personaje
+srm kit set handle=@x accent=#E4007C …    # guardarla una vez (srm new la aplica a cada proyecto nuevo)
 srm learn shorts <tema>                   # antes de empezar: las preferencias de este creador y lo aprendido
 srm templates                             # plantillas; las verticales dicen 9:16
 srm new <dir> --template short-pantalla   # proyecto nuevo desde una plantilla
@@ -51,7 +53,7 @@ saltes la revisión visual.
 
 ## Cómo se hace un short
 
-1. **Prepárate.** `srm learn shorts <tema>` (sus preferencias: @usuario, colores, voz, tono) y lee
+1. **Prepárate.** `srm kit` (su marca) y `srm learn shorts <tema>` (sus preferencias y lo aprendido), y lee
    [shorts.md](references/shorts.md). La primera vez en una máquina, `srm doctor`.
 
 2. **Una sola pregunta, con tus valores por defecto escritos.** El creador corrige línea por línea o dice «va».
@@ -60,7 +62,9 @@ saltes la revisión visual.
    - plataforma y duración (por defecto: las tres, 9:16, 30–45 s);
    - voz: su grabación, una voz generada gratis, su voz clonada (ElevenLabs) o sin voz;
    - material: grabación de pantalla del celular, video a cámara, capturas, o nada (solo tipografía);
-   - su @usuario y colores, si `srm learn` no los trae (guárdalos con `srm learn add … --kind preference`).
+   - **solo si `srm kit` está vacío:** su @usuario, colores (fondo, texto, acento), texto de cierre, idioma y, si quiere
+     narrador dibujado, cómo se ve (piel, pelo, ropa, lentes…). Guárdalo con `srm kit set …` una vez: desde ahí cada
+     `srm new` arranca con su marca y no se vuelve a preguntar.
 
 3. **El guion se aprueba antes de producir.** Tabla de **tiempo · voz · en pantalla** (la animación literal de cada
    frase) + **qué grabar**, siguiendo la estructura de [shorts.md §2](references/shorts.md). Gancho en el cuadro 0, una idea,

@@ -75,6 +75,21 @@ srm render mi-reel                     # MP4 listo para subir
 
 Lo normal es no escribir estos comandos: se los pides a tu agente y él los corre.
 
+## Tu kit
+
+Tu marca se dice una vez y cada video nuevo arranca con ella:
+
+```sh
+srm kit set handle=@tu_usuario accent=#E4007C ground=#0E0E10 ink=#F3EFE6 cta="SÍGUEME PARA MÁS" lang=es-MX speed=1.2
+srm kit set character.hair=curly character.accessory=glasses   # tu narrador dibujado (plantilla storytime)
+srm kit                                                        # ver tu kit
+srm kit import mi-kit.json                                     # o traerlo de un archivo
+```
+
+`srm new` aplica a cada proyecto nuevo las variables que la plantilla tenga con esos nombres (`--no-kit` para no
+hacerlo); `srm voice` usa tu voz y velocidad si no le dices otra. Lo normal es que tu agente te pregunte esto la primera
+vez y lo guarde él.
+
 ## Voz
 
 | Opción | Cómo | Costo |
@@ -104,7 +119,7 @@ completo, sin guías encima. `data-platforms="tiktok,reels"` en la raíz del vid
 - [x] 4 plantillas verticales más: `short-tipografia`, `short-cara`, `short-lista`, `short-antes-despues`
 - [x] Librería de movimientos para shorts (`runtime/srm-motion.js` → `vendor/srm.js`)
 - [x] La narración reconoce palabras con acento («Sígueme», «más») como anclas
-- [ ] Kit de marca (`kit.json`)
+- [x] Kit del creador (`srm kit`): @usuario, colores, cierre, idioma, plataformas, voz, velocidad y personaje
 - [ ] Ingesta de grabaciones del celular; portada y exportación por plataforma
 - [ ] ElevenLabs como opción de voz; Kokoro en un paso
 - [x] Skill «director de shorts» en español (`skills/short-reels-motion/SKILL.md` + `references/shorts.md`)
