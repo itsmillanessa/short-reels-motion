@@ -347,6 +347,9 @@ const SOUND = /<audio\b[^>]*\sid\s*=\s*["']om-sound["'][^>]*>(?:\s*<\/audio>)?/i
 const ROOT = /<([a-z][\w-]*)\b[^>]*\sdata-composition-id\s*=\s*["'][^"']+["'][^>]*>/i;
 
 export const hasSound = (html) => SOUND.test(html.replace(/<!--[\s\S]*?-->/g, ''));
+// A film that asks for sound (OM.music, OM.sfx or an om-score) but has no soundtrack yet: a new project from a template.
+// render builds it then, instead of exporting a silent film with a warning nobody reads.
+export const declaresSound = (html) => /\bOM\.(?:music|sfx)\s*\(|\bid\s*=\s*["']om-score["']/.test(html.replace(/<!--[\s\S]*?-->/g, ''));
 
 function attrs(tag) {
   const out = {};

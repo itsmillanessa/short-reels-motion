@@ -252,11 +252,12 @@ async function main() {
       const project = openProject(pos[0] || '.');
       // The soundtrack is a function of the timeline: rebuild it so a retimed film never exports stale sound. It reads the
       // timeline from the first render browser; if it rewrites the <audio> tag, the browsers reload the film.
-      const { hasSound, refreshRuntime, sound } = await import('./lib/sound.js');
+      const { declaresSound, hasSound, refreshRuntime, sound } = await import('./lib/sound.js');
       const log = (l) => process.stderr.write(l + '\n');
       refreshRuntime(project, log); // before the browsers load the film: the page lent to the sound must run the current runtime
       let prepare = null;
-      if (!flags.transparent && hasSound(readSource(project).html)) {
+      const src = readSource(project).html;
+      if (!flags.transparent && !flags.silent && (hasSound(src) || declaresSound(src))) {
         prepare = async (page) => { let rewrote = false; log((await sound(project, { page, onWrite: () => { rewrote = true; } }, log)).split('\n')[0]); return rewrote; };
       } else if (!flags.transparent && !flags.silent) log('warning  no soundtrack — run `om sound` first (or pass --silent if the film is meant to be silent)');
       process.stderr.write('rendering in your Chrome…\n');

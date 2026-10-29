@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, cpSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { RATE, SFX, Track, applySound, findChrome, hasSound, loudness, pickBpm, plan, readWav, sound, toWav } from '../cli/lib/sound.js';
+import { RATE, SFX, Track, applySound, declaresSound, findChrome, hasSound, loudness, pickBpm, plan, readWav, sound, toWav } from '../cli/lib/sound.js';
 import { openProject } from '../cli/lib/project.js';
 
 const PKG = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -91,4 +91,12 @@ test('om sound reads hits and scenes from a real composition', { skip: !findChro
   assert.match(html, /<audio id="om-sound" src="assets\/sound.wav"/);
   const w = readWav(join(dir, 'assets', 'sound.wav'));
   assert.ok(Math.abs(w.data.length / RATE - 3.7) < 0.01); // thud tween ends at 2.7, then the 1 s hold
+});
+
+test('a film that declares sound but has no soundtrack yet is recognised, so render builds it instead of exporting silence', () => {
+  assert.equal(declaresSound('<script>OM.music({ product: "explainer" });</script>'), true);
+  assert.equal(declaresSound("<script>OM.sfx('pop', 1.2)</script>"), true);
+  assert.equal(declaresSound('<script type="text/vnd.abc" id="om-score">X:1</script>'), true);
+  assert.equal(declaresSound('<!-- OM.music({}) in a comment --><div></div>'), false);
+  assert.equal(declaresSound('<div>no sound here</div>'), false);
 });
