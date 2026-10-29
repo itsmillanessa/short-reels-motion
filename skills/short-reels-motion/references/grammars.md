@@ -26,7 +26,7 @@ For a continuous UI workflow (device → action close-up → cross-device compos
 - **Sound.** Every cue gets an effect by kind (point → pop, number → count, highlight → draw, title → riser, image → paper…) when you run `om sound`. `"sfx": "stamp"` on a cue picks another, `"sfx": false` mutes it. See [sound.md](sound.md).
 - **`duration`** is the minimum length; with narration the film runs to the end of the voice + 0.5 s. **`pace`** multiplies every cue time that is not anchored to a word (and `duration`); animation speeds stay the same, so holds get longer.
 - **Scenes** are one label per beat (`title`, `point-1`, `chart-1`, …, numbered from 1). **Regions** (pickable things on the canvas) use the spec's 0-based indexes: `bar-4` is `data.series[4]`, `point-0` is the first point cue, `card-2` the third card cue. The comment at the top of each `index.html` lists both.
-- Real screenshots go in `assets/`; images are fitted (contain), never cropped. Fictional data keeps a 示意数据 badge or label in every frame; real data gets a real source and no badge.
+- Real screenshots go in `assets/`; images are fitted (contain), never cropped. Fictional data keeps a "datos ilustrativos" badge or label in every frame; real data gets a real source and no badge.
 - Vertical film: set `data-width="1080" data-height="1920"` on the root. Every grammar has a portrait layout; for burned-in subtitles add `"safe": {"bottom": 520}` to the spec.
 
 ## Anchoring cues to narration
@@ -41,7 +41,7 @@ Give a cue a `word` and it follows the voice:
 
 - After `om voice <dir> --text script.txt`, `at` = when that word is spoken (`OM.cue`), plus `offset`; `nth` picks a repeat, `edge: "end"` anchors to the end of the word. y4's slam uses `data.hitWord` the same way.
 - Without `om-cues` (no narration yet) the cue keeps its own `at`, so a template plays the same before and after you write the script.
-- A word that `om voice`'s tokenizer split (缓存命中 → 缓|存命|中) is still found: the narration text is searched with the words joined.
+- A word that `om voice`'s tokenizer split (缓存命中 (acierto de caché) → 缓|存命|中) is still found: the narration text is searched with the words joined.
 - A word missing from the narration keeps its own `at` and the frame shows a red note naming it. Fix the word or the script; don't ship with the note.
 - Anchor every beat or none: cues without `word` keep their scaled `at` and won't move with the voice.
 - Where the motion should land: 3b1b and kinetic type on the word (or a frame early); whiteboard writing about 0.5 s after the phrase starts (`"offset": 0.5`); keynote titles 0.2–0.3 s before the name; a number cue lands on the number; storytime reactions sit in the silence after the punch word.
@@ -52,6 +52,6 @@ Give a cue a `word` and it follows the voice:
 - **Highlight rects guessed by eye.** `highlightRect` / `data.rect` are fractions of the image and are often 20–30 % off. Snapshot the frame (`om look --at`) and adjust.
 - **Too many cues in a short film.** 2–5 cues per 3–8 s. Packed cues make writing speed up and the camera arrive late.
 - **`highlight` indexes.** They count only that kind (points, satellites in the current layer) from 0. A value out of range drops the highlight and says so on the frame.
-- **Numbers.** Bars always start at 0. "涨到 7.8 倍" is not "涨了 7.8 倍". A ratio in the title should be computable from the chart.
+- **Numbers.** Bars always start at 0. "subió a 7.8 veces" is not "subió 7.8 veces más". A ratio in the title should be computable from the chart.
 - **Characters outside the font subsets.** Rare characters fall back to a system font (a console warning lists them). Common GB2312 characters are all there.
 - **Editing `vendor/clip/` for one film.** Change the spec instead; the grammar files are shared code. If a grammar truly can't do something, build that shot in `blank` and cut between the two.

@@ -1,17 +1,17 @@
-# 来源与证据强度
+# Fuentes y solidez de la evidencia
 
-2026-10-09提炼。这里的历史效果均来自源skill的项目记录，本轮没有重新观看其全部历史成片，也没有独立重算旧记录中的指标。因此只把它们作为有出处的方法起点，不写成普遍效果保证。
+Destilado el 2026-10-09. Los resultados históricos de aquí vienen todos de los registros de proyecto de los skills de origen; en esta ronda no se volvieron a ver todos sus videos terminados ni se recalcularon por separado las métricas de los registros viejos. Por eso se toman solo como puntos de partida del método, con su fuente, y no como garantía general de resultados.
 
-- huashu-art-motion，`references/07-正面经验.md`：对象用全片时间、材料驱动转场、随机确定性、静态缓存、词级cue、按语法解读静止。`06-口播驱动的艺术短片.md`：先音轨后画面、世界画布、按内容取景、留白必须存在于口播。`11-进化协议.md`：问题优先于分数、经验从文字沉到工具。
-- huashu-video-pipeline，`references/21-动画段.md`与`scripts/anim_clip.py`：按解释任务选动画、以成片时间为唯一接口、词级锚点、变更后的同步核验。SKILL.md的返工规则：继承上一版补丁、按变化范围验证。
-- huashu-design，`references/storyboard-basics.md`：先关键帧、后编舞，构图与风格分离。`camera-language.md`：相机与对象分层、有目标的取景。`animation-best-practices.md`：运动层次与节奏对比；具体缓动和节奏比例保留为场景配方，不升级为公理。
+- huashu-art-motion, `references/07-正面经验.md` (experiencia positiva): los objetos usan el tiempo del video completo, transiciones que salen del material, azar determinista, caché de lo estático, cues por palabra, interpretar la quietud según la gramática. `06-口播驱动的艺术短片.md` (cortos artísticos guiados por la narración): primero el audio y luego la imagen, el lienzo como mundo, encuadrar según el contenido, el silencio tiene que existir en la narración. `11-进化协议.md` (protocolo de evolución): los problemas antes que la calificación, la experiencia baja de los textos a las herramientas.
+- huashu-video-pipeline, `references/21-动画段.md` (tramos de animación) y `scripts/anim_clip.py`: elegir la animación según lo que hay que explicar, el tiempo del video terminado como única interfaz, anclas por palabra, verificar la sincronía después de cada cambio. Las reglas de correcciones de su SKILL.md: heredar los parches de la versión anterior y verificar según el alcance del cambio.
+- huashu-design, `references/storyboard-basics.md`: primero los cuadros clave y después la coreografía; composición y estilo por separado. `camera-language.md`: cámara y objetos en capas separadas, encuadres con un objetivo. `animation-best-practices.md`: jerarquía del movimiento y contraste de ritmo; los easings y las proporciones de ritmo concretas se quedan como recetas para ciertos casos, no se vuelven axiomas.
 
-公开项目入口：[art-motion](https://github.com/alchaincyf/huashu-art-motion)、[design](https://github.com/alchaincyf/huashu-design)。本轮源文件的精确路径、SHA和私有冲突记录单独保存在项目维护资料中，不随skill分发。
+Proyectos públicos: [art-motion](https://github.com/alchaincyf/huashu-art-motion), [design](https://github.com/alchaincyf/huashu-design). Las rutas exactas de los archivos fuente de esta ronda, sus SHA y los registros privados de conflictos se guardan aparte en los materiales de mantenimiento del proyecto; no se distribuyen con el skill.
 
-## 本轮做出的归纳
+## Conclusiones de esta ronda
 
-这些是整合判断，尚待跨题目验证：以「解释意图→关键帧→对象变化→镜头→时间锚点→验证」作为小核心；把动画语法和材质拆开；让旧生产线继续负责已有录音处理和复杂剪辑。
+Son juicios de integración que todavía falta validar con otros temas: tomar «intención de explicar → cuadros clave → cambio de los objetos → tomas → anclas de tiempo → verificación» como núcleo pequeño; separar las gramáticas de animación de los materiales; dejar que la línea de producción anterior se siga encargando del procesamiento de grabaciones que ya tenía y de la edición compleja.
 
-不继承为通用规则：每帧必须运动、固定秒数切镜、固定缓动、无条件配音效、统一署名水印、所有人形都必须生图、只适合某个作者的语速和配色。三方向是当前默认协作方式，允许用户明确改变；不是好动画的物理规律。
+No se heredan como reglas generales: que cada cuadro tenga que moverse, cortes cada cierto número fijo de segundos, un easing fijo, efectos de sonido sin condiciones, una firma o marca de agua uniforme, que toda figura humana tenga que ser una imagen generada, la velocidad del habla o los colores que solo le quedan a un autor. Las tres direcciones son hoy la forma de colaborar por defecto y el creador puede cambiarla de forma explícita; no son una ley física de la buena animación.
 
-原项目中「一直慢更好」的历史概括已遭后续快运镜反馈反驳，故本项目只保留动机和可读性原则。个人偏好与单次授权不随公共skill迁移。
+La generalización histórica del proyecto original de que «siempre lento es mejor» ya la refutaron comentarios posteriores que pedían movimientos de cámara rápidos, así que este proyecto solo conserva los principios de motivación y legibilidad. Las preferencias personales y los permisos de una sola vez no pasan al skill público.

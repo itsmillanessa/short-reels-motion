@@ -30,7 +30,7 @@ Older project-specific notes (3D city film, web-product promo) are kept by the m
 
 ## 2026-10-17 | Narration timing from `om voice --audio` on halting speech
 
-- Finding: on a recorded demo with long pauses, word times stretched across the silences ("双击" placed at 6.22–8.22 s, two seconds including silence) while the note still reported a 93 % character match, which looked fine. The film's burned-in subtitles changed at the true moments and became the timing authority.
+- Finding: on a recorded demo with long pauses, word times stretched across the silences ("doble clic" placed at 6.22–8.22 s, two seconds including silence) while the note still reported a 93 % character match, which looked fine. The film's burned-in subtitles changed at the true moments and became the timing authority.
 - Do: when a word span is longer than ~1.2 s, or the speech has long pauses, check the cues against the waveform or the footage's own subtitles before anchoring motion to them.
 - Evidence: Sofatap launch test, 2026-10-17.
 - Confidence: observed once.
@@ -64,7 +64,7 @@ Older project-specific notes (3D city film, web-product promo) are kept by the m
 
 ## 2026-10-10 | Sound by default: silent films read as drafts
 
-- Finding: the user rejected silent output outright ("motion必须配音效配乐，不然太干涩"). Sound is part of the deliverable, not an export option.
+- Finding: the user rejected silent output outright ("el motion tiene que llevar efectos de sonido y música; si no, queda demasiado seco"). Sound is part of the deliverable, not an export option.
 - Do: mark hits with `OM.sfx` while animating, put cuts on `OM.beat`, run `om sound` before handing over the studio; `om render` rebuilds it. Offer narration once at the start (none / system voice / own recording).
 - Finding: two films scored end to end in ~1.5 s each (a site intro: 33 hits, 100 BPM on-grid; a skill promo: 15 hits, cuts laid out in seconds were up to 81 ms off any grid). The latter is why each scene now restarts the beat at its own cut instead of snapping to one global grid.
 - Finding: first mix was bass-heavy (kick, bass and the impact tail dominated below 150 Hz). Band means from 120 Hz–2 kHz within ~6 dB are a usable check when you can't listen.
@@ -79,7 +79,7 @@ Older project-specific notes (3D city film, web-product promo) are kept by the m
 
 ## 2026-10-09 | Data explainer, made cold from the skill alone
 
-- Finding: an agent that had only read SKILL.md built a 21 s compound-interest film in about 15 min (dark, glowing curves, one hero object carried across scenes) and handled three frame comments end to end: 2 min, 2 min and 37 s. It used `om set` for the text change and pointed out the precise figure on its own (14.2万 vs 14万).
+- Finding: an agent that had only read SKILL.md built a 21 s compound-interest film in about 15 min (dark, glowing curves, one hero object carried across scenes) and handled three frame comments end to end: 2 min, 2 min and 37 s. It used `om set` for the text change and pointed out the precise figure on its own (142 mil vs 140 mil).
 - Do: put every number a user might question into variables and recompute everything visible from them, so an edit can never leave a stale label. Use a real typeface with weight contrast; start the first pass with the axis labels at phone-readable size (≥ 32 px at 1080p), since "the chart is too small" was the first comment.
 - Do: when a comment's spot shows nothing obvious, run `om look <id>`, state the reading you chose in the note and ask the user to click again if it was the other thing. Users accept this; a guess without saying so does not work.
 - Evidence: blind trial, scratchpad project `compound`; studio inbox log with timings.

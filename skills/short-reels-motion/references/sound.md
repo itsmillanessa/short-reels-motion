@@ -4,7 +4,7 @@ A film ships with music and sound effects. Silent motion reads as a draft: the s
 
 `om sound` renders everything from what the composition declares — no network, no API — so a retimed film re-renders its own soundtrack (`om render` does it before every export). Instruments are synthesized, or played from real recordings once the sample pack is installed (`om samples build`, once per machine: a concert grand, string sections, horns, harp, mallets, guitars, a recorded drum kit; CC0 and CC-BY, credits in its NOTICE.txt). Run `om samples` to see whether it is there; without it everything still works, on synths.
 
-**Pick the world first** ([music.md](music.md)): sixteen musical worlds — pulse minimalism, UK garage, minimal techno, drum and bass, funk, lo-fi, trap, synthwave, cinematic, lyrical piano, jazz trio, folk, chiptune, ambient, 国风, amapiano — each with the products it suits and a two-bar groove that renders. You choose it from the product's character after the direction is chosen; the user isn't asked unless they want a say. `om sound` prints the score's soundprint (tempo, key, band) and warns when it is one of the example scores' bands or a recent film's on this machine: every film sounding alike is the failure users notice first.
+**Pick the world first** ([music.md](music.md)): sixteen musical worlds — pulse minimalism, UK garage, minimal techno, drum and bass, funk, lo-fi, trap, synthwave, cinematic, lyrical piano, jazz trio, folk, chiptune, ambient, guofeng (estilo chino), amapiano — each with the products it suits and a two-bar groove that renders. You choose it from the product's character after the direction is chosen; the user isn't asked unless they want a say. `om sound` prints the score's soundprint (tempo, key, band) and warns when it is one of the example scores' bands or a recent film's on this machine: every film sounding alike is the failure users notice first.
 
 There are two ways to score a film:
 
@@ -131,7 +131,7 @@ How it composes, so you can steer it: scene labels are sections and each starts 
 
 ## Levels
 
-Alone: music at −18 LUFS with effects on top, master at −14 LUFS integrated (X, Reels and 小红书 normalise near there), peaks limited to −1.5 dBFS, sub-30 Hz removed. Under narration the music sits ~12 LU under the measured voice, ducks under every word and is carved around 2 kHz. For a web page or a deck, −16 is calmer.
+Alone: music at −18 LUFS with effects on top, master at −14 LUFS integrated (X, Reels and RedNote normalise near there), peaks limited to −1.5 dBFS, sub-30 Hz removed. Under narration the music sits ~12 LU under the measured voice, ducks under every word and is carved around 2 kHz. For a web page or a deck, −16 is calmer.
 
 Check what you can't hear:
 

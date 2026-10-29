@@ -30,7 +30,7 @@ screenshots, logo, brand colours, existing launch posts, the data file. Note in 
   sites, old launch videos), send researchers and meanwhile build the hardest shot or the hero object
   from what you have. A main line idle for 25 minutes is the most common waste.
 - **Where it plays**: X / LinkedIn feed (autoplay, muted at first, 16:9 or 1:1), TikTok / Reels /
-  小红书 (9:16, captions), landing-page hero (seamless loop, no sound), keynote / stage (16:9, sound),
+  RedNote (9:16, captions), landing-page hero (seamless loop, no sound), keynote / stage (16:9, sound),
   App Store preview, a README GIF.
 - **Material**: code-built, CG, live footage, AI-generated footage, screen recording — and in what
   mix. Material changes a film more than language does.
