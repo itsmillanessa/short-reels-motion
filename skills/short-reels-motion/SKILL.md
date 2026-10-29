@@ -24,7 +24,8 @@ La guía práctica completa está en [references/shorts.md](references/shorts.md
 
 ## La herramienta
 
-`srm` y `om` son el mismo comando (este skill trae `bin/om`; también sirve `npx short-reels-motion`).
+El comando es `srm` (también `short-reels-motion`). Las referencias del motor escriben `om`: es el mismo comando, usa `srm`.
+Si `srm` no está en el PATH, este skill trae `bin/srm` (corre el CLI que viene junto al skill).
 
 ```sh
 srm doctor                                # la primera vez: Node, Chrome, FFmpeg, voces

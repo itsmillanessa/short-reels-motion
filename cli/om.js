@@ -1,19 +1,21 @@
 #!/usr/bin/env node
 // srm (also om) — the Short Reels Motion command line, built on huashu-motion (MIT). Agents and people use the same commands.
 import { spawn, spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { OmError, openProject, readSource, readVariables, scan, setVariables, undo, writeSource, snapshot } from './lib/project.js';
 import { claim, comments, pending, resolve as resolveComment, setStatus } from './lib/inbox.js';
 import { findChrome, chromeVersion, NO_CHROME } from './lib/browser.js';
 import { render } from './lib/render.js';
+import { cacheDir } from './lib/brand.js';
 
 const PKG = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const VERSION = JSON.parse(readFileSync(join(PKG, 'package.json'), 'utf8')).version;
 
 const HELP = `Short Reels Motion ${VERSION} — shorts, reels and TikToks made by your coding agent, edited by pointing at the frame.
-(srm and om are the same command; built on huashu-motion by Huashu, MIT)
+(also short-reels-motion; the engine's docs say om, which is the same command; built on huashu-motion by Huashu, MIT)
 
   om grab <url|folder> [dir]   the product's real material into <dir>/materials/: page screenshots, logo, images, its colours and type (a URL), or the project's own screenshots, icons, media and stylesheet colours (a folder)
   om new <dir> [--template t]   start a project (om templates lists them)
@@ -389,7 +391,21 @@ function doctor() {
   }
   const browser = findChrome();
   report.push([!!browser, browser ? `Chrome ${chromeVersion(browser) || ''} (${browser})` : 'Chrome (preview, render, stills, sound)', browser ? '' : NO_CHROME]);
-  out(report.map(([ok, what, hint]) => `${ok ? '✓' : '✗'} ${what}${hint && !ok ? `  — ${hint}` : ''}`).join('\n'));
+  // optional: not needed to make a short, but each one opens a way of working (· = not there yet)
+  const home = homedir(), cache = cacheDir();
+  const optional = [
+    [has('whisper-cli'), 'whisper (your own recording as the voice, word by word)', 'brew install whisper-cpp'],
+    [existsSync(join(cache, 'tts-venv', 'bin', 'python')) || existsSync(join(cache, 'tts-venv', 'Scripts', 'python.exe')), 'Kokoro (free voice, better than the system one)', '`srm voice` prints the one-line setup the first time'],
+    [existsSync(join(home, '.claude', 'skills', 'short-reels-motion')), 'skill for Claude Code (~/.claude/skills/short-reels-motion)', 'run the installer, or link skills/short-reels-motion there'],
+    [existsSync(join(home, '.codex', 'skills', 'short-reels-motion')), 'skill for Codex (~/.codex/skills/short-reels-motion)', 'only if you use Codex: run the installer'],
+  ];
+  // another program called srm (the old secure-delete tool) earlier on PATH would run instead of this one
+  const which = spawnSync(process.platform === 'win32' ? 'where' : 'which', ['srm'], { encoding: 'utf8' }).stdout.split(/\r?\n/)[0].trim();
+  let ours = !which;
+  try { ours = !which || realpathSync(which).startsWith(realpathSync(PKG)) || readFileSync(which, 'utf8').includes('short-reels-motion'); } catch { /* not readable */ }
+  if (!ours) report.push([false, `another program answers to "srm" (${which})`, 'use `short-reels-motion` instead, or put the npm global bin first on PATH']);
+  out([...report.map(([ok, what, hint]) => `${ok ? '✓' : '✗'} ${what}${hint && !ok ? `  — ${hint}` : ''}`),
+    ...optional.map(([ok, what, hint]) => `${ok ? '✓' : '·'} ${what}${hint && !ok ? `  — optional: ${hint}` : ''}`)].join('\n'));
   if (report.some(([ok]) => !ok)) process.exitCode = 2;
 }
 

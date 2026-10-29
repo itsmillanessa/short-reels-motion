@@ -38,21 +38,29 @@ Lo que lo hace distinto para videos cortos:
 
 ## Instalar
 
-Requisitos: Node 22 o superior, Google Chrome (o Chromium / Edge) y FFmpeg.
+Lo más fácil: pídeselo a tu agente (Claude Code o Codex):
+
+> Instala Short Reels Motion: https://github.com/itsmillanessa/short-reels-motion
+
+O corre el instalador tú mismo:
 
 ```sh
-git clone https://github.com/itsmillanessa/short-reels-motion.git
-cd short-reels-motion && npm install && npm install -g .
-srm doctor
+# macOS y Linux
+curl -fsSL https://raw.githubusercontent.com/itsmillanessa/short-reels-motion/main/install.sh | bash
 ```
 
-Para que tu agente lo use, enlaza el skill:
-
-```sh
-ln -sfn "$PWD/skills/short-reels-motion" ~/.claude/skills/short-reels-motion
+```powershell
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/itsmillanessa/short-reels-motion/main/install.ps1 | iex
 ```
 
-`srm` y `om` son el mismo comando.
+El instalador revisa lo que hace falta (git, Node 22 o más nuevo, FFmpeg y un navegador Chrome, Edge o Brave), descarga
+Short Reels Motion en `~/short-reels-motion`, instala el comando `srm` y registra el skill «director de shorts» para Claude
+Code (`~/.claude/skills`) y Codex (`~/.codex/skills`). Si falta algo del sistema, solo te dice qué y cómo instalarlo; con
+`--yes` (Windows: `-Yes`) lo instala él (Homebrew en macOS, apt en Linux, winget en Windows). `--whisper` agrega
+whisper-cpp para usar tu propia grabación como voz. Para actualizar, vuelve a correrlo. `srm doctor` revisa todo.
+
+El comando es `srm` (también `short-reels-motion`).
 
 ## Cómo se usa
 
@@ -100,7 +108,7 @@ completo, sin guías encima. `data-platforms="tiktok,reels"` en la raíz del vid
 - [ ] Ingesta de grabaciones del celular; portada y exportación por plataforma
 - [ ] ElevenLabs como opción de voz; Kokoro en un paso
 - [x] Skill «director de shorts» en español (`skills/short-reels-motion/SKILL.md` + `references/shorts.md`)
-- [ ] Instalador de una línea para Mac y Windows
+- [x] Instalador de una línea para Mac/Linux (`install.sh`) y Windows (`install.ps1`, sin probar todavía en Windows)
 
 ## Créditos y licencia
 

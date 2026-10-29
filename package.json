@@ -5,8 +5,7 @@
   "type": "module",
   "bin": {
     "srm": "cli/om.js",
-    "short-reels-motion": "cli/om.js",
-    "om": "cli/om.js"
+    "short-reels-motion": "cli/om.js"
   },
   "engines": {
     "node": ">=22"
