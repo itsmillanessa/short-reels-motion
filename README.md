@@ -64,7 +64,19 @@ Code (`~/.claude/skills`) y Codex (`~/.codex/skills`). Si falta algo del sistema
 `--yes` (Windows: `-Yes`) lo instala él (Homebrew en macOS, apt en Linux, winget en Windows). `--whisper` agrega
 whisper-cpp para usar tu propia grabación como voz. Para actualizar, vuelve a correrlo. `srm doctor` revisa todo.
 
-El comando es `srm` (también `short-reels-motion`).
+**En Windows** el one-liner no recibe opciones; pásalas con variables antes de correrlo, o con el bloque:
+
+```powershell
+$env:SRM_YES = 1; $env:SRM_KOKORO = 1; irm https://raw.githubusercontent.com/itsmillanessa/short-reels-motion/main/install.ps1 | iex
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/itsmillanessa/short-reels-motion/main/install.ps1))) -Yes -Kokoro -Whisper
+```
+
+`-Yes` instala con winget lo que falte, `-Kokoro` la voz gratis Kokoro y `-Whisper` whisper (también después:
+`srm voice --setup` y `srm voice --setup whisper`). Si algo falla, el instalador dice qué y tu ventana sigue abierta. En
+un Windows nuevo, PowerShell no deja correr scripts: `srm` funciona igual en cmd y Git Bash, y con `-Yes` el instalador
+cambia la política de tu usuario a `RemoteSigned` (o hazlo tú: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`).
+
+El comando es `srm` (también `short-reels-motion`). Habla en español si tu kit, `SRM_LANG` o tu sistema están en español.
 
 ## Cómo se usa
 
@@ -108,9 +120,9 @@ vez y lo guarde él.
 
 | Opción | Cómo | Costo |
 |---|---|---|
-| Tu propia grabación | `srm voice <dir> --audio voz.m4a` (whisper saca los tiempos de cada palabra: `brew install whisper-cpp`) | Gratis |
-| Voz local Kokoro | `srm voice <dir> --text guion.txt` (voz `ef_dora` para guiones en español; se instala una vez, ~325 MB) | Gratis |
-| Voz del sistema (Mac) | `--voice say:Paulina` | Gratis |
+| Tu propia grabación | `srm voice <dir> --audio voz.m4a` (whisper saca los tiempos de cada palabra; se instala una vez: `srm voice --setup whisper` en Windows, `brew install whisper-cpp` en Mac) | Gratis |
+| Voz local Kokoro | `srm voice <dir> --text guion.txt` (voz `ef_dora` para guiones en español; se instala una vez con `srm voice --setup`, ~400 MB) | Gratis |
+| Voz del sistema | Mac: `--voice say:Paulina`. Windows: `--voice win` (Sabina, es-MX, ya viene en Windows en español). Sin Kokoro instalado, `srm voice` usa esta sola | Gratis |
 | ElevenLabs | genera la toma con sus tiempos (`with-timestamps`) y pásala: `srm voice <dir> --audio toma.mp3 --words tiempos.json` (cada palabra exacta, sin whisper; `--speed 1.2` la acelera) | De pago |
 
 ## Zonas seguras
@@ -138,9 +150,11 @@ completo, sin guías encima. `data-platforms="tiktok,reels"` en la raíz del vid
 - [x] Tiempos de ElevenLabs (`srm voice --words`): palabras exactas sin whisper, con la toma acelerada o sin acelerar
 - [x] Bocas que siguen la voz: `srm voice` mide su volumen (`OM.env`, `TOON.mouth`) y la boca cierra en cada pausa
 - [x] `srm qa` distingue las pausas a propósito (`OM.hold`); `data-om-illustrative` para recreaciones sin producto
-- [ ] Generar la voz de ElevenLabs desde `srm` con tu key; Kokoro en un paso
+- [ ] Generar la voz de ElevenLabs desde `srm` con tu key
+- [x] Kokoro en un paso (`srm voice --setup`); whisper en Windows (`srm voice --setup whisper`); voces de Windows (`--voice win`)
 - [x] Skill «director de shorts» en español (`skills/short-reels-motion/SKILL.md` + `references/shorts.md`)
-- [x] Instalador de una línea para Mac/Linux (`install.sh`) y Windows (`install.ps1`, sin probar todavía en Windows)
+- [x] Instalador de una línea para Mac/Linux (`install.sh`) y Windows (`install.ps1`, probado en Windows 11 con PowerShell 5.1)
+- [x] Windows de primera: `srm doctor` sin abrir Chrome, sin carpetas temporales sueltas, saltos de línea LF, `bin\srm.cmd` para el skill, CI en Windows, macOS y Linux
 
 ## Créditos y licencia
 

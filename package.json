@@ -1,6 +1,6 @@
 {
   "name": "short-reels-motion",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Shorts, Reels and TikToks made by your coding agent: vertical-first motion graphics, narration synced word by word, each app's safe zones, and a studio where you point at the frame to change it. Built on huashu-motion (MIT).",
   "type": "module",
   "bin": {

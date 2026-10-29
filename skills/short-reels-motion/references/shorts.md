@@ -68,8 +68,8 @@ Pide las grabaciones **antes** de construir. Lo que llega del teléfono necesita
 
 | Opción | Cómo |
 |---|---|
-| Grabación del creador | `srm voice <dir> --audio voz.m4a --text guion.txt` (whisper alinea palabra por palabra; necesita `whisper-cli`) |
-| Voz generada gratis | `srm voice <dir> --text guion.txt` (un guion en español usa una voz en español: Kokoro `ef_dora`, o `say:Paulina` en Mac) |
+| Grabación del creador | `srm voice <dir> --audio voz.m4a --text guion.txt` (whisper alinea palabra por palabra; necesita `whisper-cli`: `srm voice --setup whisper` en Windows, `brew install whisper-cpp` en Mac) |
+| Voz generada gratis | `srm voice <dir> --text guion.txt` (un guion en español usa una voz en español: Kokoro `ef_dora`, que se instala una vez con `srm voice --setup`; sin Kokoro, la del sistema: `say:Paulina` en Mac, `win:Sabina` en Windows). La de Windows suena robótica: si el creador la va a publicar, ofrécele instalar Kokoro antes |
 | ElevenLabs u otra voz clonada | El creador genera la toma **con sus tiempos** (o tú con su API, `text-to-speech/{voz}/with-timestamps`, con la key en una variable de entorno, nunca impresa) y entra con `--audio toma.mp3 --words tiempos.json`: cada palabra con su inicio y fin exactos, sin whisper. El JSON tal como lo devuelve ElevenLabs sirve (con `audio_base64` adentro basta `--words`) |
 
 - Velocidad: `srm voice … --speed 1.2` acelera la toma (sin cambiar el tono) y todos sus tiempos; con `--words` usa sola

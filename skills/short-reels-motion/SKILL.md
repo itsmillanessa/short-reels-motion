@@ -6,7 +6,7 @@ metadata:
   homepage: "https://github.com/itsmillanessa"
   repository: "https://github.com/itsmillanessa/short-reels-motion"
   based-on: "huashu-motion by Huashu (https://github.com/alchaincyf/huashu-motion), MIT"
-  version: "0.6.0"
+  version: "0.7.0"
 ---
 
 # Short Reels Motion · director de shorts
@@ -25,10 +25,12 @@ La guía práctica completa está en [references/shorts.md](references/shorts.md
 ## La herramienta
 
 El comando es `srm` (también `short-reels-motion`). Las referencias del motor escriben `om`: es el mismo comando, usa `srm`.
-Si `srm` no está en el PATH, este skill trae `bin/srm` (corre el CLI que viene junto al skill).
+Si `srm` no está en el PATH, este skill trae `bin/srm` (macOS, Linux, Git Bash) y `bin\srm.cmd` (Windows: PowerShell y
+cmd): corren el CLI que viene junto al skill.
 
 ```sh
 srm doctor                                # la primera vez: Node, Chrome, FFmpeg, voces
+srm voice --setup                         # una vez, si doctor no ve Kokoro: la voz gratis (~400 MB); --setup whisper para su grabación
 srm kit                                   # la marca del creador: @usuario, colores, cierre, idioma, voz, su personaje
 srm kit set handle=@x accent=#E4007C …    # guardarla una vez (srm new la aplica a cada proyecto nuevo)
 srm learn shorts <tema>                   # antes de empezar: las preferencias de este creador y lo aprendido
