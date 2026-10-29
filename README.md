@@ -7,15 +7,19 @@
 Shorts, Reels y TikToks como código: video vertical, narración sincronizada palabra por palabra,
 las zonas seguras de cada app y un editor en el navegador donde comentas sobre el cuadro.
 
+<img src="docs/media/hero.gif" alt="Las cinco plantillas verticales de Short Reels Motion corriendo a la vez" width="100%" />
+
+<sub>Pantalla del celular · Tipografía con voz · Cara a cámara · Lista · Antes y después — todo hecho como código, con música compuesta por el motor</sub>
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Agent Skills](https://img.shields.io/badge/Agent%20Skills-Standard-green)](https://agentskills.io)
 
-[Qué es](#qué-es) · [Instalar](#instalar) · [Cómo se usa](#cómo-se-usa) · [Voz](#voz) · [Zonas seguras](#zonas-seguras) · [Créditos](#créditos-y-licencia)
+[Qué es](#qué-es) · [Instalar](#instalar) · [Cómo se usa](#cómo-se-usa) · [El studio](#el-studio) · [Tu kit](#tu-kit) · [Voz](#voz) · [Créditos](#créditos-y-licencia)
 
 </div>
 
-> **Estado:** en desarrollo, todavía privado. Faltan las plantillas verticales, la ingesta de grabaciones del celular, la
-> exportación por plataforma y los videos demo propios. Ver [Hoja de ruta](#hoja-de-ruta).
+> **Estado:** en desarrollo, todavía privado. Faltan la ingesta de grabaciones del celular, la exportación por plataforma,
+> ElevenLabs integrado y los videos demo propios. Ver [Hoja de ruta](#hoja-de-ruta).
 
 ---
 
@@ -74,6 +78,16 @@ srm render mi-reel                     # MP4 listo para subir
 ```
 
 Lo normal es no escribir estos comandos: se los pides a tu agente y él los corre.
+
+## El studio
+
+<img src="docs/media/studio.jpg" alt="El studio de Short Reels Motion: el video vertical al centro, los parámetros a la derecha y las escenas abajo" width="100%" />
+
+- **Espacio** reproduce, las flechas avanzan cuadro por cuadro.
+- A la derecha, todo lo editable por grupos (gancho, frases, cierre, colores…): cambias un texto o un color y el video se
+  actualiza al momento. Doble clic sobre un texto del video para editarlo ahí mismo.
+- **C** y un clic en el cuadro: le dejas una nota a tu agente justo en ese punto y él hace ese cambio.
+- Cada versión se guarda; **Deshacer** siempre funciona. **Exportar video** saca el MP4.
 
 ## Tu kit
 
