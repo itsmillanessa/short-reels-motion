@@ -1,6 +1,6 @@
-# Talking-head packaging (口播包装)
+# Talking-head packaging (paquete para video hablado)
 
-The job: someone hands you a recording of themselves talking to camera. They want it to look like a produced show — a name plate when they introduce themselves, the number popping up as they say it, the key phrase in bold 花字, a card at the turn — and they may want only the package layer, transparent, to drop onto the talk in 剪映 / Premiere / Final Cut.
+The job: someone hands you a recording of themselves talking to camera. They want it to look like a produced show — a name plate when they introduce themselves, the number popping up as they say it, the key phrase in a bold rótulo, a card at the turn — and they may want only the package layer, transparent, to drop onto the talk in CapCut (剪映) / Premiere / Final Cut.
 
 Start from the `talking-head` template. It already does the hard parts: words from the recording, anchoring to them, keeping off the speaker, 16:9 and 9:16 from one file, and a transparent export.
 
@@ -27,7 +27,7 @@ om voice talk --audio talk/assets/talk.mp4 --text script.txt
 
 `--audio` takes a video file directly (ffmpeg pulls the sound track). It writes the cues into `index.html`, the words with times to `assets/voice.words.json`, captions to `out/*.srt`, and sets the film length to the recording.
 
-- Give `--text` whenever you can: a transcript written the way it is *spoken* ("二十几款", not "20+ 款"). Whisper alone mishears names and jargon ("女娲skill" came back as "女arcegeal", "星标" as "新标"); with the script, whisper only places the words and the words are right. Without a script, run once without `--text`, read `voice.words.json`, fix the transcript, and run again.
+- Give `--text` whenever you can: a transcript written the way it is *spoken* ("二十几款" (veintitantos), not "20+ 款"). Whisper alone mishears names and jargon ("女娲skill" (Nüwa skill) came back as "女arcegeal", "星标" (estrella) as "新标" (marca nueva)); with the script, whisper only places the words and the words are right. Without a script, run once without `--text`, read `voice.words.json`, fix the transcript, and run again.
 - Check the `note` line: around 90% of the script matched is normal; under 50% means wrong script or wrong file.
 
 ## 3. Pick 3–6 moments
@@ -36,13 +36,13 @@ Read the transcript like an editor and choose what the viewer should *see* as we
 
 | Moment | Element | Example |
 | --- | --- | --- |
-| who is talking (first ~5 s) | name plate: `name`, `role`, `nameTag` | 花叔 · 经济学出身，不会写代码的独立开发者 |
-| a number that matters | number card in `stats` (counts up and lands on the spoken number) | 20+ 款产品 |
-| the claim people should remember | 花字 in `keywords` (4–8 characters) | 付费榜第一 |
-| a turn: 但是 / 其实 / 我学的是… | chapter card: `chapter`, `chapterNo` | 学的不是编程，是做产品 |
-| the show, the series, the brand | corner badge: `corner` | Claude Code 橙皮书 |
+| who is talking (first ~5 s) | name plate: `name`, `role`, `nameTag` | 花叔 · 经济学出身，不会写代码的独立开发者 (Huashu · economista de formación, desarrollador independiente que no sabe programar) |
+| a number that matters | number card in `stats` (counts up and lands on the spoken number) | 20+ 款产品 (20+ productos) |
+| the claim people should remember | rótulo in `keywords` (4–8 characters) | 付费榜第一 (n.º 1 en el ranking de pago) |
+| a turn: 但是 (pero) / 其实 (en realidad) / 我学的是… (lo que aprendí fue…) | chapter card: `chapter`, `chapterNo` | 学的不是编程，是做产品 (no aprendí a programar, sino a hacer productos) |
+| the show, the series, the brand | corner badge: `corner` | Claude Code 橙皮书 (el Libro Naranja de Claude Code) |
 
-Restraint is the craft: one package element every 4 s or so is plenty, and most sentences get nothing. Never package what is already on screen (the speaker holding up the book), and don't put the same fact in a card and a 花字.
+Restraint is the craft: one package element every 4 s or so is plenty, and most sentences get nothing. Never package what is already on screen (the speaker holding up the book), and don't put the same fact in a card and a rótulo.
 
 ## 4. Anchor to the words
 
@@ -53,7 +53,7 @@ om set nameCue=不会 'stats=[{"value":20,"suffix":"+","label":"款产品，全�
   'keywords=[{"text":"付费榜第一","cue":"付费榜"}]' chapterCue=我学的是 talk
 ```
 
-- The cue is text as it appears in `voice.words.json` — spoken form, Chinese numerals as said ("两万", "七万"). It may span the word splitter's cuts ("付|费|榜" still matches "付费榜") and may start mid-word. Add `"nth":2` for the second occurrence.
+- The cue is text as it appears in `voice.words.json` — spoken form, Chinese numerals as said ("两万" (veinte mil), "七万" (setenta mil)). It may span the word splitter's cuts ("付|费|榜" still matches "付费榜" (ranking de pago)) and may start mid-word. Add `"nth":2` for the second occurrence.
 - Lookup order: `OM.cue` (one word containing the term) → the same phrase across words → the `at` / `nameAt` / `chapterAt` seconds. A cue that is not found logs a console warning and uses the seconds; `window.__omAnchors` lists what each element resolved to and from where.
 - `lead` (default 0.25 s) starts the entrance early so it *settles* as the word is spoken. Number cards count until 0.35 s after the cue.
 - Elements in the same slot never overlap: when the next one arrives, the previous one leaves. Lengths come from `nameHold`, `chapterHold`, per-item `hold`, or the default `hold`.
@@ -69,8 +69,8 @@ node -e 'const w=require("./talk/assets/voice.words.json").words.map(x=>x.word).
 
 The layout reads five variables (fractions of the frame) and the frame size:
 
-- `subjectX`, `subjectW`: where the person is horizontally. In 16:9, cards go to the side with more room (`side` forces left/right) and the 花字 to the other side if it has at least 22% of the width free, both off the person.
-- `subjectTop`, `subjectBottom`: top of the head, bottom of the face. In 9:16, the 花字 goes above the head when there is room under the status bar, otherwise just below the face.
+- `subjectX`, `subjectW`: where the person is horizontally. In 16:9, cards go to the side with more room (`side` forces left/right) and the rótulo to the other side if it has at least 22% of the width free, both off the person.
+- `subjectTop`, `subjectBottom`: top of the head, bottom of the face. In 9:16, the rótulo goes above the head when there is room under the status bar, otherwise just below the face.
 - `cardBottom`: the bottom edge of the card stack (0 = automatic: 0.84 in 16:9, 0.74 in 9:16, leaving the caption zone free). Raise it if the cards would cover something the speaker is showing.
 - For 16:9 footage of a 3:4 or 9:16 recording, `videoFit=contain` keeps the whole picture and the cards sit in the side bars; `cover` with `focusX`/`focusY` crops instead.
 

@@ -1,78 +1,78 @@
-# 画面工艺与镜头导演
+# Oficio visual y dirección de cámara
 
-在制作新动画、用户要求提高完成度、或成片被评价为粗糙/无聊时读。这里指导创作判断；工程可运行、帧差通过和素材数量都不是审美合格证。原型用来验证技术时明确标为原型，不把它自动升格为创作示范。
+Léelo al hacer una animación nueva, cuando el creador pida más acabado o cuando digan que el video terminado se ve tosco o aburrido. Aquí se guía el criterio creativo: que el proyecto corra, que pase la comparación entre cuadros o que haya mucho material no certifica que se vea bien. Si un prototipo sirve para validar la técnica, márcalo como prototipo; no lo subas solo por eso a ejemplo creativo.
 
-## 先确定值得看见的东西
+## Primero, decide qué vale la pena ver
 
-把brief中的解释目标翻译成可见的证据。写下主角、变化、一个值得靠近看的细节，以及观众最后得到的认识。比如「站点缺车」既有全城流向，也有最后一辆车离开后的空车桩；数字归零与真实空间的空缺应互相证明。
+Traduce el objetivo de explicación del brief en evidencia visible. Escribe el protagonista, el cambio, un detalle que valga la pena ver de cerca y lo que el espectador entiende al final. Por ejemplo, «a la estación le faltan bicis» tiene el flujo de toda la ciudad y también el anclaje vacío cuando se va la última bici; el número que llega a cero y el hueco en el espacio real se tienen que probar uno al otro.
 
-有参考时看实际图像和动态，而非只收集风格名称：记录代表帧、主体占屏比例、材质与光影、镜头起落、可见的速度变化、读图停留和接镜。把观察与推测分开。视频理解模型可补充语义，不能代替原帧核对；宣传片的包装不自动代表产品能力。
+Si hay referencias, mira las imágenes y el movimiento reales, no solo nombres de estilos: anota cuadros representativos, cuánto de la pantalla ocupa el sujeto, materiales, luz y sombra, cómo empieza y termina cada toma, los cambios de velocidad visibles, las pausas para leer la imagen y cómo se empalma una toma con la siguiente. Separa lo que observas de lo que supones. Un modelo que entiende video puede sumar el significado, pero no reemplaza revisar los cuadros originales; el empaque de un video promocional no prueba lo que el producto puede hacer.
 
-产品演示与跨设备界面流程，按需读[连续取景best practice](product-demo-continuity.md)：ChatGPT参考的时间码、阅读区主次、短促取景与稳定读取、界面层和取景层分离，以及逐段验收。采用它的观看结构时，按本片信息量重新确定时长。
+Para demos de producto y flujos de interfaz entre dispositivos, lee cuando haga falta [la buena práctica del encuadre continuo](product-demo-continuity.md): los códigos de tiempo de la referencia de ChatGPT, la zona de lectura principal y la secundaria, reencuadres cortos con lectura estable, la capa de interfaz separada de la capa de encuadre, y la revisión tramo por tramo. Si adoptas su recorrido visual, vuelve a fijar las duraciones según la cantidad de información de tu video.
 
-沿用已确认方向。没有方向时遵循主入口的选择流程。不要以「还没指定所有参数」为由把创作判断退给用户。
+Sigue la dirección ya aprobada. Si no hay dirección, sigue el proceso para elegirla de SKILL.md. No le regreses la decisión creativa al creador con el pretexto de que «todavía no se especificaron todos los parámetros».
 
-## 让画面经得起镜头靠近
+## Que la imagen aguante el acercamiento de la cámara
 
-从实际景别反推制作精度，按可见贡献分配工作：
+Deduce el nivel de detalle a partir del plano real y reparte el trabajo según lo que de verdad se va a ver:
 
-- 远景先做轮廓、空间层次、明暗群组与视觉焦点。城市要有街区尺度、河岸或主路、建筑高低与疏密，而非均匀铺满同一种盒子。
-- 中景补解释环境的结构：建筑基座/窗洞/屋檐、道路与路缘、桥的支撑、站点与街道的关系。重复元素采用有逻辑的家族与变体，避免随机贴满细节。
-- 近景必须兑现材质和构造。自行车需要能辨识的车架、轮胎、把手和鞍座；车桩需要结构与接触阴影。产品换题后，检查对象相应的结构、边缘与接触点，不能照搬城市清单。
+- En plano general, primero la silueta, las capas de profundidad, los grupos de luz y sombra y el punto focal. Una ciudad necesita escala de manzanas, una orilla de río o una avenida principal, edificios altos y bajos, zonas densas y abiertas; no la misma caja repetida parejo por todas partes.
+- En plano medio, agrega la estructura que explica el entorno: base, vanos de ventanas y aleros de los edificios; calles y banquetas; los apoyos de un puente; cómo se relaciona la estación con la calle. Los elementos repetidos van en familias con lógica y con variantes; no llenes todo de detalles al azar.
+- En primer plano, los materiales y la construcción tienen que cumplir. Una bici necesita marco, llantas, manubrio y asiento que se reconozcan; el anclaje necesita estructura y sombra de contacto. Si cambia el tema, revisa la estructura, los bordes y los puntos de contacto de ese objeto; no copies la lista de la ciudad.
 
-检查几何轮廓、边缘高光、粗糙度差异、透光/反射、接触阴影与主辅光是否共同描述同一种材料。漂亮的调色不能补救纸片厚度、悬浮接地或错误结构。微细节只有在最终输出与目标屏幕上看得见才值得增加。
+Revisa que la silueta geométrica, los brillos en los bordes, las diferencias de rugosidad, la translucidez o los reflejos, las sombras de contacto y la luz principal y de relleno describan entre todos el mismo material. Una corrección de color bonita no salva un grosor de hoja de papel, objetos que flotan en lugar de apoyarse ni una estructura equivocada. Un microdetalle solo vale la pena si se ve en el render final y en la pantalla de destino.
 
-2D也有同样的工艺责任：字形、字距与换行；曲线与连接点；图形比例、留白与视觉权重；真实图像的裁切、分辨率和边缘处理。纯色、简约或白板可以非常精致，细节不是给所有东西加纹理。
+El 2D tiene la misma exigencia de oficio: forma de las letras, interletrado y saltos de línea; curvas y uniones; proporciones, espacio en blanco y peso visual; recorte, resolución y bordes de las imágenes reales. Un color plano, algo minimalista o un pizarrón pueden ser muy finos: detalle no es ponerle textura a todo.
 
-先选择能暴露本片主要工艺风险的代表状态，按最终分辨率实际渲出。包含尺度变化的空间片可用近景检查构造、全景检查构图；固定构图的动态图表或循环则检查其最密、最疏或关键变化状态，不为验收强加景别。与已确认方向或参考并排看，记录具体差距并修复，再铺完整时间轴。不得用低精度灰模冒充最终风格，除非用户本次选的就是灰模。
+Primero elige los estados representativos que exponen el mayor riesgo de oficio de este video y renderízalos de verdad a la resolución final. En una pieza espacial con cambios de escala, revisa la construcción en primer plano y la composición en plano completo; en una gráfica animada o un loop de composición fija, revisa su estado más denso, el más vacío o el cambio clave, sin forzar planos solo para revisar. Ponlos junto a la dirección aprobada o la referencia, anota las diferencias concretas y corrígelas antes de llenar todo el timeline. No hagas pasar un modelo gris de poca calidad por el estilo final, salvo que eso sea justo lo que eligió el creador esta vez.
 
-## 把节奏写成观看过程
+## Escribe el ritmo como un recorrido visual
 
-为镜头写「为何看这里」，再选景别与运动。每镜的工作记录保持短小：
+Para cada toma escribe «por qué mirar aquí» y luego elige el plano y el movimiento. La nota de trabajo de cada toma va corta:
 
-`镜头ID｜观众得到什么｜主角/焦点｜起止构图与景别｜对象动作｜相机路径/速度意图｜落定与停留｜如何接下镜`
+`id de la toma | qué recibe el espectador | protagonista/foco | composición y plano al inicio y al final | acción del objeto | ruta de la cámara/intención de velocidad | asentamiento y pausa | cómo empalma con la siguiente`
 
-镜头的速度意图应能读成一句话，如「短促下降到街道，沿自行车快跟，接近空桩时减速落定」，而不是全片重复一个smoothstep。相邻段落的对比可以来自快慢、远近、方向、画面密度、主次运动或动静；依据内容选择，不规定必须凑齐多少手法。
+La intención de velocidad de una toma se tiene que poder leer en una frase, como «baja rápido a la calle, sigue de cerca a la bici y frena hasta asentarse al llegar al anclaje vacío», y no un mismo smoothstep repetido en todo el video. El contraste entre tramos vecinos puede venir de rápido o lento, cerca o lejos, la dirección, la densidad de la imagen, el movimiento principal contra el secundario o el movimiento contra la quietud; elige según el contenido, sin una cuota de recursos que haya que juntar.
 
-- 推近：从关系中提取证据；主角的位置和落定构图要明确。
-- 拉远：揭示局部属于哪个系统；拉开后要真的出现新信息。
-- 横移/跟拍：让观众跟随一个事件；前景视差帮助表现速度和空间。
-- 升降/环绕：揭示平面图无法看到的结构、遮挡或空间关系。
-- 硬切/动作匹配：改变观看问题、故事时刻或叙述尺度。无需为每次切换发明花哨转场。
-- 静止：让事件完成、信息被读懂或情绪落下。停住也要有值得看的构图和已发生的变化。
+- Acercamiento: saca la evidencia de entre las relaciones; la posición del protagonista y la composición donde se asienta tienen que estar claras.
+- Alejamiento: revela a qué sistema pertenece el detalle; al abrir tiene que aparecer de verdad información nueva.
+- Desplazamiento lateral / seguimiento: el espectador acompaña un evento; el paralaje de lo que está más cerca de la cámara ayuda a sentir la velocidad y el espacio.
+- Subir, bajar o girar alrededor: revela estructura, oclusiones o relaciones espaciales que una vista plana no deja ver.
+- Corte seco / corte en movimiento: cambia la pregunta que guía la mirada, el momento de la historia o la escala del relato. No hace falta inventar una transición vistosa para cada cambio.
+- Quietud: deja que el evento termine, que la información se entienda o que la emoción aterrice. Al detenerse también tiene que haber una composición que valga la pena ver y un cambio que ya ocurrió.
 
-快镜可以短促、果断；慢镜必须有信息增长或观看价值。需要丰富节奏时，全程平滑缓移应当被质疑；但均匀运动在恒速过程或明确的平静气质中仍成立。不要把历史作品的「宁慢勿快」、镜头间隔、缩放上限或切镜配额升级为普遍审美规则。用户本次明确的节奏要求优先。
+Una toma rápida puede ser corta y decidida; una lenta tiene que sumar información o algo que valga la pena mirar. Cuando el video pide un ritmo variado, cuestiona un deslizamiento suave de principio a fin; aun así, el movimiento uniforme sigue siendo válido en un proceso de velocidad constante o en un tono claramente tranquilo. No conviertas en regla estética general el «mejor lento que rápido» de trabajos anteriores, ni intervalos entre tomas, límites de zoom o cuotas de cortes. Manda lo que el creador pidió explícitamente sobre el ritmo esta vez.
 
-网页操作、文章阅读等连续任务，优先保留观众正在跟踪的光标、按钮、文档或文字位置。接缝先明确：上一状态的焦点在下一状态落在哪里、如何过去；状态改变时避免同时重置构图、倍率与观看方向。可以压缩等待时间，但不要把快慢变化等同于突然换画面。硬切只有在本片需要改变观看问题且仍易定位时使用；用户已指出断裂时，先修空间与动作衔接，不再靠增加切换强化节奏。
+En tareas continuas, como usar una página web o leer un artículo, conserva primero lo que el espectador viene siguiendo: el cursor, el botón, el documento o el lugar en el texto. Define primero el empalme: dónde cae en el estado siguiente el foco del estado anterior y cómo llega ahí; cuando cambia el estado, no reinicies al mismo tiempo la composición, la escala y la dirección de la mirada. Puedes comprimir las esperas, pero cambiar la velocidad no es lo mismo que cambiar de imagen de golpe. Usa el corte seco solo cuando el video necesita cambiar la pregunta que guía la mirada y aun así es fácil ubicarse; si el creador ya señaló un salto, arregla primero la continuidad del espacio y de la acción, en lugar de meter más cortes para reforzar el ritmo.
 
-落点先设计，速度曲线再服务于落点。快速加速、跟随、急停和长缓冲是不同的选择；不把一条缓动曲线施加到所有对象与相机。关键文字在需要阅读时应稳定清晰，快速运动无需保证每帧都能读字，但应避免关键事实只在运动模糊中闪过。分组/排序本身是解释时，组名、编号与内容保持可追踪；固定说明层独立于场景相机，移动中也不能意外出画。
+Diseña primero dónde aterriza el movimiento; la curva de velocidad está al servicio de ese punto. Arrancar rápido, seguir, frenar en seco y amortiguar largo son decisiones distintas; no apliques una sola curva de easing a todos los objetos y a la cámara. El texto clave tiene que estar quieto y nítido cuando hay que leerlo; en un movimiento rápido no hace falta que se pueda leer en cada cuadro, pero un dato clave no puede pasar solo como un destello dentro del desenfoque de movimiento. Cuando agrupar u ordenar es la explicación misma, los nombres de los grupos, los números y el contenido se tienen que poder seguir; la capa fija de textos explicativos va aparte de la cámara de la escena y tampoco puede salirse del cuadro por accidente mientras algo se mueve.
 
-## 先做最难的一段，再扩展
+## Haz primero el tramo más difícil y luego extiende
 
-把最重要的观看变化做成可播放的短段，使用实际画面细节。需要运镜的片子验证视点转移和落定；固定机位作品验证对象状态、信息密度或循环接缝，不额外凑视点变化与停顿。使用最终渲染路径，不用PPT分镜或文字说明代替运动。
+Convierte el cambio visual más importante en un tramo corto que se pueda reproducir, con el detalle real de la imagen. Si el video lleva movimientos de cámara, valida el cambio de punto de vista y dónde se asienta; si la cámara es fija, valida el estado de los objetos, la densidad de información o el empalme del loop, sin inventar cambios de punto de vista ni pausas de más. Usa la ruta de render final; no sustituyas el movimiento con un storyboard en PowerPoint ni con una descripción escrita.
 
-连续播放后问：眼睛被带到哪里？哪一刻新信息出现？哪里只有镜头在滑、内容没有前进？把诊断落到时间码。若参考有明显速度/景别反差而样片仍是同一种缓移，先重排镜头，不靠整体提速补救。
+Después de verlo de corrido pregúntate: ¿a dónde se lleva la mirada? ¿En qué momento aparece información nueva? ¿Dónde solo se desliza la cámara sin que el contenido avance? Aterriza el diagnóstico en códigos de tiempo. Si la referencia tiene contrastes claros de velocidad o de plano y tu prueba sigue siendo el mismo deslizamiento lento, reorganiza primero las tomas; no lo arregles acelerando todo.
 
-制作期间分别处理三层，避免用错补丁：
+Mientras produces, separa tres capas para no aplicar el parche equivocado:
 
-1. 看着廉价：检查构造、材质、灯光、字形和合成；不是先加运镜。
-2. 看着无聊：检查解释推进、景别、速度与落定的变化；不是先增加装饰粒子。
-3. 看不明白：检查焦点、对象身份、数据和读取时间；不是先堆旁白。
+1. Se ve barato: revisa construcción, materiales, iluminación, letras e integración de capas; no empieces por agregar movimientos de cámara.
+2. Se ve aburrido: revisa que avance la explicación y que cambien el plano, la velocidad y los asentamientos; no empieces por agregar partículas decorativas.
+3. No se entiende: revisa el foco, la identidad de los objetos, los datos y el tiempo de lectura; no empieces por amontonar narración.
 
-在产品宣传中，真实素材约束事实与产品识别，并不意味着影片只能平移整张截图。需要表现变化时，可以从真实页面提取一句话、一个数字或一张卡片作为独立图层，让它聚焦、分层、接受修改并回到对应位置。源文字和数据保持准确，影片包装与真实控件分清；不能把演绎效果冒充产品原生功能。保留页面中的参照与归位关系，空间层次和速度变化才有认识价值。
+En un video promocional, el material real fija los hechos y la identidad del producto, pero eso no quiere decir que el video solo pueda pasear una captura completa. Cuando hay que mostrar un cambio, puedes sacar de la página real una frase, un número o una tarjeta como capa independiente: que reciba el foco, se separe en capas, acepte la edición y regrese a su lugar. El texto y los datos de origen se quedan exactos, y el empaque del video se distingue de los controles reales; un efecto dramatizado nunca se hace pasar por una función nativa del producto. Conserva las referencias de la página y el regreso a su lugar: solo así las capas en el espacio y los cambios de velocidad ayudan a entender.
 
-## 实现必须保留创作自由
+## La implementación tiene que dejar libertad creativa
 
-相机与对象运动分层；镜头表、场景资产和业务事件分离。镜头用绝对时间采样，切镜明确记录，所有随机固定种子。顺播、反向seek和单帧重渲应得到同一状态。
+Separa en capas el movimiento de la cámara y el de los objetos; separa la lista de tomas, los recursos de la escena y los eventos del producto. Las tomas se muestrean en tiempo absoluto, los cortes se registran de forma explícita y todo azar lleva semilla fija. Reproducir de corrido, hacer seek hacia atrás o volver a renderizar un solo cuadro tiene que dar el mismo estado.
 
-根据画面选工具：SVG/Canvas适合精确图形；Three.js或离线3D适合真实透视、遮挡、材质与光照；授权图片、实拍和生成素材适合其各自内容。不要为了套入首批text/shape/image/chart结构化格式而主动降低视觉。高级画法可走自由源码路径，同时明确其编辑保证边界，随后再建立相应适配器。
+Elige la herramienta según la imagen: SVG/Canvas para gráficos precisos; Three.js o 3D offline para perspectiva real, oclusión, materiales e iluminación; imágenes con licencia, grabación real y material generado, cada uno para lo suyo. No bajes la calidad visual a propósito para que quepa en los primeros formatos estructurados text/shape/image/chart. Las técnicas avanzadas pueden ir por código libre, dejando claro hasta dónde se garantiza que se puedan editar; después se construye el adaptador correspondiente.
 
-让用户用「这辆车」「这段追踪」「近景多停一拍」操作；对象ID、相机参数与时间映射由Agent和工具维护。参数化的是创作决策，不只颜色和标题。改变材质、构造、相机路径或节奏后都重看真实成片。
+Que el creador pueda pedir «esta bici», «este seguimiento», «quédate un tiempo más en el primer plano»; los ids de los objetos, los parámetros de cámara y el mapeo de tiempos los mantienen el agente y las herramientas. Lo que se vuelve parámetro son decisiones creativas, no solo colores y títulos. Después de cambiar materiales, construcción, la ruta de la cámara o el ritmo, vuelve a ver el video terminado real.
 
-## 审美验收与迁移
+## Revisión estética y transferencia
 
-独立审片者拿用户要求、已定方向、参考和真实成片；先不给制作说明或测试分数。要求指出具体缺陷与时间窗：结构/材质是否粗糙，焦点是否清楚，节奏是否一味平稳或一味躁动，哪次运镜没有增加认识。静帧检查工艺，连续观看检查节奏，二者不能互相替代。
+Un revisor independiente recibe lo que pidió el creador, la dirección aprobada, las referencias y el video terminado real; al principio no le des notas de producción ni calificaciones de pruebas. Pídele defectos concretos con su ventana de tiempo: si la estructura o los materiales se ven toscos, si el foco está claro, si el ritmo es plano todo el tiempo o nervioso todo el tiempo, qué movimiento de cámara no ayudó a entender nada. Los cuadros fijos revisan el oficio y verlo de corrido revisa el ritmo; uno no sustituye al otro.
 
-提出「顶级」目标意味着继续迭代到具体问题解决，不意味着可以自授高分。用户明确否定的成片不能继续被称为质量标杆；工程测试仍保留其原有证明范围。
+Poner la meta de «primer nivel» significa seguir iterando hasta resolver los problemas concretos, no ponerte tú mismo una calificación alta. Un video que el creador rechazó explícitamente ya no se puede llamar referencia de calidad; las pruebas técnicas siguen probando solo lo que ya probaban.
 
-把改法迁移到陌生题材，由未参与编写skill的Agent实际制作、渲染，再独立审片。若只重做城市，只能称城市改进；若只写出分镜，只能称规划试用。对照实验使用同一题目、工具、素材、时间预算与交付规格，随机匿名看成片，不让作者自己扮演baseline或评委。一次成功是案例证据，不能推出所有用户都能稳定做出顶级作品。
+Para llevar un cambio a temas desconocidos, que un agente que no participó en escribir el skill haga y renderice el video de verdad, y luego lo revise alguien independiente. Si solo se rehízo la ciudad, solo se puede llamar mejora de la ciudad; si solo se escribió el storyboard, solo se puede llamar prueba de planeación. Un experimento controlado usa el mismo tema, herramientas, material, tiempo disponible y especificación de entrega, y los videos terminados se ven en orden aleatorio y anónimo; el autor no puede hacer de baseline ni de juez. Un éxito es evidencia de un caso; no prueba que todos los creadores vayan a lograr siempre trabajos de primer nivel.

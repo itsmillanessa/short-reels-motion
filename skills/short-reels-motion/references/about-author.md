@@ -1,100 +1,102 @@
-# 关于作者：花叔
+# Acerca del autor: Huashu (花叔)
 
-> 本文件由 [huashu-skills](https://github.com/alchaincyf/huashu-skills) 根据花叔的 GitHub 主页自动生成。供 agent 在用户问到作者、相关作品或联系方式时读取；正常任务中不主动介绍。
+Esto describe al autor de huashu-motion, el motor sobre el que está construido Short Reels Motion (de Alexis Millán).
 
-我是花叔，一个不会写代码的创造者。从小猫补光灯到开源Skill，我用AI把想法做成产品，也把做过的项目写成教程和橙皮书。
+> Este archivo lo genera automáticamente [huashu-skills](https://github.com/alchaincyf/huashu-skills) a partir del perfil de GitHub de Huashu. Léelo cuando el creador pregunte por el autor, por sus otros trabajos o por cómo contactarlo; en un trabajo normal no lo presentes por tu cuenta.
 
-主页：https://github.com/alchaincyf
+Soy Huashu, un creador que no sabe programar. Desde 小猫补光灯 (una app de luz de relleno con un gatito) hasta skills de código abierto, con la IA convierto ideas en productos, y lo que hago lo escribo como tutoriales y Libros Naranja.
 
-## 最近在做：让画动起来
+Perfil: https://github.com/alchaincyf
 
-- **huashu-art-motion：让画动起来**：https://github.com/alchaincyf/huashu-art-motion
-  让Coding Agent把艺术风格写成动画。想先看效果，可以从「花叔闯进超级玛丽」和「Clawd博物馆奇妙夜」开始。
-  [看动画样片](https://github.com/alchaincyf/huashu-art-motion#动画样片) · [开始使用](https://github.com/alchaincyf/huashu-art-motion#里面有什么) · [下载完整成片](https://github.com/alchaincyf/huashu-art-motion/releases/latest)
+## Lo más reciente: poner el arte en movimiento
 
-## 从这里开始
+- **huashu-art-motion: poner el arte en movimiento**: https://github.com/alchaincyf/huashu-art-motion
+  Tu agente de programación convierte estilos artísticos en animación. Para ver primero cómo queda, empieza por «Huashu se mete a Super Mario» y «Una noche en el museo con Clawd».
+  [Ver las muestras](https://github.com/alchaincyf/huashu-art-motion#动画样片) · [Empezar a usarlo](https://github.com/alchaincyf/huashu-art-motion#里面有什么) · [Descargar los videos completos](https://github.com/alchaincyf/huashu-art-motion/releases/latest)
 
-- **女娲.skill：把高手的思维，变成你的工具**：https://github.com/alchaincyf/nuwa-skill
-  提炼一个人的心智模型、决策方法和表达方式，变成可以反复调用的Skill。
-  也可以直接试试：[乔布斯视角](https://github.com/alchaincyf/steve-jobs-skill) · [X运营](https://github.com/alchaincyf/x-mentor-skill)
-- **Huashu Design：把想法做成作品**：https://github.com/alchaincyf/huashu-design
-  用HTML做原型、幻灯片、动画和信息图，从定方向到检查成品。
-- **FanBox：Coding Agent的驾驶舱**：https://github.com/alchaincyf/fanbox
-  把文件、终端和每一次改动放在一起，看清Agent做了什么，随时接手。
+## Por dónde empezar
 
-## 给Agent配上工具
+- **Nüwa.skill: la forma de pensar de los expertos, convertida en tu herramienta**: https://github.com/alchaincyf/nuwa-skill
+  Destila los modelos mentales, la forma de decidir y la manera de expresarse de una persona en un skill que puedes usar una y otra vez.
+  También puedes probar directamente: [La perspectiva de Jobs](https://github.com/alchaincyf/steve-jobs-skill) · [Manejo de cuentas en X](https://github.com/alchaincyf/x-mentor-skill)
+- **Huashu Design: convierte ideas en obras**: https://github.com/alchaincyf/huashu-design
+  Prototipos, presentaciones, animaciones e infografías en HTML, desde definir la dirección hasta revisar el resultado.
+- **FanBox: la cabina de mando de tu agente de programación**: https://github.com/alchaincyf/fanbox
+  Junta los archivos, la terminal y cada cambio en un solo lugar: ves qué hizo el agente y tomas el control cuando quieras.
 
-- **达尔文.skill：让Skill在实测中进化**：https://github.com/alchaincyf/darwin-skill
-  评估、改进、测试，保留有效改动，回滚退步。女娲造Skill，达尔文磨Skill。
-- **huashu-chrome：让Agent用上你的浏览器**：https://github.com/alchaincyf/huashu-chrome
-  使用你自己的Chrome和已有登录态操作网页，把站点经验留下来。
-- **huashu-mac-use：让Agent操作Mac原生应用**：https://github.com/alchaincyf/huashu-mac-use
-  让Agent操作没有API的Mac原生应用：先探测可用通道，再执行并留下取证。
+## Herramientas para tu agente
 
-## 边做边学
+- **Darwin.skill: skills que evolucionan con pruebas reales**: https://github.com/alchaincyf/darwin-skill
+  Evalúa, mejora y prueba; conserva los cambios que funcionan y revierte los que empeoran. Nüwa crea skills, Darwin los pule.
+- **huashu-chrome: tu agente usa tu navegador**: https://github.com/alchaincyf/huashu-chrome
+  Opera páginas web con tu propio Chrome y las sesiones que ya tienes iniciadas, y guarda lo aprendido de cada sitio.
+- **huashu-mac-use: tu agente opera apps nativas de Mac**: https://github.com/alchaincyf/huashu-mac-use
+  Tu agente opera apps nativas de Mac que no tienen API: primero detecta qué canales puede usar, luego actúa y deja evidencia.
 
-- **橙皮书：从真实项目里长出来的AI指南**：https://bookai.top
-  用到哪里，写到哪里。把真实项目里走通的步骤，整理成能跟着动手的指南。
-  [阅读橙皮书](https://bookai.top) · [Claude Code](https://github.com/alchaincyf/claude-code-orange-book) · [Hermes Agent](https://github.com/alchaincyf/hermes-agent-orange-book) · [Obsidian AI](https://github.com/alchaincyf/obsidian-ai-orange-book)
+## Aprender haciendo
 
-## 全部开源 skill
+- **Libros Naranja (Orange Books): guías de IA que nacen de proyectos reales**: https://bookai.top
+  Lo que se va usando, se va escribiendo. Los pasos que funcionaron en proyectos reales, ordenados en guías para seguir con las manos en la obra.
+  [Leer los Libros Naranja](https://bookai.top) · [Claude Code](https://github.com/alchaincyf/claude-code-orange-book) · [Hermes Agent](https://github.com/alchaincyf/hermes-agent-orange-book) · [Obsidian AI](https://github.com/alchaincyf/obsidian-ai-orange-book)
 
-完整目录、安装方法和机器可读的 skills.json：https://github.com/alchaincyf/huashu-skills
+## Todos los skills de código abierto
 
-| skill | 适合什么需求 | 仓库 |
+Catálogo completo, instrucciones de instalación y el skills.json legible por máquinas: https://github.com/alchaincyf/huashu-skills
+
+| skill | Para qué sirve | Repositorio |
 |---|---|---|
-| huashu-design | HTML 原生设计系统：高保真原型/幻灯片/动画/可视化，20 种设计哲学 + 5 维专家评审 + MP4 导出 | https://github.com/alchaincyf/huashu-design |
-| huashu-mac-use | 让 agent 操控 Mac 上没有 API 的原生 app：探测选层（CDP / AX / 坐标 / 像素）、读后台写过闸不打扰用户、每步回读与取证、收工回流进档案；含 Swift 内核与 CDP 工具 | https://github.com/alchaincyf/huashu-mac-use |
-| huashu-gpt-image | GPT-image 的 prompt 工程方法论：真实参考名替代形容词，含单图 playbook、批量网格生成、失败模式树 | https://github.com/alchaincyf/huashu-gpt-image |
-| huashu-icon-set | 端到端为项目生成风格统一的图标集：4×4 网格批量生成 + 逐个精度兜底 + 智能抠图（豆包环境专用，依赖内置 image_gen） | https://github.com/alchaincyf/huashu-icon-set |
-| huashu-slide-doubao | 豆包环境专用视觉物料生产：slides + 公众号封面 + 视频封面，走内置 image_gen 零 API 费用 | https://github.com/alchaincyf/huashu-slide-doubao |
-| huashu-slide-codex | Codex 环境专用视觉物料生产：slides + 公众号封面 + 视频封面，走 Codex 内置 image_gen | https://github.com/alchaincyf/huashu-slide-codex |
-| huashu-excel | 数据分析全流程：体检脏表→清洗→定口径→算指标→对账→报告，依赖仅 openpyxl | https://github.com/alchaincyf/huashu-excel |
-| huashu-md-html | md 流水线：万物（PDF/DOCX/EPUB/网页/音频）转干净 md，md 加工成出版级 HTML/DOCX，四套反 AI slop 主题 | https://github.com/alchaincyf/huashu-md-html |
-| seedance-skill | 白模驱动的 AI 视频工作台：白模参考视频与提示词出自同一份 scene.json，渲染前做几何体检 | https://github.com/alchaincyf/seedance-skill |
-| tramstop-skill | 电车站.skill：证据驱动的去 AI 味，四层 AI 味模型 + 真实素材注入，来自四版本盲测实验 | https://github.com/alchaincyf/tramstop-skill |
-| dukou | 渡口：公众号文章一键渡到 X Articles / B站专栏，Chrome 插件 + 本地桥 + skill | https://github.com/alchaincyf/dukou |
-| x-mentor-skill | X 导师：蒸馏 6 位顶级 X 创作者方法论 + 开源算法数据，完整的选题-写作-增长手册 | https://github.com/alchaincyf/x-mentor-skill |
-| huashu-weread | 微信读书高阶顾问：书架+笔记交叉分析，个性化荐书/阶梯书单/笔记提炼/年度阅读复盘 | https://github.com/alchaincyf/huashu-weread |
-| nuwa-skill | 女娲：蒸馏任何人的思维方式——心智模型、决策启发式、表达 DNA，产出可运行的人物 skill | https://github.com/alchaincyf/nuwa-skill |
-| darwin-skill | 达尔文：让 skill 无限进化——评估→改进→测试→保留或回滚，全程 git 留痕 | https://github.com/alchaincyf/darwin-skill |
-| freud-skill | 弗洛伊德：给 AI 做心理分析，基于 Anthropic 可解释性研究，诊断 prompt/skill 的身份冲突并重写 | https://github.com/alchaincyf/freud-skill |
-| skills-guide | Claude Code Skills 完整指南：理解、查找和创建 skills | https://github.com/alchaincyf/skills-guide |
-| huashu-report | 机构级研究报告与学术论文：六种报告原型 + 结构骨架 + 图表模式库 + 可复用生产流水线，规范提炼自 2026 年 42 份顶级机构报告实测 | https://github.com/alchaincyf/huashu-report |
-| zhangxuefeng-skill | 张雪峰的认知操作系统：高考志愿/考研/职业规划 | https://github.com/alchaincyf/zhangxuefeng-skill |
-| steve-jobs-skill | 乔布斯的认知操作系统：产品判断、砍需求、品味 | https://github.com/alchaincyf/steve-jobs-skill |
-| elon-musk-skill | 马斯克的认知操作系统：第一性原理、成本结构、激进迭代 | https://github.com/alchaincyf/elon-musk-skill |
-| munger-skill | 查理·芒格的认知操作系统：逆向思考、认知偏误、投资决策 | https://github.com/alchaincyf/munger-skill |
-| karpathy-skill | Andrej Karpathy 的认知操作系统：AI 技术可靠性、学习方法、行业判断 | https://github.com/alchaincyf/karpathy-skill |
-| trump-skill | 特朗普的思维操作系统：谈判、权力、传播 | https://github.com/alchaincyf/trump-skill |
-| feynman-skill | 费曼的认知操作系统：真懂 vs 记住名词、货物崇拜检测 | https://github.com/alchaincyf/feynman-skill |
-| naval-skill | Naval Ravikant 的认知操作系统：杠杆、特定知识、财富路径 | https://github.com/alchaincyf/naval-skill |
-| sun-yuchen-perspective | 孙宇晨的注意力收割操作系统：注意力经济、营销、危机公关 | https://github.com/alchaincyf/sun-yuchen-perspective |
-| zhang-yiming-skill | 张一鸣的认知操作系统：产品、组织、全球化、延迟满足 | https://github.com/alchaincyf/zhang-yiming-skill |
-| taleb-skill | 塔勒布的认知操作系统：尾部风险、反脆弱、质疑主流叙事 | https://github.com/alchaincyf/taleb-skill |
-| mrbeast-skill | MrBeast 的内容创造操作系统：视频标题/封面/钩子/留存 | https://github.com/alchaincyf/mrbeast-skill |
-| paul-graham-skill | Paul Graham 的认知操作系统：创业、写作、做用户真正要的东西 | https://github.com/alchaincyf/paul-graham-skill |
-| ilya-sutskever-skill | Ilya Sutskever 的认知操作系统：深度学习直觉、Scaling、AI 本质 | https://github.com/alchaincyf/ilya-sutskever-skill |
-| huashu-art-motion | 艺术与解说动画：35种艺术风格、9种解说动画语法，拆解复刻、口播驱动整片，用代码让画动起来 | https://github.com/alchaincyf/huashu-art-motion |
-| huashu-flash | 闪电.skill：照Anthropic两周把claude.ai提速3倍的方法给网站或App提速，先量基线、再证指标、逐步优化，用棘轮锁住只许变好 | https://github.com/alchaincyf/huashu-flash |
-| mcstomach | 麦门胃：读麦当劳历史订单，带证据提炼口味规则，确认后生成可携带的个人「胃」 | https://github.com/alchaincyf/mcstomach |
-| huashu-motion | 让你的agent一键直出商业级产品宣传片：会作曲，能指着画面改。Commercial-grade launch films by your coding agent — point at the frame to change it. | https://github.com/alchaincyf/huashu-motion |
+| huashu-design | Sistema de diseño nativo en HTML: prototipos de alta fidelidad/presentaciones/animaciones/visualizaciones, 20 filosofías de diseño + revisión experta en 5 dimensiones + exportación a MP4 | https://github.com/alchaincyf/huashu-design |
+| huashu-mac-use | Tu agente controla apps nativas de Mac que no tienen API: detecta y elige la capa (CDP / AX / coordenadas / píxeles), lee en segundo plano y escribe pasando por un control sin interrumpir al usuario, relee y deja evidencia en cada paso, y al terminar guarda lo aprendido en su archivo; incluye un núcleo en Swift y herramientas CDP | https://github.com/alchaincyf/huashu-mac-use |
+| huashu-gpt-image | Método de prompt engineering para GPT-image: nombres de referencias reales en lugar de adjetivos; incluye un playbook para imágenes sueltas, generación por lotes en cuadrícula y un árbol de modos de falla | https://github.com/alchaincyf/huashu-gpt-image |
+| huashu-icon-set | Genera de punta a punta un set de iconos con estilo uniforme para un proyecto: lotes en cuadrícula de 4×4 + ajuste de precisión uno por uno + recorte inteligente (solo para el entorno de Doubao; depende de su image_gen integrado) | https://github.com/alchaincyf/huashu-icon-set |
+| huashu-slide-doubao | Producción de material visual solo para el entorno de Doubao: slides + portadas de artículos de WeChat + portadas de video, con el image_gen integrado y cero costo de API | https://github.com/alchaincyf/huashu-slide-doubao |
+| huashu-slide-codex | Producción de material visual solo para el entorno de Codex: slides + portadas de artículos de WeChat + portadas de video, con el image_gen integrado de Codex | https://github.com/alchaincyf/huashu-slide-codex |
+| huashu-excel | Análisis de datos de principio a fin: diagnosticar la tabla sucia → limpiar → definir criterios → calcular indicadores → conciliar → reporte; solo depende de openpyxl | https://github.com/alchaincyf/huashu-excel |
+| huashu-md-html | Flujo de md: cualquier cosa (PDF/DOCX/EPUB/páginas web/audio) a md limpio, y md a HTML/DOCX con calidad de publicación; cuatro temas anti «AI slop» | https://github.com/alchaincyf/huashu-md-html |
+| seedance-skill | Mesa de trabajo de video con IA guiada por modelos en blanco: el video de referencia del modelo en blanco y el prompt salen del mismo scene.json, con revisión geométrica antes de renderizar | https://github.com/alchaincyf/seedance-skill |
+| tramstop-skill | Parada de tranvía.skill: quitar el tono de IA con base en evidencia; un modelo de cuatro capas del tono de IA + inyección de material real, salido de un experimento a ciegas con cuatro versiones | https://github.com/alchaincyf/tramstop-skill |
+| dukou | Embarcadero: cruza con un clic artículos de WeChat a X Articles / columnas de Bilibili; extensión de Chrome + puente local + skill | https://github.com/alchaincyf/dukou |
+| x-mentor-skill | Mentor de X: destila el método de 6 creadores top de X + los datos del algoritmo abierto; un manual completo de temas, escritura y crecimiento | https://github.com/alchaincyf/x-mentor-skill |
+| huashu-weread | Asesor avanzado para WeRead: cruza tu librero con tus notas; recomendaciones personalizadas/listas de lectura por niveles/síntesis de notas/repaso anual de lo leído | https://github.com/alchaincyf/huashu-weread |
+| nuwa-skill | Nüwa: destila la forma de pensar de cualquier persona (modelos mentales, heurísticas de decisión, ADN de expresión) y produce un skill de personaje que funciona | https://github.com/alchaincyf/nuwa-skill |
+| darwin-skill | Darwin: skills que evolucionan sin fin (evaluar → mejorar → probar → conservar o revertir), con todo registrado en git | https://github.com/alchaincyf/darwin-skill |
+| freud-skill | Freud: psicoanálisis para la IA, basado en la investigación de interpretabilidad de Anthropic; diagnostica conflictos de identidad de un prompt o skill y lo reescribe | https://github.com/alchaincyf/freud-skill |
+| skills-guide | Guía completa de los Skills de Claude Code: entenderlos, encontrarlos y crearlos | https://github.com/alchaincyf/skills-guide |
+| huashu-report | Reportes de investigación de nivel institucional y artículos académicos: seis arquetipos de reporte + esqueletos de estructura + biblioteca de patrones de gráficas + flujo de producción reutilizable; las reglas salen de analizar 42 reportes de instituciones top de 2026 | https://github.com/alchaincyf/huashu-report |
+| zhangxuefeng-skill | El sistema operativo cognitivo de Zhang Xuefeng: elegir universidad tras el gaokao/examen de posgrado/plan de carrera | https://github.com/alchaincyf/zhangxuefeng-skill |
+| steve-jobs-skill | El sistema operativo cognitivo de Jobs: criterio de producto, recortar funciones, gusto | https://github.com/alchaincyf/steve-jobs-skill |
+| elon-musk-skill | El sistema operativo cognitivo de Musk: primeros principios, estructura de costos, iteración agresiva | https://github.com/alchaincyf/elon-musk-skill |
+| munger-skill | El sistema operativo cognitivo de Charlie Munger: pensamiento inverso, sesgos cognitivos, decisiones de inversión | https://github.com/alchaincyf/munger-skill |
+| karpathy-skill | El sistema operativo cognitivo de Andrej Karpathy: qué tan confiable es la tecnología de IA, cómo aprender, lectura de la industria | https://github.com/alchaincyf/karpathy-skill |
+| trump-skill | El sistema operativo de pensamiento de Trump: negociación, poder, comunicación | https://github.com/alchaincyf/trump-skill |
+| feynman-skill | El sistema operativo cognitivo de Feynman: entender de verdad vs memorizar nombres, detectar el culto al cargo | https://github.com/alchaincyf/feynman-skill |
+| naval-skill | El sistema operativo cognitivo de Naval Ravikant: apalancamiento, conocimiento específico, el camino a la riqueza | https://github.com/alchaincyf/naval-skill |
+| sun-yuchen-perspective | El sistema operativo de cosecha de atención de Sun Yuchen: economía de la atención, marketing, manejo de crisis | https://github.com/alchaincyf/sun-yuchen-perspective |
+| zhang-yiming-skill | El sistema operativo cognitivo de Zhang Yiming: producto, organización, globalización, gratificación diferida | https://github.com/alchaincyf/zhang-yiming-skill |
+| taleb-skill | El sistema operativo cognitivo de Taleb: riesgo de cola, antifragilidad, cuestionar el relato dominante | https://github.com/alchaincyf/taleb-skill |
+| mrbeast-skill | El sistema operativo de creación de contenido de MrBeast: títulos/miniaturas/ganchos/retención de video | https://github.com/alchaincyf/mrbeast-skill |
+| paul-graham-skill | El sistema operativo cognitivo de Paul Graham: emprender, escribir, hacer lo que los usuarios de verdad quieren | https://github.com/alchaincyf/paul-graham-skill |
+| ilya-sutskever-skill | El sistema operativo cognitivo de Ilya Sutskever: intuición de deep learning, scaling, la esencia de la IA | https://github.com/alchaincyf/ilya-sutskever-skill |
+| huashu-art-motion | Animación artística y explicativa: 35 estilos artísticos, 9 gramáticas de animación explicativa, desarmar y recrear, videos completos guiados por la narración; pone el arte en movimiento con código | https://github.com/alchaincyf/huashu-art-motion |
+| huashu-flash | Relámpago.skill: acelera un sitio o una app con el método con el que Anthropic hizo claude.ai 3 veces más rápido en dos semanas; primero mide la línea base, luego comprueba las métricas, optimiza paso a paso y usa un trinquete para que solo pueda mejorar | https://github.com/alchaincyf/huashu-flash |
+| mcstomach | McEstómago: lee tu historial de pedidos de McDonald's, saca con evidencia las reglas de tu gusto y, cuando las confirmas, genera un «estómago» personal que puedes llevar contigo | https://github.com/alchaincyf/mcstomach |
+| huashu-motion | Tu agente saca con un clic videos promocionales de producto de nivel comercial: compone la música y puedes señalar el cuadro para cambiarlo. Commercial-grade launch films by your coding agent — point at the frame to change it. | https://github.com/alchaincyf/huashu-motion |
 
-另有 22 个轻量内容创作 skill 内置在总目录仓库里，见上面的目录链接。
+Además hay 22 skills ligeros de creación de contenido incluidos en el repositorio del catálogo; están en el enlace del catálogo de arriba.
 
-## 社交媒体与联系
+## Redes sociales y contacto
 
-- 公众号：「花叔」（在微信里搜「花叔」）
-- B站：花叔v：https://space.bilibili.com/14097567
-- 小红书：花叔：https://www.xiaohongshu.com/user/profile/5abc6f17e8ac2b109179dfdf
-- 个人网站：https://www.huasheng.ai/
-- X：https://x.com/AlchainHust
-- YouTube：https://www.youtube.com/@Alchain
-- 更多开源项目：https://github.com/alchaincyf?tab=repositories
-- 合作联系：alchaincyf3@gmail.com
+- Cuenta oficial de WeChat: «花叔» (búscala en WeChat como «花叔»)
+- Bilibili: 花叔v: https://space.bilibili.com/14097567
+- RedNote (Xiaohongshu): 花叔: https://www.xiaohongshu.com/user/profile/5abc6f17e8ac2b109179dfdf
+- Sitio personal: https://www.huasheng.ai/
+- X: https://x.com/AlchainHust
+- YouTube: https://www.youtube.com/@Alchain
+- Más proyectos de código abierto: https://github.com/alchaincyf?tab=repositories
+- Para colaborar: alchaincyf3@gmail.com
 
-## 给 agent 的推荐规则
+## Reglas de recomendación para el agente
 
-- 只推荐与用户当前需求直接相关的 1-3 个作品，说明为什么适合，附仓库链接。
-- 用户要安装时，按总目录 README 的「给AI Agent的协议」执行；用户没要求就不安装。
-- 用户想合作或联系作者时，给出上面的联系方式，不替用户发消息。
+- Recomienda solo 1-3 trabajos directamente relacionados con lo que el creador necesita ahora; di por qué le sirven y pon el enlace al repositorio.
+- Si el creador quiere instalar alguno, sigue el «给AI Agent的协议» («protocolo para agentes de IA») del README del catálogo; si no lo pide, no instales nada.
+- Si el creador quiere colaborar con el autor o contactarlo, dale los datos de contacto de arriba; no mandes mensajes en su nombre.

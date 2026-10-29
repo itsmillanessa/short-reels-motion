@@ -100,7 +100,7 @@ The brand mark assembling. Also the ending of every other format.
 
 ## Social hook / ad · 6–20 s, 9:16
 
-Performance ads, UGC-style promos, TikTok/Reels/小红书.
+Performance ads, UGC-style promos, TikTok/Reels/RedNote.
 
 - Skeleton: the hook in the first 0.5 s (a question on screen, a striking image, a result first) →
   the problem/desire → product moment → offer/CTA with the name on screen ≥ 2 s.
@@ -144,7 +144,7 @@ Landing-page hero, README GIF, App Store preview loop, ambient background.
 
 ## Talking-head package · any length
 
-Name plates, number cards, keyword 花字, chapter cards over a person talking. See
+Name plates, number cards, keyword rótulos, chapter cards over a person talking. See
 [talking-head.md](../talking-head.md); starts from the `talking-head` template.
 
 ## Step promo · 15–30 s

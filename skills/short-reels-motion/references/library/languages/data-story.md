@@ -16,7 +16,7 @@ nothing to compare it with (use kinetic-type for a single figure).
 3. Count-ups that land on the exact number on the beat; tabular figures.
 4. Chart morphs that keep each datum's identity (bars → dots → map pins).
 5. Highlight by dimming the rest to 20–30 % rather than adding arrows everywhere.
-6. Source line on screen; fictional data carries a 示意/illustrative badge.
+6. Source line on screen; fictional data carries a "datos ilustrativos"/illustrative badge.
 
 ## Camera · rhythm · easing
 

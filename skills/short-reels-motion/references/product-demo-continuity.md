@@ -1,69 +1,69 @@
-# Best practice：用连续取景讲清产品操作
+# Buena práctica: explicar el uso de un producto con encuadre continuo
 
-做产品演示、跨设备工作流、界面操作短片时读。参考是ChatGPT官方的[dot委派Codex任务演示](https://x.com/ChatGPT/status/2108636748217770180)，2026-10-09发布，2026-10-10拆解。它的价值在于节奏、构图和视线交接；浅色背景、黄色气泡与设备外壳是这条片子的选择。
+Léelo cuando hagas una demo de producto, un flujo de trabajo entre dispositivos o un video corto de uso de una interfaz. La referencia es la [demo oficial de ChatGPT de dot delegando tareas a Codex](https://x.com/ChatGPT/status/2108636748217770180), publicada el 2026-10-09 y desarmada el 2026-10-10. Su valor está en el ritmo, la composición y el paso de la mirada de un lugar a otro; el fondo claro, las burbujas amarillas y la carcasa de los dispositivos son decisiones de ese video.
 
-## 证据与适用范围
+## Evidencia y alcance
 
-原片为1920×1080、30fps、732个视频帧，视频轨约24.40s。下面时间窗按原片从0开始，取近似边界，不是逐帧剪辑表。本轮核对全片抽帧、关键接缝0.1s间隔序列和原分辨率代表帧；没有完成正常速度播放审片或人耳听审，不判断精确缓动、节拍、音效或制作软件。源视频含音轨。
+El original es de 1920×1080, 30 fps, 732 cuadros de video, con una pista de video de unos 24.40 s. Las ventanas de tiempo de abajo cuentan desde 0 en el original y tienen límites aproximados; no son una lista de corte cuadro por cuadro. En esta ronda se revisaron cuadros muestreados de todo el video, secuencias a intervalos de 0.1 s alrededor de los empalmes clave y cuadros representativos a la resolución original; no se completó una revisión a velocidad normal ni una escucha, así que no se juzgan el easing exacto, los tiempos musicales, los efectos de sonido ni el software de producción. El video original trae pista de audio.
 
-「画面观察」是原片里能看见的；「移植方法」是据此提出的实现选择，尚未用陌生题目的成片验证。原片是宣传演示，不拿其中运行时间、测试数字或操作包装证明产品能力。随skill分发的是方法与来源链接，原片及取证帧留在项目私有研究目录。
+Lo «observado en la imagen» es lo que se ve en el original; el «método para llevarlo a otro video» son decisiones de implementación propuestas a partir de eso, todavía sin validar con un video terminado sobre un tema desconocido. El original es una demo promocional: sus tiempos de ejecución, sus cifras de pruebas y la forma de presentar la operación no prueban lo que el producto puede hacer. Con el skill se distribuyen el método y los enlaces a las fuentes; el original y los cuadros de evidencia se quedan en la carpeta privada de investigación del proyecto.
 
-## 原片怎样组织观看
+## Cómo organiza la mirada el original
 
-- 约0.0–0.7s：手机全貌在白底中央，随后快速放大并重新取景到下方输入框。先认出载体，再把操作变成主角；设备上半部出画是有目的的裁切。
-- 约0.8–3.8s：请求逐字出现，输入框随换行增长，近景基本停住。文字变化已经在推进事件，不需要相机同时游走。输入结束后有短暂停留再发送。
-- 约3.8–6.6s：输入清空、消息进入对话；取景拉回手机全貌，回复出现。近景解释「怎么发起」，全貌解释「发起后怎样」。
-- 约6.6–7.5s：手机向右移动，桌面窗口从左侧显现并展开，最后形成桌面为主、手机为辅的并置。手机和黄色请求仍可认出，跨端关系借构图建立，不靠另起一张标题页。
-- 约7.5–10.9s：机位大体稳定，三个任务依次出现，光标移向其中一项。桌面承担阅读，手机承担来源参照；两个载体不争同一份注意力。
-- 约11.0–12.8s：点击任务、右侧详情出现；画面向详情推近，桌面边框和其他会话逐渐退出，只留下委派请求及状态。先看到它来自哪里，再删去周边视觉负担。
-- 约13.8–16.4s：结果摘要和改动列表出现，画面留给阅读；约16.4–17.1s内容上移，下一条开PR请求进入。约18.3s后完成结果出现，继续停留。内容滚动承担推进，取景不再频繁换尺度。
-- 约20.4–20.8s：内容清空，短暂白场；约20.9–21.3s通知卡入场并落定，保持到片尾。通知复用同一角色头像并总结三项任务，把开头的请求收成一个结果。
+- Aprox. 0.0–0.7 s: el teléfono completo al centro sobre fondo blanco; luego un acercamiento rápido que reencuadra en el campo de texto de abajo. Primero se reconoce el dispositivo y después la acción se vuelve la protagonista; que la mitad de arriba del dispositivo salga del cuadro es un recorte a propósito.
+- Aprox. 0.8–3.8 s: la petición aparece letra por letra, el campo de texto crece con cada salto de línea y el primer plano prácticamente se queda quieto. El texto que cambia ya hace avanzar el evento; no hace falta que la cámara pasee al mismo tiempo. Al terminar de escribir hay una pausa corta antes de enviar.
+- Aprox. 3.8–6.6 s: el campo se vacía y el mensaje entra a la conversación; el encuadre se abre al teléfono completo y aparece la respuesta. El primer plano explica «cómo se inicia»; la vista completa, «qué pasa después».
+- Aprox. 6.6–7.5 s: el teléfono se mueve a la derecha, la ventana de escritorio aparece por la izquierda y se despliega, y al final quedan lado a lado, con el escritorio como principal y el teléfono como secundario. El teléfono y la petición amarilla se siguen reconociendo; la relación entre dispositivos la establece la composición, no una pantalla de título aparte.
+- Aprox. 7.5–10.9 s: la cámara se mantiene casi fija, aparecen tres tareas una tras otra y el cursor va hacia una de ellas. El escritorio carga con la lectura y el teléfono sirve de referencia del origen; los dos dispositivos no compiten por la misma atención.
+- Aprox. 11.0–12.8 s: clic en la tarea y aparece el detalle a la derecha; la imagen se acerca al detalle, el marco del escritorio y las otras conversaciones van saliendo, y solo queda la petición delegada con su estado. Primero se ve de dónde viene; luego se quita la carga visual de alrededor.
+- Aprox. 13.8–16.4 s: aparecen el resumen del resultado y la lista de cambios, y la imagen se deja para leer; aprox. 16.4–17.1 s el contenido sube y entra la siguiente petición, abrir un PR. Pasados unos 18.3 s aparece el resultado terminado y la imagen se sigue quedando quieta. El scroll del contenido es lo que hace avanzar; el encuadre ya no cambia de escala a cada rato.
+- Aprox. 20.4–20.8 s: el contenido se vacía y queda una pantalla en blanco breve; aprox. 20.9–21.3 s entra la tarjeta de notificación, se asienta y se queda hasta el final. La notificación reutiliza el mismo avatar del personaje y resume las tres tareas: cierra la petición del inicio con un resultado.
 
-这是「全貌→操作近景→全貌→关系并置→详情近景→结果通知」的观看结构。移植时保留因果顺序，按自己的信息量重定时间；不把24s、三项任务或这些秒数当模板配额。
+Es un recorrido visual de «vista completa → primer plano de la acción → vista completa → relación lado a lado → primer plano del detalle → notificación del resultado». Al llevarlo a tu video, conserva el orden de causa y efecto y vuelve a fijar los tiempos según tu cantidad de información; no tomes los 24 s, las tres tareas ni estos segundos como cuotas de plantilla.
 
-## 节奏：短移动，长解释，事件带下一镜
+## Ritmo: movimientos cortos, explicaciones largas, el evento trae la siguiente toma
 
-先写业务事件：开始输入、输入完成、发送、回复、任务出现、点击、结果出现、通知。再给每次取景变化找触发事件和落点。把一次观看分成「移动到焦点→落定→读懂/状态变化」，移动时长和阅读时长分别调；整体减速会同时拖慢接镜，整体加速会吞掉阅读。
+Primero escribe los eventos del producto: empieza a escribir, termina de escribir, envía, responde, aparece una tarea, clic, aparece el resultado, notificación. Luego busca para cada cambio de encuadre el evento que lo dispara y el punto donde aterriza. Divide cada mirada en «moverse al foco → asentarse → entender / cambio de estado» y ajusta por separado la duración del movimiento y la de lectura: frenar todo junto alarga también los empalmes, y acelerar todo se come la lectura.
 
-这条参考中，开头与跨设备重排较短促，打字、任务展开、结果阅读占更长时间。可先用约0.3–0.8s试一个简单取景移动，再按目标屏幕和距离观看调整；这是移植起点，不是测得的原片缓动或所有镜头的范围。稳定期间可以逐字输入、展开列表或更新状态，画面停住仍有信息增长。
+En esta referencia, el inicio y el reacomodo entre dispositivos son cortos, y escribir, desplegar las tareas y leer el resultado ocupan más tiempo. Puedes empezar probando un movimiento de encuadre simple de unos 0.3–0.8 s y luego ajustarlo según la pantalla de destino y la distancia a la que se ve; es un punto de partida para llevarlo a tu video, no el easing medido del original ni un rango para todas las tomas. Mientras la imagen está estable puede escribirse texto letra por letra, desplegarse una lista o actualizarse un estado: la imagen quieta sigue sumando información.
 
-顺序演示让光标、点击反馈和新状态衔接起来。结果出现前的等待可以压缩，但不要剪成「点击即完成」的能力暗示；必要时保留处理中状态或明确时间经过。参考中的运行时间只是画面内容，不是本次产品实测。
+Una demo en orden encadena el cursor, la respuesta al clic y el estado nuevo. La espera antes del resultado se puede comprimir, pero no la cortes al grado de sugerir que «un clic y ya está»; si hace falta, deja el estado de «procesando» o marca que pasó el tiempo. Los tiempos de ejecución de la referencia son solo contenido de la imagen, no una medición del producto que estás mostrando.
 
-## 构图：每次只指定一个主要阅读区
+## Composición: una sola zona principal de lectura a la vez
 
-全貌镜让观众认载体和关系，近景镜让观众读关键文字。并置镜指定主次：主窗口大到能读，辅设备只需认出与上一镜相同的请求/来源。需要读辅设备时才换焦点，不把两个小界面都当正文。
+La vista completa sirve para reconocer el dispositivo y las relaciones; el primer plano, para leer el texto clave. En una toma lado a lado decide qué es principal y qué secundario: la ventana principal, lo bastante grande para leerse; del dispositivo secundario solo hace falta reconocer la misma petición u origen de la toma anterior. Cambia el foco solo cuando haya que leer el dispositivo secundario; no trates dos interfaces chicas como si las dos fueran el texto principal.
 
-保留少量身份锚点，如同一条请求、头像、气泡颜色、任务标题。白底与稀疏强调色使主体容易定位；换品牌后使用本品牌的真实识别要素，无需照抄黄色或角色。外框、圆角、字距与轻阴影帮助界面分层，强反光和厚阴影不能代替文字清晰度。
+Conserva unas cuantas anclas de identidad: la misma petición, el avatar, el color de la burbuja, el título de la tarea. El fondo blanco y pocos toques de color de acento hacen fácil ubicar al sujeto; con otra marca usa sus elementos de identidad reales, sin copiar el amarillo ni el personaje. Los marcos, las esquinas redondeadas, el interletrado y las sombras suaves ayudan a separar la interfaz en capas; los reflejos fuertes y las sombras gruesas no sustituyen un texto nítido.
 
-允许为解释裁掉设备外壳或不相关侧栏。裁切前后能定位同一个焦点，并且关键文字完整，才算聚焦；最重要的信息被裁掉就是缺陷。按实际输出分辨率、目标观看尺寸检查字号和换行，参考的英文行长不能直接套中文。
+Para explicar, se vale recortar la carcasa del dispositivo o barras laterales que no vienen al caso. Solo cuenta como enfocar si antes y después del recorte se ubica el mismo foco y el texto clave queda completo; si lo más importante queda fuera del recorte, es un defecto. Revisa el tamaño de letra y los saltos de línea a la resolución real de salida y al tamaño en que se va a ver; el largo de línea del inglés de la referencia no se puede aplicar tal cual al español, que ocupa más.
 
-## 运镜：先定落点，再定怎样过去
+## Movimiento de cámara: primero dónde aterriza, luego cómo llegar
 
-每个接缝只写一句：`上一镜的焦点是谁→它到下一镜的哪里→什么新信息因此可见`。手机向右让位给桌面，是对象重排；输入框放大，是平面取景；详情脱离桌面框，是信息层次的提取。它们不必都实现成一台3D相机。
+Para cada empalme escribe una sola frase: `cuál es el foco de la toma anterior → a dónde llega en la siguiente → qué información nueva se ve gracias a eso`. Que el teléfono se haga a la derecha para dejarle lugar al escritorio es un reacomodo de objetos; agrandar el campo de texto es un encuadre plano; que el detalle se separe del marco del escritorio es extraer un nivel de información. No hace falta implementar todo eso como una cámara 3D.
 
-实现时分开四层：界面内容/滚动、设备/窗口外壳、取景包装层、固定说明/字幕。简单正视界面用DOM/SVG和2D变换即可；对象位置与取景缩放分别调，避免输入框换行时把设备比例一起拉坏。多层同步只服务于明确的交接，不为了运动感让每层都动。
+Al implementarlo, separa cuatro capas: contenido y scroll de la interfaz; carcasa del dispositivo o de la ventana; la capa envolvente del encuadre; textos fijos y subtítulos. Una interfaz simple vista de frente se resuelve con DOM/SVG y transformaciones 2D; ajusta por separado la posición de los objetos y el zoom del encuadre, para que un salto de línea en el campo de texto no deforme también las proporciones del dispositivo. Sincronizar varias capas solo sirve para un paso de foco claro; no muevas todas las capas solo para dar sensación de movimiento.
 
-平面取景可用包装层局部焦点`(fx, fy)`、画面落点`(vx, vy)`、包装层未变换时左上角在画面中的布局位置`(bx, by)`及倍率`s`求包装层平移：`x = vx - bx - s * fx`，`y = vy - by - s * fy`。前提是包装层变换原点为左上，局部点已计入内容滚动，父层没有另一次未计入的变换；`bx/by`不能用已经缩放/平移后的边界代替。包装层原本就在画面原点时`bx/by`才是0。动画从当前姿态走到这个落点，不能每次从默认居中重新出发；近邻目标常只需平移。
+Para un encuadre plano, calcula la traslación de la capa envolvente con el foco local en la capa `(fx, fy)`, el punto del cuadro donde debe caer `(vx, vy)`, la posición en el cuadro de la esquina superior izquierda de la capa cuando no tiene transformación `(bx, by)` y la escala `s`: `x = vx - bx - s * fx`, `y = vy - by - s * fy`. Esto supone que el origen de la transformación de la capa está arriba a la izquierda, que el punto local ya incluye el scroll del contenido y que el padre no tiene otra transformación sin contar; `bx/by` no se pueden reemplazar con los límites ya escalados o trasladados. `bx/by` valen 0 solo cuando la capa ya está en el origen del cuadro. La animación va desde la pose actual hasta este punto; no arranca cada vez desde el centrado por defecto. Para un objetivo cercano muchas veces basta con trasladar.
 
-详情需要抽出时，让它起初与原界面中的位置、尺寸和文字一致，观众认出后再淡去周围框架或推近。包装效果保持为影片图层，不能伪装成产品自带动画。截图素材要用匹配的裁片/遮罩，不能将文字抹掉再编写不存在的反馈。
+Cuando hay que sacar el detalle, que al principio coincida en posición, tamaño y texto con la interfaz original; cuando el espectador ya lo reconoció, desvanece el marco de alrededor o acércate. Los efectos de empaque se quedan como capas del video; no se hacen pasar por animaciones propias del producto. Con capturas de pantalla usa recortes o máscaras que coincidan; no borres el texto para escribir una respuesta que no existe.
 
-通知收尾可以是独立卡片，沿用头像/名称把结果接回发起者。原片在这里使用了白场分隔，没有要求所有镜头都无缝变形；白场应是有意的结束标点，不能拿来遮掩加载失败或跳帧。
+El cierre con notificación puede ser una tarjeta aparte que retome el avatar o el nombre para regresarle el resultado a quien lo pidió. Aquí el original separa con una pantalla en blanco: no exige que todas las tomas se transformen sin costura. El blanco tiene que ser un punto final a propósito, no algo para tapar una carga fallida o cuadros que saltan.
 
-所有姿态由同一时间轴或绝对时间采样决定。GSAP包装层初态明确设置；后续`fromTo`按需要设`immediateRender:false`，避免未来近景提前出现在首帧。逆向seek也要恢复相同的内容、裁切和机位。
+Todas las poses salen del mismo timeline o de muestrear tiempo absoluto. El estado inicial de la capa envolvente en GSAP se fija de forma explícita; los `fromTo` posteriores llevan `immediateRender:false` cuando haga falta, para que un primer plano futuro no aparezca antes de tiempo en el primer cuadro. Un seek hacia atrás también tiene que restaurar el mismo contenido, recorte y posición de cámara.
 
-## 放进实际制作与验收
+## Llevarlo a la producción y a la revisión
 
-产品演示开工时，用实际素材写一个短镜头记录：
+Al arrancar una demo de producto, escribe con el material real una nota corta por toma:
 
-`事件｜当前阅读区｜保留的身份锚点｜起止构图｜内容动作/取景动作｜落定时刻｜读取窗口｜下镜新增信息`
+`evento | zona de lectura actual | anclas de identidad que se conservan | composición al inicio y al final | acción del contenido/acción del encuadre | momento en que se asienta | ventana de lectura | información nueva de la siguiente toma`
 
-先制作最容易丢失方向的一段，如「全设备→跨端并置→任务详情」。用最终素材与字体检查运动和读取，再铺整片。现有`keynote-ui`语法能提供标题、卡片与截图高亮；它没有自动保证跨设备连续重排、可滚动内容和详情抽离，需要这些时用`blank`自由源码实现对应镜头。
+Haz primero el tramo donde es más fácil perderse, como «dispositivo completo → lado a lado entre dispositivos → detalle de la tarea». Revisa el movimiento y la lectura con el material y las tipografías finales, y luego llena el video completo. La gramática `keynote-ui` que ya existe da títulos, tarjetas y resaltado de capturas; no garantiza por sí sola el reacomodo continuo entre dispositivos, el contenido con scroll ni sacar el detalle: si los necesitas, haz esas tomas en `blank` con código libre.
 
-验收时分别看：
+Al revisar, mira por separado:
 
-- 三张代表帧：全貌是否能认、并置是否有主次、详情是否足够大且能读。与参考比较视觉权重、留白和取景目的，不以同色同字体冒充学到了构图。
-- 每个接缝的短序列：旧焦点如何交到新焦点，是否同时换位置、倍率和内容导致重新找对象；快速移动是否落到准确的位置。
-- 正常速度成片：读取窗口是否够用，稳定段是否有内容推进，镜头移动是否抢在用户操作前，通知是否回答了开头的请求。抽帧不能替代这项。
-- 声音：沿用主skill的配乐/音效流程，按自己的落点设计；本次没有听审参考，不据此指定BPM或声音配方。
+- Tres cuadros representativos: si la vista completa se reconoce, si el lado a lado tiene principal y secundario, si el detalle es lo bastante grande para leerse. Compara con la referencia el peso visual, el espacio en blanco y el propósito del encuadre; usar los mismos colores y la misma tipografía no quiere decir que aprendiste la composición.
+- Una secuencia corta de cada empalme: cómo pasa el foco viejo al nuevo, si cambian a la vez la posición, la escala y el contenido y obligan a volver a buscar el objeto; si los movimientos rápidos aterrizan en el lugar exacto.
+- El video terminado a velocidad normal: si las ventanas de lectura alcanzan, si los tramos estables tienen contenido que avanza, si la cámara se adelanta a la acción del usuario, si la notificación responde la petición del inicio. Los cuadros muestreados no sustituyen esto.
+- Sonido: sigue el flujo de música y efectos del skill principal y diséñalo según tus propios puntos de aterrizaje; esta vez no se escuchó la referencia, así que de ella no se saca un BPM ni una receta de sonido.
 
-成功迁移的标准是陌生内容也能从发起一路看懂到结果。首次移植记为「试用」，经独立审片和真实用户反馈后，把有效改法、失败时间窗与适用范围回流到`experience.md`；反证出现时修正对应结论，不把本片配方升级为所有动画的硬规则。
+Llevarlo a otro video funcionó si un contenido desconocido también se entiende de punta a punta, desde la petición hasta el resultado. La primera vez se registra como «prueba»; después de una revisión independiente y de la opinión de creadores reales, lleva a `experience.md` lo que funcionó, las ventanas de tiempo que fallaron y el alcance; si aparece evidencia en contra, corrige esa conclusión, y no conviertas la receta de este video en regla fija para todas las animaciones.

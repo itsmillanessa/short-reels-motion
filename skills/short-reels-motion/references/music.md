@@ -345,7 +345,7 @@ V:SB inst=sinebass gain=0.6
 E,,8 | C,,8 |
 ```
 
-### 15 · 国风 electronic — guzheng over a beat
+### 15 · Guofeng electronic — guzheng over a beat
 A guzheng running pentatonic figures, a dizi melody, an erhu holding long notes, over a tight kick, claps and
 808 hats (an 808 kick's long boom buries the plucked strings at this tempo).
 Chinese brands and culture, tea, heritage, a modern take on tradition. 88–104 BPM.
@@ -404,7 +404,7 @@ V:PN inst=piano gain=0.6
 | hype, game, sport, bold | trap · drum and bass · synthwave · chiptune | ambient, jazz |
 | premium, craft, design tools | jazz trio · pulse minimalism · lyrical piano · UK garage | chiptune |
 | retro, nostalgic | synthwave · chiptune · funk | — |
-| Chinese culture, heritage | 国风 electronic · lyrical waltz with dizi/guzheng | — |
+| Chinese culture, heritage | Guofeng electronic · lyrical waltz with dizi/guzheng | — |
 
 Most products sit in two rows at once (a developer tool for calm, private work; an AI product for families):
 the world that fits both is usually the right one, and it is rarely the obvious first pick of either row. Never

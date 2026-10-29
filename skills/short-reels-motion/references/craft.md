@@ -1,41 +1,41 @@
-# 按条件使用经验
+# Experiencia según el caso
 
-## 构图与解释
+## Composición y explicación
 
-先问这一镜的主角是什么、观众看多大的屏幕、需要读什么、变化前后有什么不同。用实际画幅设计关键帧，尽早发现文字过小与信息挤压。写「截图右半区的这个按钮」比写「震撼科技感」更能指导实现。
+Primero pregúntate quién es el protagonista de esta toma, en qué tamaño de pantalla se ve, qué hay que leer y qué cambia entre antes y después. Diseña los cuadros clave en el formato real para detectar pronto el texto demasiado chico y la información apretada. Escribir «este botón de la mitad derecha de la captura» guía la implementación mucho mejor que «un look tecnológico impactante».
 
-风格与构图分开：同一套颜色、字体和材质可以有不同景别、空间布局与运动。混合风格是合法叙事选择，但对象身份和概念对应仍应清楚。不要为了维持统一把每一镜做成同一张模板。
+Separa el estilo de la composición: los mismos colores, tipografías y materiales admiten planos, distribuciones del espacio y movimientos distintos. Mezclar estilos es una decisión narrativa válida, pero la identidad de los objetos y qué concepto representa cada uno tienen que seguir claros. No hagas cada toma con la misma plantilla solo por mantener la unidad.
 
-真实材料先取齐再设计；界面、产品形态与数据口径也属于事实。缺失就标记缺口，不用假界面补出未发生的操作。
+Junta el material real antes de diseñar; la interfaz, la forma del producto y el criterio de los datos también son hechos. Si algo falta, marca el hueco; no lo llenes con una interfaz falsa que muestre una acción que nunca pasó.
 
-## 对象为什么动
+## Por qué se mueve un objeto
 
-最有用的运动能用一个动词描述：聚合、拆开、对齐、连接、筛选、揭示。看懂「前后有什么不同」应主要依靠对象变化，而不是依赖旁白解释一段无关动画。
+El movimiento más útil se describe con un verbo: juntar, separar, alinear, conectar, filtrar, revelar. Entender «qué cambió» tiene que depender sobre todo de cómo cambian los objetos, no de una narración que explique una animación que no tiene que ver.
 
-延续同一个对象能减少观众重新认物的成本。只有叙事确实需要时才保持全片hero；不要把「必须有hero」变成给每条视频硬加吉祥物。
+Mantener el mismo objeto le ahorra al espectador el esfuerzo de reconocer cosas nuevas. Mantén un objeto protagonista (hero) en todo el video solo cuando la historia de verdad lo necesite; no conviertas «tiene que haber un hero» en meterle a fuerza una mascota a cada video.
 
-艺术速通可用主动作加取自材料的循环：星空流动、墨晕扩散、色块套印。故事反应、文字落定、数据读图可以完全静止。运动面积是诊断线索，不是质量分。
+Un speedrun de estilos de arte puede usar una acción principal más un loop que sale del propio material de la obra: el cielo estrellado que fluye, la tinta que se expande, bloques de color sobreimpresos. Las reacciones de una historia, el texto que se asienta y la lectura de datos pueden quedarse totalmente quietos. Cuánta superficie se mueve es una pista para diagnosticar, no una calificación de calidad.
 
-转场可以来自下一幕的签名材料：色点长满、纸面展开、线条延伸；也可以就是相机在同一世界里移动。硬切有明确节奏或语义作用时直接使用。
+Una transición puede salir del material característico de la escena siguiente: puntos de color que lo llenan todo, un papel que se despliega, líneas que se extienden; o puede ser simplemente la cámara moviéndose dentro del mismo mundo. Usa el corte seco sin más cuando tiene un papel claro de ritmo o de significado.
 
-## 相机与节奏
+## Cámara y ritmo
 
-每次移动写出具体目标和理由。截图信息用平面缩放通常足够；前后景关系值得表达时才分层做视差。相邻焦点近则合并或平移，避免无意义地拉远再推近。
+Para cada movimiento escribe su objetivo concreto y su razón. Para la información de una captura, un zoom plano suele bastar; separa en capas con paralaje solo cuando vale la pena mostrar la relación entre lo de adelante y lo de atrás. Si dos focos vecinos están cerca, júntalos o haz un desplazamiento; no te alejes para luego volver a acercarte sin motivo.
 
-取景先算关键内容的外框，再减字幕占位与边距。字够不够大以最终目标屏幕检查，不以代码字号或固定倍率判断。
+Para encuadrar, calcula primero el recuadro del contenido clave y luego réstale el espacio de los subtítulos y los márgenes. Si la letra es lo bastante grande se revisa en la pantalla final de destino, no por el tamaño de fuente en el código ni por una escala fija.
 
-教学操作要看清定位与结果，快节奏表达可以短促推近、甩镜或快速尺度变化。没有通用的镜头间隔、缩放上限或「宁慢勿快」规则；这些数值取决于素材分辨率、信息量、片型和用户反馈。
+En un tutorial tiene que verse claro dónde está cada cosa y qué resulta; un tono de ritmo rápido admite acercamientos cortos, barridos de cámara o cambios rápidos de escala. No hay una regla general de intervalo entre tomas, de límite de zoom ni de «mejor lento que rápido»; esos números dependen de la resolución del material, la cantidad de información, el tipo de video y lo que diga el creador.
 
-动作强调可用快速起步、稳稳落定，弹性只给需要重量或回弹的对象。匀速运动用于恒速物体、滚动背景等是合法的。不存在一种缓动曲线能保证高级感。
+Para enfatizar una acción, arranque rápido y asentamiento firme; el rebote, solo para objetos que necesitan peso o elasticidad. El movimiento a velocidad constante es válido para objetos que van a velocidad constante, fondos que se desplazan y cosas así. No existe una curva de easing que garantice que algo se vea premium.
 
-## 声画对齐
+## Sincronía de imagen y sonido
 
-有旁白先确认音轨和词轴，再设计需要同步的揭示。把cue写成「说到这个词时，观众看到结果」，别只对齐动作起点：如果要飞入半秒，动作开始应提前，落定才是重音。
+Si hay narración, confirma primero la pista de audio y los tiempos por palabra, y después diseña las revelaciones que van sincronizadas. Escribe el cue como «cuando dice esta palabra, el espectador ve el resultado»; no alinees solo el inicio de la acción: si algo entra volando en medio segundo, la acción empieza antes y el acento cae cuando se asienta.
 
-停留要留给读图和推导。口播没有气口时，靠放慢画面无法创造听觉留白；改音频须在本次授权内，不能自动增删用户原话。
+Las pausas son para leer la imagen y razonar. Si la narración no tiene respiros, frenar la imagen no crea silencio para el oído; cambiar el audio tiene que caber en lo que el creador autorizó esta vez, y nunca se agregan ni se quitan por tu cuenta palabras que dijo el creador.
 
-## 实现分层
+## Capas de implementación
 
-概念与时间计划→素材和绘制→对象动画→相机→字幕→混音。先判断问题在哪一层，再改那一层。画面工艺不足不应重做时间轴；口播过密不应要求动画师无休止调镜头。
+Concepto y plan de tiempos → material y dibujo → animación de objetos → cámara → subtítulos → mezcla. Primero identifica en qué capa está el problema y luego cambia esa capa. Si falta oficio en la imagen, no rehagas el timeline; si la narración está demasiado apretada, no le pidas al animador que ajuste la cámara sin fin.
 
-Canvas风格先理解材料如何形成：笔触布局、区域色组、纸与墨的层序。静态材料可缓存，笔触方向连续演化；每帧随机重洗会变成闪烁。角色叠入时统一光影或材质，原始图像优先保存。
+Para un estilo en canvas, entiende primero cómo se forma el material: la distribución de las pinceladas, los grupos de color por zona, el orden de capas entre papel y tinta. El material estático se puede cachear y la dirección de las pinceladas evoluciona de forma continua; volver a barajar el azar en cada cuadro produce parpadeo. Cuando se integra un personaje, unifica la luz o los materiales, y da prioridad a conservar la imagen original.

@@ -1,6 +1,6 @@
 # talking-head — a person speaks, motion packages it
 
-Name plates, number cards that count to the spoken number, 花字 key phrases, chapter cards and corner
+Name plates, number cards that count to the spoken number, key phrases in rótulos, chapter cards and corner
 badges over a real recording; optionally as a transparent overlay for an editor. The Claude Motion
 launch puts cards on Nate this way.
 
