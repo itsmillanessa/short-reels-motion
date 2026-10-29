@@ -45,7 +45,7 @@
   #hook3 { visibility: hidden; }
   h1, h2, p { margin: 0; }
 
-  /* Safe area of the feeds (srm check, S in the studio): text lives between y 230 and 1480 and left of x 920 below y 760 (the hook sits mid-frame: it is also the poster). */
+  /* Safe area of the feeds (srm check warns about it): text lives between y 230 and 1480 and left of x 920 below y 760 (the hook sits mid-frame: it is also the poster). */
   .kick { position: absolute; left: 80px; top: 600px; font-weight: 800; font-size: 34px; letter-spacing: .2em; color: var(--accent); white-space: nowrap; }
   .hook { position: absolute; left: 80px; width: 920px; font-weight: 900; letter-spacing: -.045em; line-height: .95; white-space: nowrap; }
   .hook1 { top: 690px; font-size: 112px; }
@@ -86,7 +86,7 @@
   With narration (srm voice), every step can anchor to a word: {"word":"receta","text":"…"} instead of {"at":5.0,…}.
   Coordinates of taps and zooms are 0–1 of the screen (x from the left, y from the top), so they survive a new recording size.
 
-  Keep text inside the safe area (srm check warns, S in the studio shows it): the band under the phone is y 1300–1480.
+  Keep text inside the safe area (srm check warns when it is not): the band under the phone is y 1300–1480.
 -->
 <div id="film" data-composition-id="film" data-width="1080" data-height="1920" data-platforms="tiktok,reels,shorts">
   <div class="light"></div>

@@ -1,7 +1,6 @@
 // Short Reels Motion studio (from huashu-motion). One page, no build step: the om player shows the real composition,
 // this file adds pointing, direct edits and the comment loop around it.
 import { LANGS, pickLang, saveLang, setLang, lang, t, applyI18n } from './i18n.js';
-import { PLATFORMS, isVertical, platformsOf, unionZones } from './safezones.js';
 
 const BOOT = window.OM_BOOT || {};
 setLang(pickLang(BOOT));
@@ -20,7 +19,6 @@ const S = {
   token: null, variables: [], comments: [], history: 0, name: '',
   w: 1920, h: 1080, duration: 0, scenes: [],
   tool: 'select', selected: null, playing: false, restore: null, renderJob: null,
-  platforms: null, safe: false,
 };
 let player = $('#player');
 const FPS = 30;
@@ -68,8 +66,6 @@ async function boot() {
   const st = await (await fetch('/api/state')).json();
   Object.assign(S, { token: st.token, variables: st.variables, comments: st.comments, history: st.history, name: st.name, renderJob: st.render });
   if (st.scan.width) { S.w = st.scan.width; S.h = st.scan.height; }
-  S.platforms = st.scan.platforms;
-  try { S.safe = localStorage.getItem('srm.safe') !== '0' && isVertical(S.w, S.h); } catch { S.safe = isVertical(S.w, S.h); }
   $('#project-name').textContent = st.name;
   document.title = `${st.name} · Short Reels Motion`;
   $('#agent-cmd').textContent = 'srm inbox --wait';
@@ -184,32 +180,9 @@ function layout() {
   const frame = $('#frame');
   frame.style.width = Math.max(10, S.w * scale) + 'px';
   frame.style.height = Math.max(10, S.h * scale) + 'px';
-  drawSafe();
   tick(true);
 }
 
-// ---------- safe zones ----------
-// The bands where TikTok, Reels and Shorts draw their interface over a vertical film (cli/lib/safezones.js).
-// S shows or hides them; they are on by default for a 9:16 film. Drawn in frame percentages, so they follow layout().
-function drawSafe() {
-  let layer = $('#safe');
-  if (!layer) { layer = el('div', { id: 'safe', class: 'safe', 'aria-hidden': 'true' }); $('#overlay').prepend(layer); }
-  let list = [];
-  try { list = platformsOf(S.platforms); } catch { list = Object.keys(PLATFORMS); }
-  const on = S.safe && isVertical(S.w, S.h);
-  layer.hidden = !on;
-  if (!on) return;
-  const pct = (v, of) => (100 * v / of).toFixed(3) + '%';
-  layer.replaceChildren(...unionZones(list, S.w, S.h).filter((z) => z.side !== 'left').map((z) => el('div', {
-    class: 'band ' + z.side, style: `left:${pct(z.x, S.w)};top:${pct(z.y, S.h)};width:${pct(z.w, S.w)};height:${pct(z.h, S.h)}`,
-  }, el('span', {}, t('safe.' + z.side, { apps: z.platforms.map((p) => PLATFORMS[p].label).join(' · ') })))));
-}
-function toggleSafe() {
-  if (!isVertical(S.w, S.h)) return toast(esc(t('safe.wide')));
-  S.safe = !S.safe;
-  try { localStorage.setItem('srm.safe', S.safe ? '1' : '0'); } catch { /* private window */ }
-  drawSafe();
-}
 new ResizeObserver(layout).observe($('#stage'));
 
 const view = () => {
@@ -522,8 +495,6 @@ document.addEventListener('focusout', () => setTimeout(() => { if (S.varsDirty &
 function onSource(d) {
   Object.assign(S, { token: d.token, variables: d.variables, history: d.history });
   if (d.scan?.width) { S.w = d.scan.width; S.h = d.scan.height; }
-  if (d.scan) S.platforms = d.scan.platforms;
-  drawSafe();
   renderVars(); renderStatus();
   S.restore = { t: player.currentTime || 0, playing: S.playing };
   if (S.playing) { player.pause(); S.playing = false; setPlayIcon(); }
@@ -590,7 +561,6 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === 'ArrowLeft') { e.preventDefault(); if (S.playing) pause(); seek((player.currentTime || 0) - (e.shiftKey ? 1 : 1 / FPS)); }
   else if (e.key === 'c' || e.key === 'C') setTool('comment');
   else if (e.key === 'v' || e.key === 'V') setTool('select');
-  else if ((e.key === 's' || e.key === 'S') && !e.metaKey && !e.ctrlKey) toggleSafe();
   else if (e.key === 'Escape') { closeComposer(); select(null); setTool('select'); }
   else if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); doUndo(); }
 });

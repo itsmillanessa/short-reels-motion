@@ -30,7 +30,7 @@ Lo que lo hace distinto para videos cortos:
 
 | | |
 |---|---|
-| **Vertical primero** | Cuadros de 1080×1920, con las zonas donde TikTok, Reels y Shorts dibujan sus botones |
+| **Vertical primero** | Cuadros de 1080×1920; el texto se acomoda lejos de los botones de TikTok, Reels y Shorts |
 | **Voz en español** | Tu grabación, una voz local gratis o ElevenLabs; los movimientos caen en la palabra exacta |
 | **Volumen de feed** | La mezcla de voz y música sale a −14 LUFS, donde normalizan las apps |
 | **Editor en tu idioma** | El studio, las plantillas y los mensajes del motor en español (también inglés y chino) |
@@ -60,7 +60,7 @@ ln -sfn "$PWD/skills/short-reels-motion" ~/.claude/skills/short-reels-motion
 srm new mi-reel --template short-pantalla   # vertical desde el inicio (srm templates lista las 13)
 srm voice mi-reel --audio voz.m4a      # tu grabación, alineada palabra por palabra
 srm sound mi-reel                      # música y efectos, bajo la voz
-srm studio mi-reel                     # editor en el navegador: C para comentar, S para zonas seguras
+srm studio mi-reel                     # editor en el navegador: C para comentar sobre el cuadro
 srm check mi-reel                      # texto cortado, tapado o bajo los botones de las apps
 srm render mi-reel                     # MP4 listo para subir
 ```
@@ -78,15 +78,16 @@ Lo normal es no escribir estos comandos: se los pides a tu agente y él los corr
 
 ## Zonas seguras
 
-En un video vertical, `srm check` avisa cuando un texto queda debajo de la interfaz de la app (arriba: pestañas;
-abajo: texto del post y sonido; derecha: like, comentar, compartir). En el studio, la tecla **S** las dibuja encima
-del cuadro. `data-platforms="tiktok,reels"` en la raíz del video elige las apps; `data-layout-allow-safe-zone` exime
-un elemento. Las medidas están en `cli/lib/safezones.js`; las apps las mueven de vez en cuando.
+En el teléfono, TikTok, Reels y Shorts dibujan su interfaz encima del video: pestañas arriba, botones a la derecha,
+tu @usuario, el texto y la canción abajo. Short Reels Motion lo da por hecho: las plantillas verticales ponen el texto
+en el área libre del centro, y `srm check` avisa si un texto queda debajo de esa interfaz. El studio muestra el video
+completo, sin guías encima. `data-platforms="tiktok,reels"` en la raíz del video elige las apps;
+`data-layout-allow-safe-zone` exime un elemento. Las medidas están en `cli/lib/safezones.js`.
 
 ## Hoja de ruta
 
 - [x] Cue por palabra exacta, mezcla a −14 LUFS, voz en español por defecto
-- [x] Zonas seguras en `check` y en el studio
+- [x] Zonas seguras en `check` y en el diseño de las plantillas
 - [x] Studio que se recupera solo al reiniciarse; textos del motor en español
 - [x] Plantillas y fuentes en español; firma apagada por defecto
 - [x] Personaje propio y configurable (piel, pelo, ropa, accesorio) en la plantilla `storytime`

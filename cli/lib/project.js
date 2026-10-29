@@ -231,7 +231,6 @@ export function scan(html) {
     width: Number(attr('width')) || null,
     height: Number(attr('height')) || null,
     duration: Number(attr('duration')) || null,
-    platforms: attr('platforms') ?? null,
     variables: readVariables(html).map(({ id, type, label, default: value }) => ({ id, type, label, value })),
     objects,
     scenes,

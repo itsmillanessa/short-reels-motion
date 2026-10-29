@@ -65,7 +65,7 @@ export function unsafeText(boxes, platforms, W, H) {
     const sides = [...new Set(hits.map((h) => h.side))];
     const names = [...new Set(hits.map((h) => PLATFORMS[h.platform].label))];
     out.push({ code: 'unsafe-zone', sides, platforms: [...new Set(hits.map((h) => h.platform))],
-      message: `${b.name} "${b.text}" sits under ${sides.map((s) => SIDE[s]).join(' and ')} on ${names.join(', ')} — the app's interface covers it on the phone. Move it inside the safe area (om studio shows it with S), or waive it with data-layout-allow-safe-zone` });
+      message: `${b.name} "${b.text}" sits under ${sides.map((s) => SIDE[s]).join(' and ')} on ${names.join(', ')} — the app's interface covers it on the phone. Move it toward the middle of the frame, or waive it with data-layout-allow-safe-zone` });
   }
   return out;
 }

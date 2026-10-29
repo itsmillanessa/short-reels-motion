@@ -8,7 +8,7 @@ keeps every upstream commit, so what came from huashu-motion and what was change
 
 What Short Reels Motion changes or adds over huashu-motion 0.3.1:
 
-- Vertical first: safe zones of TikTok, Reels and Shorts in `om check` and in the studio (`cli/lib/safezones.js`).
+- Vertical first: safe zones of TikTok, Reels and Shorts in `om check` and in the templates' layout (`cli/lib/safezones.js`).
 - Narration: cues match whole words (Spanish and English), narrated mixes are levelled to -14 LUFS, Spanish scripts get
   a Spanish voice by default.
 - Studio in Spanish, English and Chinese; it recovers on its own when restarted.
