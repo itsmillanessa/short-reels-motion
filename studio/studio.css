@@ -1,13 +1,12 @@
-/* Short Reels Motion studio · «cuaderno de guion»: paper with ruled lines and a red margin, the script typed in
-   Courier, notes by hand in green ink, scenes as index cards, the film taped to a dark desk, comments on sticky notes.
-   Every colour lives in :root. */
+/* Short Reels Motion studio · «cuaderno de guion»: paper with a red margin, the script typed in Courier, notes by hand
+   in green ink, scenes as index cards, the film on a dark desk, comments on sticky notes. Every colour lives in :root. */
 @font-face { font-family: "Caveat"; src: url("/_om/fonts/Caveat-600.woff") format("woff"); font-weight: 600; font-display: swap; }
 :root {
   --bg: #e9e2d2; --panel: #faf6ee; --panel-2: #f3ede1; --panel-3: #e8e0cf; --line: #dcd1bd; --line-soft: #e9e2d4;
   --ink: #221d17; --ink-2: #5a5146; --ink-3: #91877a;
   --accent: #2f7d4f; --accent-ink: #ffffff; --accent-soft: #2f7d4f1f;
   --blue: #2f7d4f; --blue-soft: #2f7d4f1f; --green: #2f7d4f; --green-soft: #2f7d4f1f; --amber: #b7791f; --amber-soft: #f6ead0;
-  --card-red: #d65a4a; --note: #fff4a8; --note-line: #e6d97c; --rule: #e7dfcc; --margin: #e4a79f;
+  --card-red: #d65a4a; --note: #fff4a8; --note-line: #e6d97c; --margin: #e4a79f;
   --stage: #2a2621; --radius: 4px;
   --hand: "Caveat", "Bradley Hand", "Segoe Print", cursive;
   --type: "Courier Prime", "Courier New", Courier, monospace;
@@ -53,12 +52,9 @@ select.lang { appearance: none; -webkit-appearance: none; background: transparen
 .tool svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
 .tool:hover { background: var(--panel-2); } .tool.active { background: var(--ink); color: var(--panel); }
 
-/* the desk, and the film taped to it */
+/* the desk the film sits on */
 .stage { position: relative; display: grid; place-items: center; background: var(--stage); min-width: 0; min-height: 0; overflow: hidden; }
 .frame { position: relative; box-shadow: 0 18px 44px #00000066; }
-.frame::before, .frame::after { content: ''; position: absolute; z-index: 3; top: -8px; width: 64px; height: 20px; background: #efe4bcd9; box-shadow: 0 1px 2px #00000033; pointer-events: none; }
-.frame::before { left: -22px; transform: rotate(-36deg); }
-.frame::after { right: -22px; transform: rotate(36deg); }
 .frame om-player { display: block; width: 100%; height: 100%; aspect-ratio: auto; background: transparent; }
 .frame om-player.staged { position: absolute; inset: 0; visibility: hidden; pointer-events: none; }
 .overlay { position: absolute; inset: 0; cursor: default; }
@@ -85,14 +81,14 @@ select.lang { appearance: none; -webkit-appearance: none; background: transparen
 .agent-hint b { color: var(--ink); }
 .agent-hint code { padding: 3px 8px; border-radius: 2px; background: #fffbe2; border: 1px dashed var(--note-line); color: var(--ink); font: 12px var(--type); }
 
-/* side panel: a ruled page with a red margin */
+/* side panel: a page with a red margin */
 .side { display: flex; flex-direction: column; min-height: 0; background: var(--panel); border-left: 1px solid var(--line); }
 .tabs { display: flex; gap: 4px; padding: 8px 10px 0; border-bottom: 1px solid var(--line); font-family: var(--type); }
 .tab { padding: 8px 10px 9px; color: var(--ink-3); border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .tab.active { color: var(--ink); border-bottom-color: var(--accent); font-weight: 700; }
 .count { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 2px; font: 700 11px var(--type); background: var(--accent); color: var(--accent-ink); }
 .count:empty { display: none; }
-.panel { flex: 1; overflow: auto; background: linear-gradient(90deg, transparent 0 12px, var(--margin) 12px 13px, transparent 13px), repeating-linear-gradient(180deg, transparent 0 31px, var(--rule) 31px 32px); background-attachment: local; }
+.panel { flex: 1; overflow: auto; background: linear-gradient(90deg, transparent 0 12px, var(--margin) 12px 13px, transparent 13px); }
 .selection { padding: 14px 16px 14px 22px; border-bottom: 1px solid var(--line-soft); }
 .selection .empty { color: var(--ink-2); line-height: 1.6; }
 .sel-head { display: flex; align-items: center; justify-content: space-between; }
