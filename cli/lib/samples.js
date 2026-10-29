@@ -9,8 +9,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { N, RATE, env, mtof } from './dsp.js';
+import { cacheDir } from './brand.js';
 
-export const packDir = () => process.env.OM_SAMPLES || join(homedir(), '.cache', 'huashu-motion', 'samples');
+export const packDir = () => process.env.OM_SAMPLES || join(cacheDir(), 'samples');
 
 let pack;
 export function loadPack() {

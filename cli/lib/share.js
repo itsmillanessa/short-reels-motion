@@ -1,4 +1,4 @@
-// om share — after the render, the things a person needs to post the film: a GIF small enough for a README, X or a
+// srm share — after the render, the things a person needs to post the film: a GIF small enough for a README, X or a
 // chat (≤ 10 MB: the opening plus the end frame with its signature), and share.md with where each file goes, a slot for
 // the post the agent writes in the user's language, the line that says where the film came from, and a README snippet.
 // Nothing is uploaded or posted: the user decides where it goes.
@@ -84,13 +84,13 @@ export function share(project, { from = 0, to = null, video = null } = {}) {
 <!-- agent: write 2–3 sentences in the user's language: what the film is about and one concrete detail of how it was made
 (the one-line request, a note given in the studio, the music it composed). Keep the last line as it is. -->
 
-Made with huashu-motion · ${REPO_URL} #huashumotion
+Made with Short Reels Motion · ${REPO_URL} #shortreelsmotion
 
 ## README 头图 · README header
 
 \`\`\`html
 <a href="${REPO_URL}"><img src="${rel(gif)}" alt="" width="100%"></a>
-<sub>Made with <a href="${REPO_URL}">huashu-motion</a></sub>
+<sub>Made with <a href="${REPO_URL}">Short Reels Motion</a></sub>
 \`\`\`
 `;
   const mdFile = join(dir, 'share.md');

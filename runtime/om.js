@@ -1,4 +1,4 @@
-// huashu-motion runtime — optional helpers a composition can include (copy to vendor/om.js).
+// Short Reels Motion runtime (from huashu-motion) — optional helpers a composition can include (copy to vendor/om.js).
 // Plain script, no build. Everything here stays deterministic: values come from time, never the clock.
 (function () {
   const OM = (window.OM = window.OM || {});
@@ -89,14 +89,14 @@
   let music = {};
   OM.sfx = function (name, at, opts) {
     const t = Number(at);
-    if (!(t >= 0)) throw new Error(`huashu-motion: OM.sfx('${name}') needs a time ≥ 0, got ${at}`);
+    if (!(t >= 0)) throw new Error(`short-reels-motion: OM.sfx('${name}') needs a time ≥ 0, got ${at}`);
     hits.push({ ...(opts || {}), name: String(name), at: t });
     return t;
   };
   OM.music = function (opts) { music = { ...music, ...(opts || {}) }; return OM; };
   OM.beat = function (n, bpm) {
     const b = Number(bpm || music.bpm);
-    if (!(b > 0)) throw new Error('huashu-motion: OM.beat needs a bpm — call OM.music({ bpm }) first');
+    if (!(b > 0)) throw new Error('short-reels-motion: OM.beat needs a bpm — call OM.music({ bpm }) first');
     return (Number(n) * 60) / b;
   };
   window.__om.sound = () => ({ hits: hits.slice(), music: { ...music } });
@@ -155,7 +155,7 @@
   OM.camera = function (world, opts) {
     const o = opts || {};
     const el = typeof world === 'string' ? document.querySelector(world) : world;
-    if (!el) throw new Error(`huashu-motion: OM.camera — no element ${world}`);
+    if (!el) throw new Error(`short-reels-motion: OM.camera — no element ${world}`);
     const root = document.querySelector('[data-composition-id]');
     const W = o.width || Number(root?.getAttribute('data-width')) || 1920;
     const H = o.height || Number(root?.getAttribute('data-height')) || 1080;
@@ -169,7 +169,7 @@
     // pose and the studio's preview scale cancel out.
     const box = (target) => {
       const t = typeof target === 'string' ? el.querySelector(target) || document.querySelector(target) : target;
-      if (!t) throw new Error(`huashu-motion: OM.camera — no element ${target}`);
+      if (!t) throw new Error(`short-reels-motion: OM.camera — no element ${target}`);
       const wr = el.getBoundingClientRect(), r = t.getBoundingClientRect();
       const k = wr.width / (el.offsetWidth || W);
       return { x: (r.left - wr.left) / k, y: (r.top - wr.top) / k, w: r.width / k, h: r.height / k };
@@ -235,7 +235,7 @@
     let world = null;
     if (!three) {
       world = typeof subject === 'string' ? document.querySelector(subject) : subject;
-      if (!world) throw new Error(`huashu-motion: OM.space — no element ${subject}`);
+      if (!world) throw new Error(`short-reels-motion: OM.space — no element ${subject}`);
       if (getComputedStyle(world).position === 'static') world.style.position = 'absolute';
       Object.assign(world.style, { left: '0px', top: '0px', width: W + 'px', height: H + 'px', transformOrigin: '0 0 0', transformStyle: 'preserve-3d' });
       world.parentElement.style.perspectiveOrigin = `${W / 2}px ${H / 2}px`;
@@ -251,7 +251,7 @@
     // positioned elements between it and the world (put transforms on positioned elements).
     const locate = (sel) => {
       const el = typeof sel === 'string' ? (world || document).querySelector(sel) || document.querySelector(sel) : sel;
-      if (!el) throw new Error(`huashu-motion: OM.space — no element ${sel}`);
+      if (!el) throw new Error(`short-reels-motion: OM.space — no element ${sel}`);
       let m = new DOMMatrix(), n = el;
       while (n && n !== world) {
         const cs = getComputedStyle(n);

@@ -10,6 +10,7 @@ import { dirname, extname, join, resolve } from 'node:path';
 import { OmError, readSource, sha, writeSource } from './project.js';
 import { fileURLToPath } from 'node:url';
 import { nextOutput } from './render.js';
+import { cacheDir } from './brand.js';
 
 const r3 = (x) => Math.round(x * 1000) / 1000;
 const sum = (xs) => xs.reduce((n, x) => n + x, 0);
@@ -491,9 +492,9 @@ function speechOf(file, duration, noise = '-35dB', min = 0.15) {
   return speechIntervals(parseSilences(r.stderr, duration), duration);
 }
 
-// Models live in ~/.cache/huashu-motion; files an earlier version downloaded (under ~/.cache/hyperframes) are used where
+// Models live in ~/.cache/short-reels-motion (or an existing ~/.cache/huashu-motion); files an earlier version downloaded (under ~/.cache/hyperframes) are used where
 // they are, so nobody downloads 800 MB twice.
-const CACHE = join(homedir(), '.cache', 'huashu-motion');
+const CACHE = cacheDir();
 const LEGACY = join(homedir(), '.cache', 'hyperframes');
 const firstFile = (...paths) => paths.find((p) => existsSync(p)) || null;
 
@@ -507,7 +508,7 @@ function download(url, file, log, what) {
   renameSync(part, file);
 }
 
-const KOKORO_SETUP = 'uv venv -p 3.12 ~/.cache/huashu-motion/tts-venv && uv pip install -p ~/.cache/huashu-motion/tts-venv/bin/python kokoro-onnx soundfile';
+const KOKORO_SETUP = `uv venv -p 3.12 ${CACHE}/tts-venv && uv pip install -p ${CACHE}/tts-venv/bin/python kokoro-onnx soundfile`;
 const KOKORO_FILES = 'https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/';
 const KOKORO_PY = join(dirname(fileURLToPath(import.meta.url)), 'kokoro.py');
 
@@ -516,7 +517,7 @@ class KokoroMissing extends OmError {}
 function kokoro(textFile, outFile, voice, speed, log = () => {}) {
   // Our documented Kokoro venv (short path on purpose: espeak-ng silently ignores long data paths).
   // (installs made before the rename to huashu-motion live under the old name; a venv can't be moved)
-  const python = firstFile(...['huashu-motion', 'open-motion'].map((d) => join(homedir(), '.cache', d, 'tts-venv', 'bin', 'python')));
+  const python = firstFile(...['short-reels-motion', 'huashu-motion', 'open-motion'].map((d) => join(homedir(), '.cache', d, 'tts-venv', 'bin', 'python')));
   if (!python) throw new KokoroMissing(`Kokoro TTS is not set up. One-time setup:\n  ${KOKORO_SETUP}`);
   const model = firstFile(join(CACHE, 'tts', 'kokoro-v1.0.onnx'), join(LEGACY, 'tts', 'models', 'kokoro-v1.0.onnx')) || join(CACHE, 'tts', 'kokoro-v1.0.onnx');
   const voices = firstFile(join(CACHE, 'tts', 'voices-v1.0.bin'), join(LEGACY, 'tts', 'voices', 'voices-v1.0.bin')) || join(CACHE, 'tts', 'voices-v1.0.bin');

@@ -1,18 +1,18 @@
 <!doctype html>
-<html lang="zh-CN" data-composition-variables='[
-  {"id":"kicker","type":"string","label":"眉题","default":"HUASHU-MOTION"},
-  {"id":"title","type":"string","label":"标题","default":"一句话，变成会动的画面"},
-  {"id":"subtitle","type":"string","label":"副标题","default":"对着画面指一下，就能改"},
-  {"id":"stat","type":"number","label":"数字","default":100,"min":0,"max":9999,"step":1},
-  {"id":"statLabel","type":"string","label":"数字说明","default":"% 由代码生成，随时可改"},
-  {"id":"accent","type":"color","label":"强调色","default":"#d9480f"},
-  {"id":"paper","type":"color","label":"底色","default":"#f3eee4"},
-  {"id":"ink","type":"color","label":"文字色","default":"#1d1b18"},
-  {"id":"endHold","type":"number","label":"结尾停留（秒）","default":1.6,"min":0,"max":10,"step":0.1,"group":"节奏"}
+<html lang="es-MX" data-composition-variables='[
+  {"id":"kicker","type":"string","label":"Antetítulo","default":"HUASHU-MOTION"},
+  {"id":"title","type":"string","label":"Título","default":"Una frase, convertida en imagen en movimiento"},
+  {"id":"subtitle","type":"string","label":"Subtítulo","default":"Señala el cuadro y cámbialo"},
+  {"id":"stat","type":"number","label":"Número","default":100,"min":0,"max":9999,"step":1},
+  {"id":"statLabel","type":"string","label":"Texto del número","default":"% generado con código, editable cuando quieras"},
+  {"id":"accent","type":"color","label":"Color de acento","default":"#d9480f"},
+  {"id":"paper","type":"color","label":"Color de fondo","default":"#f3eee4"},
+  {"id":"ink","type":"color","label":"Color del texto","default":"#1d1b18"},
+  {"id":"endHold","type":"number","label":"Permanencia final (s)","default":1.6,"min":0,"max":10,"step":0.1,"group":"Ritmo"}
 ]'>
 <head>
 <meta charset="utf-8">
-<title>huashu-motion · blank</title>
+<title>Short Reels Motion · blank</title>
 <script src="vendor/gsap.min.js"></script>
 <style id="om-fonts">
 @font-face { font-family: "Noto Sans SC"; src: url("assets/fonts/NotoSansSC-500.woff") format("woff"); font-weight: 500; font-style: normal; }
@@ -40,7 +40,7 @@
 </head>
 <body>
 <!--
-  huashu-motion contract (all optional, all plain HTML + GSAP):
+  Short Reels Motion contract (all optional, all plain HTML + GSAP):
   1. Editable values are composition variables on <html>. The studio inspector edits their defaults.
   2. data-om-id names things people can point at; comments arrive with the id under the pointer.
   3. Timeline labels "scene:<id>" become the studio's scene strip.
@@ -53,15 +53,15 @@
     <div class="kicker" data-om-id="kicker" data-var-text="kicker">HUASHU-MOTION</div>
     <h1 class="title" data-om-id="title" data-om-var="title"></h1>
     <div class="rule" data-om-id="rule"></div>
-    <div class="subtitle" data-om-id="subtitle" data-var-text="subtitle">对着画面指一下，就能改</div>
+    <div class="subtitle" data-om-id="subtitle" data-var-text="subtitle">Señala el cuadro y cámbialo</div>
   </section>
 
   <section id="s-stat" class="stat" data-om-id="stat">
     <span class="num" id="num">0</span>
-    <span class="lbl" data-var-text="statLabel">% 由代码生成，随时可改</span>
+    <span class="lbl" data-var-text="statLabel">% generado con código, editable cuando quieras</span>
   </section>
 
-  <section id="s-end" class="end" data-om-id="end"><span>made with <b>huashu-motion</b></span></section>
+  <section id="s-end" class="end" data-om-id="end"><span><b>@tu_usuario</b></span></section>
 </div>
 
 <script>

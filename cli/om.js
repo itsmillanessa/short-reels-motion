@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// om — the huashu-motion command line. Agents and people use the same commands.
+// srm (also om) — the Short Reels Motion command line, built on huashu-motion (MIT). Agents and people use the same commands.
 import { spawn, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -12,7 +12,8 @@ import { render } from './lib/render.js';
 const PKG = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const VERSION = JSON.parse(readFileSync(join(PKG, 'package.json'), 'utf8')).version;
 
-const HELP = `huashu-motion ${VERSION} — motion graphics made by your coding agent, edited by pointing at the frame.
+const HELP = `Short Reels Motion ${VERSION} — shorts, reels and TikToks made by your coding agent, edited by pointing at the frame.
+(srm and om are the same command; built on huashu-motion by Huashu, MIT)
 
   om grab <url|folder> [dir]   the product's real material into <dir>/materials/: page screenshots, logo, images, its colours and type (a URL), or the project's own screenshots, icons, media and stylesheet colours (a folder)
   om new <dir> [--template t]   start a project (om templates lists them)
@@ -47,7 +48,7 @@ const HELP = `huashu-motion ${VERSION} — motion graphics made by your coding a
   om export html [dir] [--out folder] [--title …] [--desc …]   share page (player, Remix prompt, source.zip) for any static host
   om doctor                     check Node, FFmpeg and the renderer
 
-Docs: skills/huashu-motion/SKILL.md`;
+Docs: skills/short-reels-motion/SKILL.md`;
 
 function parse(argv) {
   const flags = {}, pos = [];
@@ -137,7 +138,7 @@ async function main() {
     case 'demo': {
       const src = join(PKG, 'examples', 'showcase');
       if (!existsSync(src)) throw new OmError('this build has no showcase yet — try `om new my-film`');
-      const dir = copyTemplate(src, pos[0] || 'huashu-motion-demo');
+      const dir = copyTemplate(src, pos[0] || 'short-reels-motion-demo');
       process.stdout.write(`copied the showcase to ${dir}\n`);
       return studio(dir, flags);
     }

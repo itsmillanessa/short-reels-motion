@@ -1,6 +1,10 @@
 {
-  "title": "Blank",
-  "summary": "Title, a big number and an end card. The smallest project that follows the whole contract — start here for anything custom.",
-  "best_for": ["anything custom", "kinetic titles", "a starting point"],
+  "title": "En blanco",
+  "summary": "Título, un número grande y una tarjeta final. El proyecto más pequeño que cumple todo el contrato; empieza aquí para cualquier cosa a medida.",
+  "best_for": [
+    "cualquier cosa a medida",
+    "títulos cinéticos",
+    "un punto de partida"
+  ],
   "aspect": "16:9"
 }

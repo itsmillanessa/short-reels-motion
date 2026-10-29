@@ -1,9 +1,9 @@
-// huashu-motion engine — the page side of rendering. The renderer injects this file before the
+// Short Reels Motion engine (built on huashu-motion, MIT) — the page side of rendering. The renderer injects this file before the
 // composition's own scripts run (Page.addScriptToEvaluateOnNewDocument); the composition never
 // references it; the studio and exported pages inject it the same way. One engine serves rendering,
 // screenshots and the preview (window.__omConfig.video === 'live', driven by runtime/om-player.js).
 //
-// What it provides, from the composition contract (skills/huashu-motion/references/contract.md):
+// What it provides, from the composition contract (skills/short-reels-motion/references/contract.md):
 //   window.__timelines           registry of paused GSAP timelines (created here if missing)
 //   OM.vars()                    the variables — defaults from <html data-composition-variables>, overridden by
 //                                window.__omVariables, typed as declared (window.__hyperframes.getVariables(): older alias)
@@ -173,19 +173,20 @@
   }
 
   // ---------- signature ----------
-  // "Made with huashu-motion" in a corner for the last SIG_SHOW seconds, so a film that travels says where it came from.
+  // "Made with Short Reels Motion" in a corner for the last SIG_SHOW seconds. Off unless the film asks for it: a creator's
+  // short carries their own handle at the end, not the tool's. data-om-signature="on" (or a corner name) turns it on.
   // It is part of the picture everywhere the engine runs (render, still, check, studio, share page), drawn in the film's
   // own typeface and text colour, in the first corner where it covers no text or picture. A pure function of t and the
-  // page at t, like everything else. Off with data-om-signature="off" on <html> or the root; a corner name pins it
+  // page at t, like everything else. On with data-om-signature="on" on <html> or the root; a corner name pins it
   // (bottom-right, bottom-left, top-right, top-left). Never on an overlay render or a film shorter than SIG_MIN seconds.
   const SIG_SHOW = 1.2, SIG_FADE = 0.3, SIG_MIN = 4, SIG_ALPHA = 0.78;
   const CORNERS = ['bottom-right', 'bottom-left', 'top-right', 'top-left'];
   let sig = null, sigCorner = null;
   function signatureSetting() {
     const r = root();
-    const v = ((r && r.getAttribute('data-om-signature')) || document.documentElement.getAttribute('data-om-signature') || 'auto').trim().toLowerCase();
+    const v = ((r && r.getAttribute('data-om-signature')) || document.documentElement.getAttribute('data-om-signature') || 'off').trim().toLowerCase();
     if (cfg.transparent) return { on: false, why: 'overlay render' };
-    if (/^(off|none|false|no|0)$/.test(v)) return { on: false, why: 'data-om-signature="off"' };
+    if (/^(off|none|false|no|0)$/.test(v)) return { on: false, why: v === 'off' ? 'off by default (data-om-signature="on" adds it)' : `data-om-signature="${v}"` };
     if (!r) return { on: false, why: 'not a composition' };
     const d = duration();
     if (d < SIG_MIN) return { on: false, why: `shorter than ${SIG_MIN}s` };
@@ -270,7 +271,7 @@
       sig = document.createElement('div');
       sig.id = 'om-signature';
       sig.setAttribute('aria-hidden', 'true');
-      sig.innerHTML = 'Made with <b>huashu-motion</b>';
+      sig.innerHTML = 'Made with <b>Short Reels Motion</b>';
       document.body.appendChild(sig);
     }
     const rs = getComputedStyle(r);

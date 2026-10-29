@@ -1,53 +1,53 @@
 <!doctype html>
-<html lang="zh-CN" data-composition-variables='[
-  {"id":"talk","type":"string","label":"口播视频（工程内路径，如 assets/talk.mp4；留空显示占位提示）","default":"","group":"口播"},
-  {"id":"transparent","type":"boolean","label":"只导出包装层（隐藏口播视频，透明底）","default":false,"group":"口播"},
-  {"id":"videoFit","type":"enum","label":"视频填充","default":"cover","options":[{"value":"cover","label":"铺满（裁切）"},{"value":"contain","label":"完整（留边）"}],"group":"口播"},
-  {"id":"focusX","type":"number","label":"裁切焦点 X（%）","default":50,"min":0,"max":100,"step":1,"group":"口播"},
-  {"id":"focusY","type":"number","label":"裁切焦点 Y（%）","default":35,"min":0,"max":100,"step":1,"group":"口播"},
-  {"id":"backdrop","type":"color","label":"留边底色","default":"#14120f","group":"口播"},
-  {"id":"length","type":"number","label":"片长（秒，没有 om-cues 时用）","default":12,"min":1,"max":3600,"step":0.1,"group":"口播"},
+<html lang="es-MX" data-composition-variables='[
+  {"id":"talk","type":"string","label":"Video hablado (ruta dentro del proyecto, p. ej. assets/talk.mp4; vacío = muestra la guía de marcador)","default":"","group":"Narración"},
+  {"id":"transparent","type":"boolean","label":"Exportar solo la capa gráfica (oculta el video, fondo transparente)","default":false,"group":"Narración"},
+  {"id":"videoFit","type":"enum","label":"Ajuste del video","default":"cover","options":[{"value":"cover","label":"Llenar (recortar)"},{"value":"contain","label":"Completo (con bordes)"}],"group":"Narración"},
+  {"id":"focusX","type":"number","label":"Foco del recorte X (%)","default":50,"min":0,"max":100,"step":1,"group":"Narración"},
+  {"id":"focusY","type":"number","label":"Foco del recorte Y (%)","default":35,"min":0,"max":100,"step":1,"group":"Narración"},
+  {"id":"backdrop","type":"color","label":"Color de los bordes","default":"#14120f","group":"Narración"},
+  {"id":"length","type":"number","label":"Duración (s; se usa cuando no hay om-cues)","default":12,"min":1,"max":3600,"step":0.1,"group":"Narración"},
 
-  {"id":"subjectX","type":"number","label":"人物中心 X（0–1，画面比例）","default":0.5,"min":0,"max":1,"step":0.01,"group":"避让"},
-  {"id":"subjectW","type":"number","label":"人物宽度（0–1）","default":0.36,"min":0,"max":1,"step":0.01,"group":"避让"},
-  {"id":"subjectTop","type":"number","label":"头顶 Y（0–1；竖屏头顶上方够空时，花字放在头顶上方）","default":0.12,"min":0,"max":1,"step":0.01,"group":"避让"},
-  {"id":"subjectBottom","type":"number","label":"脸的下沿 Y（0–1；否则花字放在脸下方）","default":0.36,"min":0,"max":1,"step":0.01,"group":"避让"},
-  {"id":"cardBottom","type":"number","label":"卡片底边 Y（0–1；0 = 自动：横屏 0.84，竖屏 0.74，下面留给字幕）","default":0,"min":0,"max":1,"step":0.01,"group":"避让"},
-  {"id":"side","type":"enum","label":"卡片放哪边（横屏）","default":"auto","options":[{"value":"auto","label":"自动避开人物"},{"value":"left","label":"左"},{"value":"right","label":"右"}],"group":"避让"},
+  {"id":"subjectX","type":"number","label":"Centro de la persona X (0–1, fracción del cuadro)","default":0.5,"min":0,"max":1,"step":0.01,"group":"Evitar al orador"},
+  {"id":"subjectW","type":"number","label":"Ancho de la persona (0–1)","default":0.36,"min":0,"max":1,"step":0.01,"group":"Evitar al orador"},
+  {"id":"subjectTop","type":"number","label":"Parte alta de la cabeza Y (0–1; en vertical, si hay espacio sobre la cabeza, el rótulo va arriba)","default":0.12,"min":0,"max":1,"step":0.01,"group":"Evitar al orador"},
+  {"id":"subjectBottom","type":"number","label":"Borde inferior de la cara Y (0–1; si no, el rótulo va bajo la cara)","default":0.36,"min":0,"max":1,"step":0.01,"group":"Evitar al orador"},
+  {"id":"cardBottom","type":"number","label":"Borde inferior de las tarjetas Y (0–1; 0 = automático: horizontal 0.84, vertical 0.74, abajo queda libre para subtítulos)","default":0,"min":0,"max":1,"step":0.01,"group":"Evitar al orador"},
+  {"id":"side","type":"enum","label":"Lado de las tarjetas (horizontal)","default":"auto","options":[{"value":"auto","label":"Automático, evita a la persona"},{"value":"left","label":"Izquierda"},{"value":"right","label":"Derecha"}],"group":"Evitar al orador"},
 
-  {"id":"name","type":"string","label":"名牌 · 姓名（留空不出）","default":"林一","group":"名牌"},
-  {"id":"role","type":"string","label":"名牌 · 身份","default":"独立开发者 · 用 AI 写了 20 款产品","group":"名牌"},
-  {"id":"nameTag","type":"string","label":"名牌 · 小标","default":"主讲","group":"名牌"},
-  {"id":"nameCue","type":"string","label":"名牌 · 锚定词（说到它时出现）","default":"","group":"名牌"},
-  {"id":"nameAt","type":"number","label":"名牌 · 兜底时刻（秒）","default":0.6,"min":0,"max":3600,"step":0.1,"group":"名牌"},
-  {"id":"nameHold","type":"number","label":"名牌 · 停留（秒）","default":3.4,"min":0.5,"max":60,"step":0.1,"group":"名牌"},
+  {"id":"name","type":"string","label":"Placa · nombre (vacío = no aparece)","default":"Lin Yi","group":"Placa"},
+  {"id":"role","type":"string","label":"Placa · rol","default":"Desarrollador independiente · 20 productos hechos con IA","group":"Placa"},
+  {"id":"nameTag","type":"string","label":"Placa · etiqueta","default":"Presenta","group":"Placa"},
+  {"id":"nameCue","type":"string","label":"Placa · palabra ancla (aparece cuando se dice)","default":"","group":"Placa"},
+  {"id":"nameAt","type":"number","label":"Placa · momento de respaldo (s)","default":0.6,"min":0,"max":3600,"step":0.1,"group":"Placa"},
+  {"id":"nameHold","type":"number","label":"Placa · permanencia (s)","default":3.4,"min":0.5,"max":60,"step":0.1,"group":"Placa"},
 
-  {"id":"stats","type":"string","label":"数字卡（JSON：value/prefix/suffix/label/cue/at/hold）","default":"[{\"value\":20,\"suffix\":\"+\",\"label\":\"款产品，全部用 AI 写成\",\"cue\":\"二十\",\"at\":4.2}]","group":"数字卡"},
-  {"id":"statTint","type":"color","label":"数字卡底色","default":"#f6dccb","group":"数字卡"},
+  {"id":"stats","type":"string","label":"Tarjetas numéricas (JSON:value/prefix/suffix/label/cue/at/hold)","default":"[{\"value\":20,\"suffix\":\"+\",\"label\":\"productos, todos hechos con IA\",\"cue\":\"veinte\",\"at\":4.2}]","group":"Tarjeta numérica"},
+  {"id":"statTint","type":"color","label":"Tarjeta numérica · fondo","default":"#f6dccb","group":"Tarjeta numérica"},
 
-  {"id":"keywords","type":"string","label":"花字（JSON：text/cue/at/hold）","default":"[{\"text\":\"一行代码没写\",\"cue\":\"代码\",\"at\":7.4}]","group":"花字"},
-  {"id":"highlight","type":"color","label":"花字底色","default":"#ffd24a","group":"花字"},
+  {"id":"keywords","type":"string","label":"Rótulos (JSON:text/cue/at/hold)","default":"[{\"text\":\"Sin escribir una sola línea de código\",\"cue\":\"código\",\"at\":7.4}]","group":"Rótulo"},
+  {"id":"highlight","type":"color","label":"Rótulo · fondo","default":"#ffd24a","group":"Rótulo"},
 
-  {"id":"chapter","type":"string","label":"章节标题（留空不出）","default":"先想清楚，再让 AI 写","group":"章节"},
-  {"id":"chapterNo","type":"string","label":"章节编号","default":"PART 01","group":"章节"},
-  {"id":"chapterCue","type":"string","label":"章节 · 锚定词","default":"","group":"章节"},
-  {"id":"chapterAt","type":"number","label":"章节 · 兜底时刻（秒）","default":9.6,"min":0,"max":3600,"step":0.1,"group":"章节"},
-  {"id":"chapterHold","type":"number","label":"章节 · 停留（秒）","default":2.4,"min":0.5,"max":60,"step":0.1,"group":"章节"},
+  {"id":"chapter","type":"string","label":"Capítulo · título (vacío = no aparece)","default":"Piénsalo primero, luego deja que la IA escriba","group":"Capítulo"},
+  {"id":"chapterNo","type":"string","label":"Capítulo · número","default":"PART 01","group":"Capítulo"},
+  {"id":"chapterCue","type":"string","label":"Capítulo · palabra ancla","default":"","group":"Capítulo"},
+  {"id":"chapterAt","type":"number","label":"Capítulo · momento de respaldo (s)","default":9.6,"min":0,"max":3600,"step":0.1,"group":"Capítulo"},
+  {"id":"chapterHold","type":"number","label":"Capítulo · permanencia (s)","default":2.4,"min":0.5,"max":60,"step":0.1,"group":"Capítulo"},
 
-  {"id":"corner","type":"string","label":"角标（留空不出）","default":"AI 编程实录","group":"角标"},
-  {"id":"cornerPos","type":"enum","label":"角标位置","default":"auto","options":[{"value":"auto","label":"自动"},{"value":"tl","label":"左上"},{"value":"tr","label":"右上"}],"group":"角标"},
-  {"id":"cornerAt","type":"number","label":"角标出现（秒）","default":0.3,"min":0,"max":3600,"step":0.1,"group":"角标"},
+  {"id":"corner","type":"string","label":"Marca de esquina (vacío = no aparece)","default":"Programando con IA","group":"Marca de esquina"},
+  {"id":"cornerPos","type":"enum","label":"Marca de esquina · posición","default":"auto","options":[{"value":"auto","label":"Automática"},{"value":"tl","label":"Arriba izquierda"},{"value":"tr","label":"Arriba derecha"}],"group":"Marca de esquina"},
+  {"id":"cornerAt","type":"number","label":"Marca de esquina · aparece en (s)","default":0.3,"min":0,"max":3600,"step":0.1,"group":"Marca de esquina"},
 
-  {"id":"accent","type":"color","label":"强调色","default":"#d9653b","group":"配色"},
-  {"id":"ink","type":"color","label":"文字色","default":"#17140f","group":"配色"},
-  {"id":"card","type":"color","label":"名牌底色","default":"#ffffff","group":"配色"},
+  {"id":"accent","type":"color","label":"Color de acento","default":"#d9653b","group":"Colores"},
+  {"id":"ink","type":"color","label":"Color del texto","default":"#17140f","group":"Colores"},
+  {"id":"card","type":"color","label":"Placa · fondo","default":"#ffffff","group":"Colores"},
 
-  {"id":"lead","type":"number","label":"提前量（秒；动作在说到词时落定）","default":0.25,"min":0,"max":2,"step":0.05,"group":"节奏"},
-  {"id":"hold","type":"number","label":"数字卡/花字默认停留（秒）","default":2.8,"min":0.5,"max":30,"step":0.1,"group":"节奏"}
+  {"id":"lead","type":"number","label":"Anticipación (s; el movimiento se asienta cuando se dice la palabra)","default":0.25,"min":0,"max":2,"step":0.05,"group":"Ritmo"},
+  {"id":"hold","type":"number","label":"Tarjeta numérica/Rótulo · permanencia por defecto (s)","default":2.8,"min":0.5,"max":30,"step":0.1,"group":"Ritmo"}
 ]'>
 <head>
 <meta charset="utf-8">
-<title>huashu-motion · talking head</title>
+<title>Short Reels Motion · talking head</title>
 <script src="vendor/gsap.min.js"></script>
 <script src="vendor/om.js"></script>
 <style id="om-fonts">
@@ -68,14 +68,14 @@
 
   .placeholder { position: absolute; inset: calc(48 * var(--u)); border: calc(3 * var(--u)) dashed #ffffff40; border-radius: calc(28 * var(--u));
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(18 * var(--u)); color: #ffffffcc; text-align: center; }
-  .portrait .placeholder { justify-content: flex-start; padding-top: calc(170 * var(--u)); }   /* above the 花字 band */
+  .portrait .placeholder { justify-content: flex-start; padding-top: calc(170 * var(--u)); }   /* above the Rótulo band */
   .placeholder b { font-weight: 900; font-size: calc(56 * var(--u)); color: #fff; }
   .placeholder code { font: 500 calc(26 * var(--u))/1.5 Inter, monospace; color: #ffffff99; }
   .placeholder span { font-size: calc(26 * var(--u)); }
 
   #pack { position: absolute; inset: 0; pointer-events: none; }
   #pack > * { position: absolute; opacity: 0; }
-  .ln { display: block; overflow: hidden; padding: .04em 0 .16em; margin: -.04em 0 -.16em; }
+  .ln { display: block; overflow: hidden; padding: .22em 0 .22em; margin: -.22em 0 -.22em; }   /* máscara más alta: las letras latinas con acento o descendentes no se recortan */
   .ln > .in { display: inline-block; }
 
   /* Name plate: white card, big name, quiet role line. */
@@ -95,7 +95,7 @@
   .st .num .pre { font-size: .5em; font-weight: 700; margin-right: .06em; vertical-align: .62em; }
   .st .lbl { font-size: calc(28 * var(--u)); line-height: 1.3; margin-top: calc(10 * var(--u)); }
 
-  /* Keyword 花字: highlighter block brushed in under heavy type, a little off-axis. */
+  /* Keyword Rótulo: highlighter block brushed in under heavy type, a little off-axis. */
   .kw { transform-origin: 0 50%; display: flex; flex-direction: column; align-items: flex-start; gap: .1em; }
   .kw .row { position: relative; }
   .kw .blk { position: absolute; left: -.22em; right: -.22em; top: .2em; bottom: .02em; background: var(--highlight); border-radius: .08em; transform-origin: 0 50%; }
@@ -119,19 +119,19 @@
 </head>
 <body>
 <!--
-  Talking-head package (口播包装). The picture is the `talk` variable (assets/talk.mp4), muted: the sound
+  Talking-head package (Paquete para video hablado). The picture is the `talk` variable (assets/talk.mp4), muted: the sound
   is <audio id="om-voice">, which `om voice . --audio assets/talk.mp4` extracts from the same file. The package
-  layer — name plate, number cards, keyword 花字, chapter card, corner badge — sits on top.
+  layer — name plate, number cards, keyword Rótulo, chapter card, corner badge — sits on top.
   Timing: each element lands on a spoken word from <script id="om-cues"> (om voice . --audio assets/talk.mp4);
   without cues, or when the word is not found, the seconds variable is used.
   Layout reads the root size, so the same file works at 1920x1080 and 1080x1920 (om fork --size).
-  Workflow and the transparent overlay export: skills/huashu-motion/references/talking-head.md
+  Workflow and the transparent overlay export: skills/short-reels-motion/references/talking-head.md
 -->
 <div id="film" data-composition-id="film" data-width="1920" data-height="1080">
   <div class="placeholder" data-om-id="placeholder">
-    <b>口播视频放这里</b>
-    <code>cp 你的口播.mp4 assets/talk.mp4<br>om set talk=assets/talk.mp4 .<br>om voice . --audio assets/talk.mp4</code>
-    <span>声音和每个词的时间都从这段视频里来</span>
+    <b>Tu video hablado va aquí</b>
+    <code>cp tu-video.mp4 assets/talk.mp4<br>om set talk=assets/talk.mp4 .<br>om voice . --audio assets/talk.mp4</code>
+    <span>El sonido y el tiempo de cada palabra salen de ese video</span>
   </div>
   <video id="talk" class="clip" data-om-id="talk" data-var-src="talk" data-start="0" data-track-index="0" muted playsinline></video>
 
@@ -139,17 +139,17 @@
     <div class="np" data-om-id="nameplate">
       <div class="bar"></div>
       <div>
-        <span class="ln tag"><span class="in" data-var-text="nameTag">主讲</span></span>
-        <span class="ln nm"><span class="in" data-var-text="name">林一</span></span>
-        <span class="ln rl"><span class="in" data-var-text="role">独立开发者 · 用 AI 写了 20 款产品</span></span>
+        <span class="ln tag"><span class="in" data-var-text="nameTag">Presenta</span></span>
+        <span class="ln nm"><span class="in" data-var-text="name">Lin Yi</span></span>
+        <span class="ln rl"><span class="in" data-var-text="role">Desarrollador independiente · 20 productos hechos con IA</span></span>
       </div>
     </div>
     <div class="cp" data-om-id="chapter">
       <div class="no" data-var-text="chapterNo">PART 01</div>
       <div class="rule"></div>
-      <span class="ln tt"><span class="in" data-var-text="chapter">先想清楚，再让 AI 写</span></span>
+      <span class="ln tt"><span class="in" data-var-text="chapter">Piénsalo primero, luego deja que la IA escriba</span></span>
     </div>
-    <div class="cn" data-om-id="corner"><i></i><span data-var-text="corner">AI 编程实录</span></div>
+    <div class="cn" data-om-id="corner"><i></i><span data-var-text="corner">Programando con IA</span></div>
   </div>
 </div>
 
@@ -181,7 +181,7 @@
   const flat = [], owner = [];
   words.forEach((w, i) => norm(w.word).forEach((c) => { flat.push(c); owner.push(i); }));
   // Where a spoken phrase starts. OM.cue finds a term inside one word; the phrase search below also
-  // finds terms that the word splitter cut in two (付费|榜) and starts mid-word when the term does.
+  // finds terms that the word splitter cut in two (de pago|ranking) and starts mid-word when the term does.
   function phrase(term, nth = 1) {
     const t = norm(term);
     if (!t.length) return null;
@@ -217,7 +217,7 @@
   const kwSide = (other === 'left' ? freeL : freeR) >= 0.22 ? other : cardSide;
   const sideRoom = (side) => Math.max(380 * u, (side === 'left' ? freeL : freeR) * W - mx - 24 * u);
   const cardBottom = (1 - (Number(V.cardBottom) > 0 ? Number(V.cardBottom) : portrait ? 0.74 : 0.84)) * H;
-  // Portrait 花字: above the head when there is headroom under the status bar, else below the face.
+  // Portrait Rótulo: above the head when there is headroom under the status bar, else below the face.
   const headTop = Number(V.subjectTop) * H, kwAbove = headTop - 0.12 * H >= 150 * u;
   const kwPortrait = kwAbove ? { bottom: H - headTop + 12 * u } : { top: Math.max(Number(V.subjectBottom) * H + 40 * u, 0.26 * H) };
   const SLOT = portrait

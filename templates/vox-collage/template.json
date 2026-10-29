@@ -1,10 +1,10 @@
 {
-  "title": "Vox-style collage desk (y2)",
-  "summary": "Screenshots and note cards are taped onto a paper desk and tied with red string; a highlighter and a red circle mark the line that matters while the camera follows.",
+  "title": "Escritorio collage estilo Vox (y2)",
+  "summary": "Capturas y fichas pegadas con cinta sobre un escritorio de papel y unidas con hilo rojo; un marcador y un círculo rojo señalan la línea que importa mientras la cámara sigue.",
   "best_for": [
-    "arguments built on real screenshots, documents or clippings",
-    "news and history explainers",
-    "look at this line / this number"
+    "argumentos construidos sobre capturas, documentos o recortes reales",
+    "explicaciones de noticias e historia",
+    "«mira esta línea / este número»"
   ],
   "aspect": "16:9",
   "grammar": "y2_vox",

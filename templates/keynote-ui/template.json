@@ -1,11 +1,11 @@
 {
-  "title": "Keynote launch UI (t2)",
-  "summary": "Dark glowing backdrop, one thing per screen: a title floats out of blur, glass cards spring in, a screenshot gets a highlight box, a big number counts up.",
+  "title": "Interfaz de lanzamiento tipo keynote (t2)",
+  "summary": "Fondo oscuro con brillos, una cosa por pantalla: un título emerge del desenfoque, tarjetas de vidrio entran con rebote, una captura recibe un recuadro resaltado, un número grande cuenta hacia arriba.",
   "best_for": [
-    "product and feature launches",
-    "release notes and specs",
-    "a tutorial step with a screenshot",
-    "one headline number"
+    "lanzamientos de producto y de funciones",
+    "notas de versión y especificaciones",
+    "un paso de tutorial con captura",
+    "una sola cifra protagonista"
   ],
   "aspect": "16:9",
   "grammar": "t2_keynote_ui",

@@ -1,28 +1,28 @@
 <!doctype html>
-<html lang="zh-CN" data-composition-variables='[
-  {"id":"titleWord","type":"string","label":"开场主词","default":"AI 写代码","group":"开场"},
-  {"id":"titleSub","type":"string","label":"开场辅句","default":"的三个阶段","group":"开场"},
-  {"id":"item1","type":"string","label":"第 1 项主词（清空就少一页）","default":"补全","group":"第 1 项"},
-  {"id":"item1Sub","type":"string","label":"第 1 项辅句","default":"它补完下一行","group":"第 1 项"},
-  {"id":"item1Key","type":"string","label":"第 1 项辅句里要着色的词","default":"下一行","group":"第 1 项"},
-  {"id":"item1Label","type":"string","label":"第 1 项左上小标签","default":"阶段 01","group":"第 1 项"},
-  {"id":"item2","type":"string","label":"第 2 项主词（清空就少一页）","default":"对话","group":"第 2 项"},
-  {"id":"item2Sub","type":"string","label":"第 2 项辅句","default":"一句话换一整段","group":"第 2 项"},
-  {"id":"item2Key","type":"string","label":"第 2 项辅句里要着色的词","default":"一整段","group":"第 2 项"},
-  {"id":"item2Label","type":"string","label":"第 2 项左上小标签","default":"阶段 02","group":"第 2 项"},
-  {"id":"item3","type":"string","label":"第 3 项主词（清空就少一页）","default":"代理","group":"第 3 项"},
-  {"id":"item3Sub","type":"string","label":"第 3 项辅句","default":"你只说要什么","group":"第 3 项"},
-  {"id":"item3Key","type":"string","label":"第 3 项辅句里要着色的词","default":"要什么","group":"第 3 项"},
-  {"id":"item3Label","type":"string","label":"第 3 项左上小标签","default":"阶段 03","group":"第 3 项"},
-  {"id":"highlightWord","type":"string","label":"最后荧光笔刷的词（要在最后一页的主词里；清空不刷）","default":"代理","group":"收尾"},
-  {"id":"palette","type":"string","label":"配色（JSON：[[底色, 字色], …] 按页轮换）","default":"[[\"#FFD23F\",\"#111111\"],[\"#FF5A36\",\"#FFFFFF\"],[\"#14213D\",\"#FFD23F\"],[\"#F4EFE6\",\"#111111\"]]","group":"收尾"},
-  {"id":"duration","type":"number","label":"片长（秒；有配音时至少到配音结束）","default":8,"min":2,"max":120,"step":0.5,"group":"节奏"},
-  {"id":"pace","type":"number","label":"节奏倍率（1 原速；主词 2 字至少停 0.5 秒、辅句至少 1 秒）","default":1,"min":0.5,"max":4,"step":0.1,"group":"节奏"}
+<html lang="es-MX" data-composition-variables='[
+  {"id":"titleWord","type":"string","label":"Apertura · palabra principal","default":"Programar con IA","group":"apertura"},
+  {"id":"titleSub","type":"string","label":"Apertura · frase secundaria","default":"en tres etapas","group":"apertura"},
+  {"id":"item1","type":"string","label":"Elemento 1 · palabra principal (vacío = una página menos)","default":"completar","group":"Elemento 1"},
+  {"id":"item1Sub","type":"string","label":"Elemento 1 · frase secundaria","default":"Él completa la siguiente línea","group":"Elemento 1"},
+  {"id":"item1Key","type":"string","label":"Elemento 1 · palabra a colorear en la frase","default":"la siguiente línea","group":"Elemento 1"},
+  {"id":"item1Label","type":"string","label":"Elemento 1 · etiqueta superior izquierda","default":"Etapa 01","group":"Elemento 1"},
+  {"id":"item2","type":"string","label":"Elemento 2 · palabra principal (vacío = una página menos)","default":"conversar","group":"Elemento 2"},
+  {"id":"item2Sub","type":"string","label":"Elemento 2 · frase secundaria","default":"Una frase a cambio de un bloque entero","group":"Elemento 2"},
+  {"id":"item2Key","type":"string","label":"Elemento 2 · palabra a colorear en la frase","default":"un bloque entero","group":"Elemento 2"},
+  {"id":"item2Label","type":"string","label":"Elemento 2 · etiqueta superior izquierda","default":"Etapa 02","group":"Elemento 2"},
+  {"id":"item3","type":"string","label":"Elemento 3 · palabra principal (vacío = una página menos)","default":"agente","group":"Elemento 3"},
+  {"id":"item3Sub","type":"string","label":"Elemento 3 · frase secundaria","default":"Tú solo dices qué quieres","group":"Elemento 3"},
+  {"id":"item3Key","type":"string","label":"Elemento 3 · palabra a colorear en la frase","default":"qué quieres","group":"Elemento 3"},
+  {"id":"item3Label","type":"string","label":"Elemento 3 · etiqueta superior izquierda","default":"Etapa 03","group":"Elemento 3"},
+  {"id":"highlightWord","type":"string","label":"Palabra que el marcador resalta al final (debe estar en la palabra principal de la última página; vacío = sin resaltado)","default":"agente","group":"cierre"},
+  {"id":"palette","type":"string","label":"Paleta (JSON:[[Color de fondo, Color del texto], …] rota por página)","default":"[[\"#FFD23F\",\"#111111\"],[\"#FF5A36\",\"#FFFFFF\"],[\"#14213D\",\"#FFD23F\"],[\"#F4EFE6\",\"#111111\"]]","group":"cierre"},
+  {"id":"duration","type":"number","label":"Duración (s; con narración, al menos hasta que termine)","default":8,"min":2,"max":120,"step":0.5,"group":"Ritmo"},
+  {"id":"pace","type":"number","label":"Factor de ritmo (1 = normal; una palabra principal de 2 caracteres se queda al menos 0.5 s, la frase secundaria al menos 1 s)","default":1,"min":0.5,"max":4,"step":0.1,"group":"Ritmo"}
 ]'>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=1920, height=1080">
-<title>huashu-motion · 动态文字</title>
+<title>Short Reels Motion · Tipografía cinética</title>
 <script src="vendor/gsap.min.js"></script>
 <script src="vendor/om.js"></script>
 <style>
@@ -33,11 +33,11 @@
 </head>
 <body>
 <!--
-  动态文字（y5）：字就是演员。一个 cue 一页，主词在 at 这一帧砸进来，辅句从槽里升起；换页是色带擦除（at 前 0.3 秒开始）。
-  两个以上的 point 页＝一份清单：画进度轨和背景巨型序号。
+  Tipografía cinética (y5): las palabras son los actores. Un cue por página, la palabra principal entra de golpe en el cuadro at, la frase secundaria sube desde su ranura; el cambio de página es un barrido de color (empieza 0.3 s antes de at).
+  más de dos páginas point = una lista: se dibuja la pista de progreso y el número gigante de fondo.
   The whole film is the spec below, drawn on the canvas by vendor/clip (grammar: y5_kinetic_type, from huashu-art-motion, MIT).
   - Variables fill the "{{…}}" placeholders. Timing and structure live in the cues: `at` is the frame the word slams in;
-    `word` anchors it to that word of the narration once `om voice` has run (skills/huashu-motion/references/grammars.md).
+    `word` anchors it to that word of the narration once `om voice` has run (skills/short-reels-motion/references/grammars.md).
   - Pickable regions (0-based page index, title page = 0): word-<i> · sub-<i> · label-<i> · track · marker.
   - Scenes: title → item-1 → item-2 → item-3 → highlight-1.
 -->
@@ -55,10 +55,10 @@
   "data": { "palette": "{{palette|json}}" },
   "cues": [
     { "at": 0.0, "kind": "title", "text": "{{titleWord}}", "sub": "{{titleSub}}" },
-    { "at": 1.9, "kind": "point", "word": "补全", "text": "{{item1}}", "sub": "{{item1Sub}}", "data": { "label": "{{item1Label}}", "key": "{{item1Key}}" } },
-    { "at": 3.6, "kind": "point", "word": "对话", "text": "{{item2}}", "sub": "{{item2Sub}}", "data": { "label": "{{item2Label}}", "key": "{{item2Key}}" } },
-    { "at": 5.3, "kind": "point", "word": "代理", "text": "{{item3}}", "sub": "{{item3Sub}}", "data": { "label": "{{item3Label}}", "key": "{{item3Key}}" } },
-    { "at": 6.4, "kind": "highlight", "word": "要什么", "data": { "word": "{{highlightWord}}" } }
+    { "at": 1.9, "kind": "point", "word": "completar", "text": "{{item1}}", "sub": "{{item1Sub}}", "data": { "label": "{{item1Label}}", "key": "{{item1Key}}" } },
+    { "at": 3.6, "kind": "point", "word": "conversar", "text": "{{item2}}", "sub": "{{item2Sub}}", "data": { "label": "{{item2Label}}", "key": "{{item2Key}}" } },
+    { "at": 5.3, "kind": "point", "word": "agente", "text": "{{item3}}", "sub": "{{item3Sub}}", "data": { "label": "{{item3Label}}", "key": "{{item3Key}}" } },
+    { "at": 6.4, "kind": "highlight", "word": "qué quieres", "data": { "word": "{{highlightWord}}" } }
   ]
 }
 </script>
@@ -84,7 +84,7 @@
     tl,
     apply(spec) {
       const pal = spec.data.palette;
-      if (pal !== undefined && !(Array.isArray(pal) && pal.length && pal.every((p) => Array.isArray(p) && p.length === 2))) { CLIP.problem('palette 要写成 [[底色, 字色], …]'); delete spec.data.palette; }
+      if (pal !== undefined && !(Array.isArray(pal) && pal.length && pal.every((p) => Array.isArray(p) && p.length === 2))) { CLIP.problem('palette debe escribirse como [[Color de fondo, Color del texto], …]'); delete spec.data.palette; }
       if (pal === undefined) delete spec.data.palette;
       spec.cues = spec.cues.filter((q) => q.kind !== 'highlight' || String(q.data.word || '').trim());
       return spec;

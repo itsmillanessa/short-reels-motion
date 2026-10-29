@@ -1,4 +1,4 @@
-// huashu-motion studio. One page, no build step: the om player shows the real composition,
+// Short Reels Motion studio (from huashu-motion). One page, no build step: the om player shows the real composition,
 // this file adds pointing, direct edits and the comment loop around it.
 import { LANGS, pickLang, saveLang, setLang, lang, t, applyI18n } from './i18n.js';
 import { PLATFORMS, isVertical, platformsOf, unionZones } from './safezones.js';
@@ -71,8 +71,8 @@ async function boot() {
   S.platforms = st.scan.platforms;
   try { S.safe = localStorage.getItem('srm.safe') !== '0' && isVertical(S.w, S.h); } catch { S.safe = isVertical(S.w, S.h); }
   $('#project-name').textContent = st.name;
-  document.title = `${st.name} · huashu-motion`;
-  $('#agent-cmd').textContent = 'om inbox --wait';
+  document.title = `${st.name} · Short Reels Motion`;
+  $('#agent-cmd').textContent = 'srm inbox --wait';
   layout();
   loadPlayer();
   renderVars(); renderComments(); renderStatus();

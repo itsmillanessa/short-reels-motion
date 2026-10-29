@@ -1,10 +1,10 @@
 {
-  "title": "Finance chart (t3)",
-  "summary": "Economist-style data chart: layout, then axes, then the data grows, then one annotation. Bars, line or K-line from a JSON series.",
+  "title": "Gráfica financiera (t3)",
+  "summary": "Gráfica de datos estilo The Economist: maqueta, luego ejes, luego crecen los datos, luego una sola anotación. Barras, línea o velas a partir de una serie JSON.",
   "best_for": [
-    "revenue, growth and share figures",
-    "a trend with one turning point",
-    "numbers viewers will screenshot and check"
+    "cifras de ingresos, crecimiento y participación",
+    "una tendencia con un punto de quiebre",
+    "números que la audiencia va a capturar y verificar"
   ],
   "aspect": "16:9",
   "grammar": "t3_finance_chart",

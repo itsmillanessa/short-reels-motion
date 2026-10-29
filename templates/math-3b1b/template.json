@@ -1,10 +1,10 @@
 {
-  "title": "3Blue1Brown-style explainer (t1)",
-  "summary": "Black board, one idea on screen at a time: a title is written, an equation transforms into the next, a curve morphs, points are written and one gets boxed.",
+  "title": "Explicación estilo 3Blue1Brown (t1)",
+  "summary": "Pizarrón negro, una idea en pantalla a la vez: se escribe un título, una ecuación se transforma en la siguiente, una curva muta, se escriben puntos y uno queda recuadrado.",
   "best_for": [
-    "how a mechanism turns into the next step",
-    "math, ML and algorithm explainers",
-    "formulas whose symbols match colours on screen"
+    "cómo un mecanismo lleva al siguiente paso",
+    "explicaciones de matemáticas, ML y algoritmos",
+    "fórmulas cuyos símbolos comparten color en pantalla"
   ],
   "aspect": "16:9",
   "grammar": "t1_3b1b",

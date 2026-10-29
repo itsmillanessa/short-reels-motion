@@ -1,11 +1,11 @@
 {
-  "title": "Whiteboard drawing (y3)",
-  "summary": "A marker writes each sentence as it is said, draws a doodle icon beside it, links icons with arrows, circles the key point and pulls back to show the whole board.",
+  "title": "Pizarrón a mano (y3)",
+  "summary": "Un marcador escribe cada frase mientras se dice, dibuja un icono garabateado al lado, une iconos con flechas, encierra el punto clave y se aleja para mostrar todo el pizarrón.",
   "best_for": [
-    "step-by-step reasoning",
-    "why does X happen",
-    "a chain of causes",
-    "lecture-style narration"
+    "razonamiento paso a paso",
+    "por qué pasa X",
+    "una cadena de causas",
+    "narración tipo clase"
   ],
   "aspect": "16:9",
   "grammar": "y3_whiteboard",

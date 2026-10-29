@@ -1,6 +1,6 @@
-# Materials — where every piece comes from
+# Materiales — de dónde sale cada pieza
 
-- `studio.jpg` — a screenshot of the huashu-motion studio (`om studio examples/showcase`), 1600×1000 at 2×.
-- `cursor.svg`, `comment.svg` — the studio's own select and comment tool icons (`studio/index.html`), in its ink and accent colours (`studio/studio.css`).
+- `studio.jpg` — una captura del studio de huashu-motion (`om studio examples/showcase`), 1600×1000 a 2×.
+- `cursor.svg`, `comment.svg` — los iconos de seleccionar y comentar del propio studio (`studio/index.html`), en sus colores de tinta y acento (`studio/studio.css`).
 
-Swap in your product's: a screenshot (or several), its logo as an SVG, its colours. Keep this list current (`materials.md` in a film).
+Cámbialos por los de tu producto: una captura (o varias), su logo en SVG, sus colores. Mantén esta lista al día (`materials.md` dentro de cada película).

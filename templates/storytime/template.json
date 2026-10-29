@@ -1,10 +1,10 @@
 {
-  "title": "Storytime character (y4)",
-  "summary": "A stick-bean character talks in a little room with speech bubbles, cuts to the computer screen for a punchline number, then a silent reaction close-up and a closing question mark.",
+  "title": "Personaje narrador (y4)",
+  "summary": "Un personaje frijol de trazo simple habla en un cuarto pequeño con globos de diálogo, corta a la pantalla de la computadora para un número remate, luego un primer plano de reacción en silencio y un signo de interrogación de cierre.",
   "best_for": [
-    "first-person stories and fails",
-    "a joke that needs a pause",
-    "I asked the AI and it... moments"
+    "historias en primera persona y fracasos",
+    "un chiste que necesita pausa",
+    "momentos de «le pedí a la IA y...»"
   ],
   "aspect": "16:9",
   "grammar": "y4_storytime",

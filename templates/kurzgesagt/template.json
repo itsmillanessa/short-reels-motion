@@ -1,11 +1,11 @@
 {
-  "title": "Kurzgesagt-style flat science (y1)",
-  "summary": "A glowing planet is the concept, each point a satellite node with a label; the camera zooms into one node and comes out inside it — what is inside.",
+  "title": "Divulgación plana estilo Kurzgesagt (y1)",
+  "summary": "Un planeta brillante es el concepto, cada punto un satélite con etiqueta; la cámara entra en un nodo y sale dentro de él: qué hay adentro.",
   "best_for": [
-    "what is inside X",
-    "systems and their parts",
-    "scale and levels",
-    "calm science narration"
+    "qué hay dentro de X",
+    "sistemas y sus partes",
+    "escala y niveles",
+    "narración científica tranquila"
   ],
   "aspect": "16:9",
   "grammar": "y1_kurzgesagt",

@@ -1,11 +1,11 @@
 {
-  "title": "Kinetic typography (y5)",
-  "summary": "Words are the actors: one page per beat, the key word slams in, a colour band wipes to the next page, a progress track counts the list and a highlighter hits the punch word.",
+  "title": "Tipografía cinética (y5)",
+  "summary": "Las palabras son los actores: una página por tiempo, la palabra clave entra de golpe, una banda de color barre hacia la siguiente página, una pista de progreso cuenta la lista y un marcador resalta la palabra remate.",
   "best_for": [
-    "lists and stages (3 reasons, 3 steps)",
-    "chapter cards and openers",
-    "a one-line takeaway",
-    "a single number"
+    "listas y etapas (3 razones, 3 pasos)",
+    "tarjetas de capítulo y aperturas",
+    "una conclusión de una línea",
+    "un solo número"
   ],
   "aspect": "16:9",
   "grammar": "y5_kinetic_type",

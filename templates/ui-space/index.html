@@ -1,19 +1,19 @@
 <!doctype html>
-<html lang="zh-CN" data-composition-variables='[
-  {"id":"screen","type":"string","label":"界面截图（真实界面，1600×1000 的 2 倍图）","default":"assets/studio.jpg"},
-  {"id":"comment","type":"string","label":"留言","default":"标题再大一点"},
-  {"id":"reply","type":"string","label":"Agent 回复","default":"已改：标题 96 → 132 px"},
-  {"id":"title","type":"string","label":"标题","default":"huashu-motion"},
-  {"id":"subtitle","type":"string","label":"副标题","default":"对着画面指一下，就能改"},
-  {"id":"paper","type":"color","label":"底色","default":"#f6f5f2"},
-  {"id":"ink","type":"color","label":"文字色","default":"#1d1b18"},
-  {"id":"accent","type":"color","label":"强调色","default":"#d9480f"},
-  {"id":"green","type":"color","label":"完成色","default":"#2f855a"},
-  {"id":"endHold","type":"number","label":"结尾停留（秒）","default":1.4,"min":0,"max":10,"step":0.1,"group":"节奏"}
+<html lang="es-MX" data-composition-variables='[
+  {"id":"screen","type":"string","label":"Captura de la interfaz (interfaz real,1600×1000 a 2x)","default":"assets/studio.jpg"},
+  {"id":"comment","type":"string","label":"Comentario","default":"El título un poco más grande"},
+  {"id":"reply","type":"string","label":"Agent Respuesta","default":"Hecho: título 96 → 132 px"},
+  {"id":"title","type":"string","label":"Título","default":"Short Reels Motion"},
+  {"id":"subtitle","type":"string","label":"Subtítulo","default":"Señala el cuadro y cámbialo"},
+  {"id":"paper","type":"color","label":"Color de fondo","default":"#f6f5f2"},
+  {"id":"ink","type":"color","label":"Color del texto","default":"#1d1b18"},
+  {"id":"accent","type":"color","label":"Color de acento","default":"#d9480f"},
+  {"id":"green","type":"color","label":"Color de hecho","default":"#2f855a"},
+  {"id":"endHold","type":"number","label":"Permanencia final (s)","default":1.4,"min":0,"max":10,"step":0.1,"group":"Ritmo"}
 ]'>
 <head>
 <meta charset="utf-8">
-<title>huashu-motion · ui-space</title>
+<title>Short Reels Motion · ui-space</title>
 <script src="vendor/gsap.min.js"></script>
 <script src="vendor/om.js"></script>
 <style id="om-fonts">
@@ -73,17 +73,17 @@
         <div class="ring" id="ring"></div>
         <div class="pin" id="pin" data-om-id="pin"></div>
         <div class="card" id="card" data-om-id="card">
-          <div class="who"><i></i>你 · 刚刚</div>
-          <div class="say" data-var-text="comment">标题再大一点</div>
-          <div class="done" id="done" data-om-id="done"><b>✓</b><span data-var-text="reply">已改：标题 96 → 132 px</span></div>
+          <div class="who"><i></i>Tú · ahora</div>
+          <div class="say" data-var-text="comment">El título un poco más grande</div>
+          <div class="done" id="done" data-om-id="done"><b>✓</b><span data-var-text="reply">Hecho: título 96 → 132 px</span></div>
         </div>
         <svg class="cursor" id="cursor" viewBox="0 0 24 24" data-om-id="cursor"><path fill="#1d1b18" stroke="#fff" stroke-width="1.2" stroke-linejoin="round" d="M5 3l14 8-6 1.5L10 19z"/></svg>
       </div>
     </div>
     <div class="type" data-om-id="type">
       <div class="bar"></div>
-      <h1 data-om-id="title" data-var-text="title">huashu-motion</h1>
-      <p data-om-id="subtitle" data-var-text="subtitle">对着画面指一下，就能改</p>
+      <h1 data-om-id="title" data-var-text="title">Short Reels Motion</h1>
+      <p data-om-id="subtitle" data-var-text="subtitle">Señala el cuadro y cámbialo</p>
     </div>
     <div id="endframe"></div>
   </div>

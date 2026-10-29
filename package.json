@@ -1,16 +1,53 @@
 {
-  "name": "huashu-motion",
-  "version": "0.3.1",
-  "description": "Make motion graphics with your own coding agent — point at the frame to change it. Open, local, with sound.",
+  "name": "short-reels-motion",
+  "version": "0.4.0",
+  "description": "Shorts, Reels and TikToks made by your coding agent: vertical-first motion graphics, narration synced word by word, each app's safe zones, and a studio where you point at the frame to change it. Built on huashu-motion (MIT).",
   "type": "module",
-  "bin": { "om": "cli/om.js", "huashu-motion": "cli/om.js" },
-  "engines": { "node": ">=22" },
-  "files": ["cli", "studio", "runtime", "templates", "fonts", "examples", "skills", "LICENSE", "THIRD_PARTY.md"],
-  "scripts": { "test": "node --import ./test/setup.mjs --test test/*.test.js" },
-  "keywords": ["motion-graphics", "animation", "agent-skill", "claude-code", "codex", "video", "gsap", "launch-video"],
-  "repository": { "type": "git", "url": "git+https://github.com/alchaincyf/huashu-motion.git" },
-  "homepage": "https://github.com/alchaincyf/huashu-motion#readme",
-  "bugs": "https://github.com/alchaincyf/huashu-motion/issues",
-  "author": "Huashu (https://github.com/alchaincyf)",
-  "license": "MIT"
+  "bin": {
+    "srm": "cli/om.js",
+    "short-reels-motion": "cli/om.js",
+    "om": "cli/om.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "cli",
+    "studio",
+    "runtime",
+    "templates",
+    "fonts",
+    "examples",
+    "skills",
+    "LICENSE",
+    "THIRD_PARTY.md",
+    "NOTICE.md"
+  ],
+  "scripts": {
+    "test": "node --import ./test/setup.mjs --test test/*.test.js"
+  },
+  "keywords": [
+    "shorts",
+    "reels",
+    "tiktok",
+    "youtube-shorts",
+    "vertical-video",
+    "motion-graphics",
+    "agent-skill",
+    "claude-code",
+    "codex",
+    "gsap",
+    "espanol"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/itsmillanessa/short-reels-motion.git"
+  },
+  "homepage": "https://github.com/itsmillanessa/short-reels-motion#readme",
+  "bugs": "https://github.com/itsmillanessa/short-reels-motion/issues",
+  "author": "Alexis Millán (https://github.com/itsmillanessa)",
+  "license": "MIT",
+  "contributors": [
+    "Huashu (https://github.com/alchaincyf) — original huashu-motion engine"
+  ]
 }

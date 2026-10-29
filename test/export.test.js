@@ -114,7 +114,7 @@ test('export writes every file, injects the runtime into the copy only, and zips
   assert.ok(page.includes('href="source.zip" download'));
   assert.ok(page.includes('--ar: 1080 / 1920'), 'aspect ratio comes from the composition');
   assert.ok(page.includes('Q3 &amp; more') && page.includes('one line'));
-  assert.ok(page.includes('npx huashu-motion demo'));
+  assert.ok(page.includes('npx short-reels-motion demo'));
   for (const [, code] of page.matchAll(/<script>([\s\S]*?)<\/script>/g)) new Function(code); // the inline scripts parse
 });
 

@@ -1,25 +1,25 @@
 <!doctype html>
-<html lang="zh-CN" data-composition-variables='[
-  {"id":"title","type":"string","label":"标题（先问后演）","default":"梯度下降：每一步都往坡下走","group":"文字"},
-  {"id":"eq1","type":"string","label":"公式 1（单个字母自动斜体）","default":"L(θ)","group":"公式"},
-  {"id":"eq2","type":"string","label":"公式 2（从公式 1 变形过来：同名符号移到新位置）","default":"θ ← θ − η∇L","group":"公式"},
-  {"id":"mathColors","type":"string","label":"符号配色（JSON：符号 → manim 色名或 #hex；颜色＝概念）","default":"{\"L\":\"BLUE_C\",\"θ\":\"YELLOW\",\"η\":\"GREEN_C\"}","group":"公式"},
-  {"id":"point1","type":"string","label":"要点 1（清空就不出现）","default":"算出当前位置的坡度 ∇L","group":"文字"},
-  {"id":"point2","type":"string","label":"要点 2（清空就不出现）","default":"沿反方向走一小步，步长是 η","group":"文字"},
-  {"id":"highlightIndex","type":"number","label":"最后框住第几条要点（从 0 数；-1 不框）","default":1,"min":-1,"max":9,"step":1,"group":"文字"},
-  {"id":"curve1Label","type":"string","label":"曲线 1 标签","default":"损失 L(θ)","group":"曲线"},
-  {"id":"curve1","type":"string","label":"曲线 1 数据（JSON：等距的 y 值数组）","default":"[9, 5.8, 3.4, 1.8, 1.0, 0.8, 1.0, 1.8, 3.4, 5.8, 9]","group":"曲线"},
-  {"id":"curve1Color","type":"color","label":"曲线 1 颜色","default":"#2dcff4","group":"曲线"},
-  {"id":"curve2Label","type":"string","label":"曲线 2 标签（从曲线 1 形变过来）","default":"训练中的损失","group":"曲线"},
-  {"id":"curve2","type":"string","label":"曲线 2 数据（JSON：等距的 y 值数组）","default":"[9, 6.2, 4.4, 3.2, 2.4, 1.9, 1.55, 1.3, 1.15, 1.05, 1.0]","group":"曲线"},
-  {"id":"curve2Color","type":"color","label":"曲线 2 颜色","default":"#2fddb2","group":"曲线"},
-  {"id":"duration","type":"number","label":"片长（秒；有配音时至少到配音结束）","default":10,"min":2,"max":120,"step":0.5,"group":"节奏"},
-  {"id":"pace","type":"number","label":"节奏倍率（1 原速；真片常用 2–3，3b1b 一个动画后要停约 1 秒）","default":1,"min":0.5,"max":4,"step":0.1,"group":"节奏"}
+<html lang="es-MX" data-composition-variables='[
+  {"id":"title","type":"string","label":"Título (primero pregunta, luego demuestra)","default":"Descenso de gradiente: cada paso baja la pendiente","group":"Texto"},
+  {"id":"eq1","type":"string","label":"Fórmula 1 (las letras sueltas van en cursiva solas)","default":"L(θ)","group":"Fórmula"},
+  {"id":"eq2","type":"string","label":"Fórmula 2 (se transforma desde la 1: los símbolos iguales se mueven a su nuevo sitio)","default":"θ ← θ − η∇L","group":"Fórmula"},
+  {"id":"mathColors","type":"string","label":"Colores de símbolos (JSON: símbolo → manim nombre de color o #hex; color = concepto)","default":"{\"L\":\"BLUE_C\",\"θ\":\"YELLOW\",\"η\":\"GREEN_C\"}","group":"Fórmula"},
+  {"id":"point1","type":"string","label":"Punto 1 (vacío = no aparece)","default":"Calcula la pendiente en el punto actual ∇L","group":"Texto"},
+  {"id":"point2","type":"string","label":"Punto 2 (vacío = no aparece)","default":"Da un paso corto en sentido contrario, de longitud η","group":"Texto"},
+  {"id":"highlightIndex","type":"number","label":"Punto a recuadrar al final (desde 0; -1 = ninguno)","default":1,"min":-1,"max":9,"step":1,"group":"Texto"},
+  {"id":"curve1Label","type":"string","label":"Curva 1 · etiqueta","default":"pérdida L(θ)","group":"Curva"},
+  {"id":"curve1","type":"string","label":"Curva 1 · datos (JSON: array de valores y equiespaciados)","default":"[9, 5.8, 3.4, 1.8, 1.0, 0.8, 1.0, 1.8, 3.4, 5.8, 9]","group":"Curva"},
+  {"id":"curve1Color","type":"color","label":"Curva 1 · color","default":"#2dcff4","group":"Curva"},
+  {"id":"curve2Label","type":"string","label":"Curva 2 · etiqueta (se transforma desde la curva 1)","default":"Pérdida durante el entrenamiento","group":"Curva"},
+  {"id":"curve2","type":"string","label":"Curva 2 · datos (JSON: array de valores y equiespaciados)","default":"[9, 6.2, 4.4, 3.2, 2.4, 1.9, 1.55, 1.3, 1.15, 1.05, 1.0]","group":"Curva"},
+  {"id":"curve2Color","type":"color","label":"Curva 2 · color","default":"#2fddb2","group":"Curva"},
+  {"id":"duration","type":"number","label":"Duración (s; con narración, al menos hasta que termine)","default":10,"min":2,"max":120,"step":0.5,"group":"Ritmo"},
+  {"id":"pace","type":"number","label":"Factor de ritmo (1 = normal; en películas reales se usa 2–3; 3b1b deja ~1 s tras cada animación)","default":1,"min":0.5,"max":4,"step":0.1,"group":"Ritmo"}
 ]'>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=1920, height=1080">
-<title>huashu-motion · 3b1b 式讲解</title>
+<title>Short Reels Motion · Explicación estilo 3b1b</title>
 <script src="vendor/gsap.min.js"></script>
 <script src="vendor/om.js"></script>
 <style>
@@ -30,10 +30,10 @@
 </head>
 <body>
 <!--
-  3Blue1Brown 式讲解（t1）：纯黑底，一次只放正在讲的那一个东西；字和公式都是 Write，上一个概念 Transform 成下一个。颜色＝概念名。
+  3Blue1Brown explicación (t1): fondo negro, una sola cosa en pantalla a la vez; texto y fórmulas se escriben (Write) y cada concepto se transforma (Transform) en el siguiente. Color = nombre del concepto.
   The whole film is the spec below, drawn on the canvas by vendor/clip (grammar: t1_3b1b, from huashu-art-motion, MIT).
   - Variables fill the "{{…}}" placeholders. Timing and structure live in the cues: `at` is the second the thing first
-    shows; `word` anchors it to that word of the narration once `om voice` has run (skills/huashu-motion/references/grammars.md).
+    shows; `word` anchors it to that word of the narration once `om voice` has run (skills/short-reels-motion/references/grammars.md).
   - An equation cue keeps hand-spaced `tokens` while its text equals `tokensFor`; edit the variable and the tokens are rebuilt
     from the text (single letters italic, words upright, the symbol colours from mathColors).
   - Pickable regions (0-based like the spec): title · equation · curve · point-<i>.
@@ -52,16 +52,16 @@
   "fps": 30,
   "cues": [
     { "at": 0.0, "kind": "title", "text": "{{title}}" },
-    { "at": 1.2, "kind": "equation", "word": "损失", "text": "{{eq1}}", "data": { "tokensFor": "L(θ)", "tokens": [
+    { "at": 1.2, "kind": "equation", "word": "pérdida", "text": "{{eq1}}", "data": { "tokensFor": "L(θ)", "tokens": [
       { "s": "L", "it": true, "col": "BLUE_C" }, { "s": "(", "gap": 4 }, { "s": "θ", "it": true, "col": "YELLOW", "gap": 4 }, { "s": ")" } ] } },
-    { "at": 2.0, "kind": "line", "word": "曲线", "text": "{{curve1Label}}", "data": { "values": "{{curve1|json}}", "color": "{{curve1Color}}" } },
-    { "at": 3.6, "kind": "equation", "word": "更新", "text": "{{eq2}}", "data": { "tokensFor": "θ ← θ − η∇L", "tokens": [
+    { "at": 2.0, "kind": "line", "word": "Curva", "text": "{{curve1Label}}", "data": { "values": "{{curve1|json}}", "color": "{{curve1Color}}" } },
+    { "at": 3.6, "kind": "equation", "word": "actualizar", "text": "{{eq2}}", "data": { "tokensFor": "θ ← θ − η∇L", "tokens": [
       { "s": "θ", "it": true, "col": "YELLOW" }, { "s": "←", "gap": 18 }, { "s": "θ", "it": true, "col": "YELLOW", "gap": 14 },
       { "s": "−", "gap": 14 }, { "s": "η", "it": true, "col": "GREEN_C", "gap": 8 }, { "s": "∇", "gap": 4 }, { "s": "L", "it": true, "col": "BLUE_C" } ] } },
-    { "at": 4.6, "kind": "point", "word": "坡度", "text": "{{point1}}" },
-    { "at": 5.8, "kind": "point", "word": "反方向", "text": "{{point2}}" },
-    { "at": 7.0, "kind": "line", "word": "训练", "text": "{{curve2Label}}", "data": { "values": "{{curve2|json}}", "color": "{{curve2Color}}" } },
-    { "at": 8.4, "kind": "highlight", "word": "一小步", "data": { "index": "{{highlightIndex}}" } }
+    { "at": 4.6, "kind": "point", "word": "pendiente", "text": "{{point1}}" },
+    { "at": 5.8, "kind": "point", "word": "sentido contrario", "text": "{{point2}}" },
+    { "at": 7.0, "kind": "line", "word": "entrenamiento", "text": "{{curve2Label}}", "data": { "values": "{{curve2|json}}", "color": "{{curve2Color}}" } },
+    { "at": 8.4, "kind": "highlight", "word": "un paso pequeño", "data": { "index": "{{highlightIndex}}" } }
   ]
 }
 </script>
@@ -101,10 +101,10 @@
           if (!q.data || q.text !== q.data.tokensFor) q.data = { tokens: mathTokens(q.text, colors) };
           else q.data.tokens = q.data.tokens.map((tk) => (colors[tk.s] ? { ...tk, col: colors[tk.s] } : tk));
         }
-        if (q.kind === 'line' && !Array.isArray(q.data.values)) CLIP.problem('曲线数据要是数字数组，如 [9, 5, 3, 2]');
+        if (q.kind === 'line' && !Array.isArray(q.data.values)) CLIP.problem('los datos de la curva deben ser un array de números, p. ej. [9, 5, 3, 2]');
       }
       const points = spec.cues.filter((q) => q.kind === 'point').length;
-      for (const q of spec.cues) if (q.kind === 'highlight' && q.data.index >= points) CLIP.problem(`highlightIndex ${q.data.index} 超出了要点数（${points} 条）`);
+      for (const q of spec.cues) if (q.kind === 'highlight' && q.data.index >= points) CLIP.problem(`highlightIndex ${q.data.index} supera el número de puntos (${points} puntos)`);
       spec.cues = spec.cues.filter((q) => !(q.kind === 'equation' && !String(q.text || '').trim()) && !(q.kind === 'highlight' && !(q.data.index >= 0 && q.data.index < points)));
       return spec;
     },

@@ -1,24 +1,24 @@
 <!doctype html>
-<html lang="zh-CN" data-composition-variables='[
-  {"id":"line1","type":"string","label":"第 1 句口播原文（定张嘴时长 ≈6.5 字/秒；气泡短句清空时气泡显示它）","default":"我第一次让 AI 帮我写代码，","group":"第 1 句"},
-  {"id":"bubble1","type":"string","label":"第 1 句气泡里的短句（≤12 字；清空就显示口播原文）","default":"AI，帮我写个网站！","group":"第 1 句"},
-  {"id":"line1Pose","type":"enum","label":"第 1 句姿势","default":"talk","options":[{"value":"talk","label":"说话"},{"value":"point","label":"指"},{"value":"shrug","label":"摊手"},{"value":"type","label":"打字"}],"group":"第 1 句"},
-  {"id":"typed","type":"string","label":"插入镜头：他在电脑上打的那一行","default":"帮我做个网站","group":"电脑屏幕"},
-  {"id":"bigText","type":"string","label":"插入镜头：砸出来的大字","default":"3000行","group":"电脑屏幕"},
-  {"id":"count","type":"number","label":"右上角计数器停在","default":3000,"min":0,"step":1,"group":"电脑屏幕"},
-  {"id":"unit","type":"string","label":"计数器单位","default":"行","group":"电脑屏幕"},
-  {"id":"app","type":"string","label":"窗口标题","default":"AI助手","group":"电脑屏幕"},
-  {"id":"hit","type":"number","label":"大字砸出的时刻（秒；有配音时跟 hitWord 走）","default":3.5,"min":0,"max":120,"step":0.05,"group":"电脑屏幕"},
-  {"id":"line2","type":"string","label":"第 2 句（反应特写之后说）","default":"这些……贴哪儿？","group":"第 2 句"},
-  {"id":"line2Pose","type":"enum","label":"第 2 句姿势","default":"point","options":[{"value":"talk","label":"说话"},{"value":"point","label":"指"},{"value":"shrug","label":"摊手"},{"value":"type","label":"打字"}],"group":"第 2 句"},
-  {"id":"mark","type":"string","label":"最后弹出的符号（清空不弹）","default":"？","group":"第 2 句"},
-  {"id":"duration","type":"number","label":"片长（秒；有配音时至少到配音结束；包袱后至少留 0.9 秒）","default":8.5,"min":2,"max":120,"step":0.5,"group":"节奏"},
-  {"id":"pace","type":"number","label":"节奏倍率（1 原速）","default":1,"min":0.5,"max":4,"step":0.1,"group":"节奏"}
+<html lang="es-MX" data-composition-variables='[
+  {"id":"line1","type":"string","label":"Frase 1 · texto hablado (fija cuánto mueve la boca ≈6.5 caracteres/s; si la frase corta de la burbuja está vacía, la burbuja muestra este texto)","default":"La primera vez que le pedí a la IA que programara por mí,","group":"Frase 1"},
+  {"id":"bubble1","type":"string","label":"Frase 1 · texto corto de la burbuja (≤12 caracteres; vacío = muestra el texto hablado)","default":"IA, ¡hazme un sitio web!","group":"Frase 1"},
+  {"id":"line1Pose","type":"enum","label":"Frase 1 · pose","default":"talk","options":[{"value":"talk","label":"habla"},{"value":"point","label":"señala"},{"value":"shrug","label":"encoge los hombros"},{"value":"type","label":"teclea"}],"group":"Frase 1"},
+  {"id":"typed","type":"string","label":"Plano insertado: la línea que escribió en la computadora","default":"hazme un sitio web","group":"pantalla de la computadora"},
+  {"id":"bigText","type":"string","label":"Plano insertado: el texto gigante que cae","default":"3000 líneas","group":"pantalla de la computadora"},
+  {"id":"count","type":"number","label":"El contador de arriba a la derecha se detiene en","default":3000,"min":0,"step":1,"group":"pantalla de la computadora"},
+  {"id":"unit","type":"string","label":"Unidad del contador","default":" líneas","group":"pantalla de la computadora"},
+  {"id":"app","type":"string","label":"Título de la ventana","default":"Asistente IA","group":"pantalla de la computadora"},
+  {"id":"hit","type":"number","label":"Momento en que cae el texto gigante (s; con narración sigue a hitWord)","default":3.5,"min":0,"max":120,"step":0.05,"group":"pantalla de la computadora"},
+  {"id":"line2","type":"string","label":"Frase 2 (se dice tras el primer plano de reacción)","default":"Y esto… ¿dónde lo pego?","group":"Frase 2"},
+  {"id":"line2Pose","type":"enum","label":"Frase 2 · pose","default":"point","options":[{"value":"talk","label":"habla"},{"value":"point","label":"señala"},{"value":"shrug","label":"encoge los hombros"},{"value":"type","label":"teclea"}],"group":"Frase 2"},
+  {"id":"mark","type":"string","label":"Símbolo final (vacío = no aparece)","default":"?","group":"Frase 2"},
+  {"id":"duration","type":"number","label":"Duración (s; con narración al menos hasta que termine; tras el remate deja al menos 0.9 s)","default":8.5,"min":2,"max":120,"step":0.5,"group":"Ritmo"},
+  {"id":"pace","type":"number","label":"Factor de ritmo (1 = normal)","default":1,"min":0.5,"max":4,"step":0.1,"group":"Ritmo"}
 ]'>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=1920, height=1080">
-<title>huashu-motion · 故事型角色</title>
+<title>Short Reels Motion · Personaje narrador</title>
 <script src="vendor/gsap.min.js"></script>
 <script src="vendor/om.js"></script>
 <style>
@@ -29,11 +29,11 @@
 </head>
 <body>
 <!--
-  故事型简笔角色（y4，storytime）：豆子角色在小房间里对镜头讲，姿势快切后定住；笑点靠插入镜头（电脑屏幕＋砸出的大字）和一言不发的反应特写。
+  Personaje de trazo simple (y4, storytime): un personaje frijol habla a cámara en un cuarto pequeño; cambia de pose con cortes rápidos y se queda quieto; el chiste llega con planos insertados (la pantalla de la computadora+el texto gigante que cae) y un primer plano de reacción en silencio.
   The whole film is the spec below, drawn on the canvas by vendor/clip (grammar: y4_storytime, from huashu-art-motion, MIT).
   - Variables fill the "{{…}}" placeholders. Timing and structure live in the cues: `at` is the second the thing first
     shows; `word` anchors it to that word of the narration once `om voice` has run; the insert's slam follows data.hitWord
-    (skills/huashu-motion/references/grammars.md). The reaction close-up needs silence: anchor it after the punch word.
+    (skills/short-reels-motion/references/grammars.md). The reaction close-up needs silence: anchor it after the punch word.
   - Pickable regions (0-based like the spec): character · computer · line-<i> (bubble of the i-th point) · mark ·
     screen · typed · big-text · counter.
   - Scenes: talk-1 → screen-1 → react-1 → talk-2 → punchline-1.
@@ -50,11 +50,11 @@
   "pace": "{{pace}}",
   "fps": 30,
   "cues": [
-    { "at": 0.1, "kind": "point", "word": "第一次", "text": "{{line1}}", "sub": "{{bubble1}}", "data": { "pose": "{{line1Pose}}" } },
-    { "at": 2.0, "kind": "insert", "word": "网站", "text": "{{bigText}}", "sub": "{{typed}}", "data": { "hit": "{{hit}}", "hitWord": "3000", "count": "{{count}}", "unit": "{{unit}}", "app": "{{app}}" } },
+    { "at": 0.1, "kind": "point", "word": "primera vez", "text": "{{line1}}", "sub": "{{bubble1}}", "data": { "pose": "{{line1Pose}}" } },
+    { "at": 2.0, "kind": "insert", "word": "sitio web", "text": "{{bigText}}", "sub": "{{typed}}", "data": { "hit": "{{hit}}", "hitWord": "3000", "count": "{{count}}", "unit": "{{unit}}", "app": "{{app}}" } },
     { "at": 4.6, "kind": "react", "word": "3000", "edge": "end", "offset": 0.6 },
-    { "at": 5.9, "kind": "point", "word": "这些", "text": "{{line2}}", "data": { "pose": "{{line2Pose}}" } },
-    { "at": 7.2, "kind": "highlight", "word": "贴哪儿", "edge": "end", "data": { "mark": "{{mark}}" } }
+    { "at": 5.9, "kind": "point", "word": "esto", "text": "{{line2}}", "data": { "pose": "{{line2Pose}}" } },
+    { "at": 7.2, "kind": "highlight", "word": "dónde lo pego", "edge": "end", "data": { "mark": "{{mark}}" } }
   ]
 }
 </script>
