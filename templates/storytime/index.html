@@ -12,6 +12,14 @@
   {"id":"line2","type":"string","label":"Frase 2 (se dice tras el primer plano de reacción)","default":"Y esto… ¿dónde lo pego?","group":"Frase 2"},
   {"id":"line2Pose","type":"enum","label":"Frase 2 · pose","default":"point","options":[{"value":"talk","label":"habla"},{"value":"point","label":"señala"},{"value":"shrug","label":"encoge los hombros"},{"value":"type","label":"teclea"}],"group":"Frase 2"},
   {"id":"mark","type":"string","label":"Símbolo final (vacío = no aparece)","default":"?","group":"Frase 2"},
+  {"id":"skin","type":"color","label":"Personaje · tono de piel","default":"#E8B48E","group":"Personaje"},
+  {"id":"hair","type":"enum","label":"Personaje · pelo","default":"short","options":[{"value":"short","label":"corto"},{"value":"long","label":"largo"},{"value":"curly","label":"rizado"},{"value":"bun","label":"chongo"},{"value":"buzz","label":"rapado"},{"value":"none","label":"sin pelo"}],"group":"Personaje"},
+  {"id":"hairColor","type":"color","label":"Personaje · color del pelo","default":"#2B2119","group":"Personaje"},
+  {"id":"top","type":"enum","label":"Personaje · prenda de arriba","default":"hoodie","options":[{"value":"hoodie","label":"sudadera"},{"value":"tee","label":"playera"},{"value":"shirt","label":"camisa"}],"group":"Personaje"},
+  {"id":"topColor","type":"color","label":"Personaje · color de la prenda","default":"#2F6FED","group":"Personaje"},
+  {"id":"bottomColor","type":"color","label":"Personaje · color del pantalón","default":"#252A36","group":"Personaje"},
+  {"id":"accessory","type":"enum","label":"Personaje · accesorio","default":"none","options":[{"value":"none","label":"ninguno"},{"value":"glasses","label":"lentes"},{"value":"headphones","label":"audífonos"},{"value":"cap","label":"gorra"}],"group":"Personaje"},
+  {"id":"accessoryColor","type":"color","label":"Personaje · color del accesorio","default":"#1B1B1F","group":"Personaje"},
   {"id":"duration","type":"number","label":"Duración (s; con narración al menos hasta que termine; tras el remate deja al menos 0.9 s)","default":8.5,"min":2,"max":120,"step":0.5,"group":"Ritmo"},
   {"id":"pace","type":"number","label":"Factor de ritmo (1 = normal)","default":1,"min":0.5,"max":4,"step":0.1,"group":"Ritmo"}
 ]'>
@@ -29,7 +37,7 @@
 </head>
 <body>
 <!--
-  Personaje de trazo simple (y4, storytime): un personaje frijol habla a cámara en un cuarto pequeño; cambia de pose con cortes rápidos y se queda quieto; el chiste llega con planos insertados (la pantalla de la computadora+el texto gigante que cae) y un primer plano de reacción en silencio.
+  Personaje de trazo simple (y4, storytime): un personaje configurable (grupo «Personaje»: piel, pelo, ropa, accesorio) habla a cámara en un cuarto pequeño; cambia de pose con cortes rápidos y se queda quieto; el chiste llega con planos insertados (la pantalla de la computadora+el texto gigante que cae) y un primer plano de reacción en silencio.
   The whole film is the spec below, drawn on the canvas by vendor/clip (grammar: y4_storytime, from huashu-art-motion, MIT).
   - Variables fill the "{{…}}" placeholders. Timing and structure live in the cues: `at` is the second the thing first
     shows; `word` anchors it to that word of the narration once `om voice` has run; the insert's slam follows data.hitWord
@@ -49,6 +57,7 @@
   "duration": "{{duration}}",
   "pace": "{{pace}}",
   "fps": 30,
+  "data": { "character": { "skin": "{{skin}}", "hair": "{{hair}}", "hairColor": "{{hairColor}}", "top": "{{top}}", "topColor": "{{topColor}}", "bottomColor": "{{bottomColor}}", "accessory": "{{accessory}}", "accessoryColor": "{{accessoryColor}}" } },
   "cues": [
     { "at": 0.1, "kind": "point", "word": "primera vez", "text": "{{line1}}", "sub": "{{bubble1}}", "data": { "pose": "{{line1Pose}}" } },
     { "at": 2.0, "kind": "insert", "word": "sitio web", "text": "{{bigText}}", "sub": "{{typed}}", "data": { "hit": "{{hit}}", "hitWord": "3000", "count": "{{count}}", "unit": "{{unit}}", "app": "{{app}}" } },

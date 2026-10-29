@@ -1,4 +1,4 @@
-// 片段 · 故事型简笔角色（y4，storytime）：豆子花叔在小房间里对镜头讲，姿势快切（0.1s）后定住，笑点靠反应特写和插入镜头。
+// 片段 · 故事型简笔角色（y4，storytime）：叙述者（TOON.person，外观由 data.character 配置）在小房间里对镜头讲，姿势快切（0.1s）后定住，笑点靠反应特写和插入镜头。
 // cues：point | title（他说一句：at 这一帧气泡弹出、开始张嘴；嘴按 text 的字数说 ≈6.5 字/秒；data.pose 指定姿势 talk/point/shrug/type）
 //         气泡里写什么：有 sub 就写 sub（≤12 字的短句最好），没有才写 text——口播原文交给管线的字幕，气泡别和字幕重复一遍
 //       highlight（「？」「！」弹出＋摊手担心：data.mark 默认「？」）
@@ -58,7 +58,7 @@ return {
       const st = TOON.poseAt(keys, ts), say = says.find(s => t >= s.q.at - 1e-6 && t < s.end);
       const mouth = window.VO_ENV ? TOON.mouth(t) : say ? [1, 2, 1, 0, 2, 1][Math.floor(MO.step(t - say.q.at + 1e-6, 12) * 12) % 6] : 0;
       const blink = TOON.blinkAt(ts, [0.9, 3.4, 6.1, 8.8, 11.5]), br = 1 + 0.012 * Math.sin(2 * Math.PI * t / 1.6);
-      const info = TOON.bean(g, { x: L.cx, y: L.fy, s: L.R, pose: st.pose, expr: inReact ? 'blank' : st.expr, mouth: inReact ? 0 : mouth, blink, squash: st.squash * br, bob: mouth * L.R * 0.015, tilt: st.expr === 'worry' ? -0.06 : 0.02 * Math.sin(t), lw: inReact ? 12 * u : undefined });
+      const info = TOON.person(g, { character: ctx.data && ctx.data.character, x: L.cx, y: L.fy, s: L.R, pose: st.pose, expr: inReact ? 'blank' : st.expr, mouth: inReact ? 0 : mouth, blink, squash: st.squash * br, bob: mouth * L.R * 0.015, tilt: st.expr === 'worry' ? -0.06 : 0.02 * Math.sin(t), lw: inReact ? 12 * u : undefined });
       CLIP.mark(g, 'character', L.cx - L.R * 1.2, info.head[1] - L.R * 1.05, L.R * 2.4, L.fy - info.head[1] + L.R * 1.05);
       if (!ctx.alpha) desk(g, t, ctx);
       if (inReact) { const sw = clamp((t - shot.q.at - 0.3) / 0.9); if (sw > 0) TOON.sweat(g, L.cx + L.R * 0.88, info.head[1] - L.R * 0.1, 30 * u, MO.expoOut(sw) * 0.6 + sw * 0.4); }
@@ -170,13 +170,7 @@ function insert(c, t, ctx, shot) {
   });
   // 前景：他的后脑勺（过肩），随呼吸起伏，砸出时往后一缩
   const hx = W * (ctx.portrait ? 0.2 : 0.17), hy = by + bh - 60 * u + 6 * u * Math.sin(2 * Math.PI * t / 1.6) + (slam > 0 ? -MO.settle(slam, 18 * u, 4, 7) : 0), s = (ctx.portrait ? 0.8 : 0.75) * u;
-  c.save(); c.translate(hx, hy); c.scale(s, s); c.lineWidth = 7; c.strokeStyle = '#1B1B1F'; c.lineJoin = 'round';
-  c.fillStyle = '#FFFFFF'; c.beginPath(); c.ellipse(0, 300, 330, 200, 0, Math.PI, 0); c.fill(); c.stroke();
-  c.fillStyle = '#FFE2CC'; c.beginPath(); c.roundRect(-70, 120, 140, 110, 30); c.fill(); c.stroke();
-  for (const k of [-1, 1]) { c.beginPath(); c.ellipse(k * 196, 40, 34, 52, k * 0.2, 0, 7); c.fill(); c.stroke(); }
-  c.fillStyle = '#1B1B1F'; c.beginPath(); c.ellipse(0, 40, 190, 175, 0, 0, 7); c.fill();
-  c.fillStyle = '#FFFFFF'; c.beginPath(); c.moveTo(-180, -20); c.bezierCurveTo(-180, -290, 180, -290, 180, -20); c.closePath(); c.fill(); c.stroke();
-  c.beginPath(); c.ellipse(0, -12, 280, 64, 0, 0, 7); c.fill(); c.stroke();
+  c.save(); c.translate(hx, hy); c.scale(s, s); TOON.personBack(c, ctx.data && ctx.data.character);
   c.restore();
 }
 })();

@@ -1,4 +1,4 @@
-// 卡通与扁平插画 TOON：Kurzgesagt 式「无描边、双色分面」、柔光；故事型（storytime）极简角色「豆子花叔」、
+// 卡通与扁平插画 TOON：Kurzgesagt 式「无描边、双色分面」、柔光；故事型（storytime）的叙述者（TOON.person，Short Reels Motion 自绘、可配置）、
 // pose-to-pose 换姿势（快切＋身体挤压回弹）、眨眼时刻表、口型读口播包络（一拍二）、汗滴、漫画符号。
 (() => {
 const W = 1920, H = 1080;
@@ -26,109 +26,182 @@ TOON.ellipse = (x, y, rx, ry, a = 0) => { const p = new Path2D(); p.ellipse(x, y
 TOON.env = t => { const E = window.VO_ENV; if (!E) return 0; const i = Math.round(t * E.fps); return i < 0 || i >= E.a.length ? 0 : E.a[i]; };
 TOON.mouth = (t, fps = 12) => { const v = TOON.env(MO.step(t, fps)); return v < 0.06 ? 0 : v < 0.22 ? 1 : 2; };   // 0 闭 1 半 2 张
 
-// ---------- 豆子花叔（故事型极简角色） ----------
-// 正面、圆头、豆子身体、面条手臂。标志物：纯白渔夫帽、圆框黑眼镜（另：白T、卡其短裤、黑手表）。
-// o: { x, y(脚底), s(头半径 px), pose:{l,r}(手臂目标点，相对肩，头半径单位), expr, mouth(0/1/2), blink, look:[dx,dy],
-//      squash(竖向缩放，以脚底为轴，体积守恒), tilt(头歪), bob(头下沉), browUp, lw }
-// expr: 'talk' | 'happy' | 'blank'(死鱼眼) | 'worry' | 'shock'。返回 { hl, hr(两手位置), head:[x,y] }
-const SK = '#FFE2CC', LINE = '#1B1B1F', HAT = '#FFFFFF', BAND = '#E4E4E8', SHIRT = '#FFFFFF', SHORTS = '#CDBB97', HAIR = '#1B1B1F';
+// ---------- the narrator: a person each creator dresses as themselves ----------
+// Front view, oval head on a neck, a torso with sleeves, long legs in trousers, sneakers. Nothing in it is fixed:
+// skin, hair, clothes and one accessory come from `look` (the storytime spec's data.character), so the narrator of a
+// creator's short can look like the creator. Defaults are neutral.
+// o: { x, y (feet), s (head size px), pose:{l,r} (hand targets relative to the shoulder, in head units), expr, mouth (0/1/2),
+//      blink, look:[dx,dy] (eyes), squash (vertical scale about the feet, volume kept), tilt, bob, browUp, lw, character }
+// expr: 'talk' | 'happy' | 'blank' | 'worry' | 'shock'. Returns { hl, hr (hands), head:[x,y] }.
+// character: { skin, hair: short|long|curly|bun|buzz|none, hairColor, top: hoodie|tee|shirt, topColor, bottomColor,
+//              shoes, accessory: none|glasses|headphones|cap, accessoryColor }
+const LINE = '#1B1B1F';
+TOON.LOOK = { skin: '#E8B48E', hair: 'short', hairColor: '#2B2119', top: 'hoodie', topColor: '#2F6FED', bottomColor: '#252A36', shoes: '#F4F4F0', accessory: 'none', accessoryColor: '#1B1B1F' };
+TOON.look = (ch) => ({ ...TOON.LOOK, ...(ch && typeof ch === 'object' ? ch : {}) });
+const shade = (hex, k) => { const c = PAINT.hex(hex); return PAINT.rgb([c[0] * k, c[1] * k, c[2] * k].map(v => Math.max(0, Math.min(255, v))), 1); };
 TOON.POSES = {
   rest:  { l: [-0.95, 1.05], r: [0.95, 1.05] },
-  talk:  { l: [-0.95, 1.05], r: [1.05, 0.55] },          // 一只手微抬，口播默认
-  point: { l: [-0.95, 1.05], r: [1.75, -0.15] },         // 指向画右
-  type:  { l: [-0.55, 0.62], r: [0.55, 0.62] },          // 双手在胸前（打字）
+  talk:  { l: [-0.95, 1.05], r: [1.05, 0.55] },          // one hand a little up: the default while talking
+  point: { l: [-0.95, 1.05], r: [1.75, -0.15] },         // points to the right of the frame
+  type:  { l: [-0.55, 0.62], r: [0.55, 0.62] },          // both hands in front of the chest (typing)
   shrug: { l: [-1.45, -0.05], r: [1.45, -0.05], palms: 1 },
-  stiff: { l: [-0.78, 1.25], r: [0.78, 1.25] },          // 僵住
+  stiff: { l: [-0.78, 1.25], r: [0.78, 1.25] },          // frozen
 };
-TOON.bean = (c, o) => {
-  const R = o.s, x = o.x, y = o.y, lw = o.lw || Math.max(4, R * 0.05), sq = o.squash || 1;
+// hair behind the head (long hair falls to the shoulders, a bun sits on top): drawn before the face
+function hairBack(c, L, R, lw) {
+  c.fillStyle = L.hairColor; c.strokeStyle = LINE; c.lineWidth = lw;
+  if (L.hair === 'long') { c.beginPath(); c.moveTo(-R * 0.86, -R * 0.2); c.bezierCurveTo(-R * 1.05, R * 0.6, -R * 0.95, R * 1.15, -R * 0.7, R * 1.3);
+    c.lineTo(R * 0.7, R * 1.3); c.bezierCurveTo(R * 0.95, R * 1.15, R * 1.05, R * 0.6, R * 0.86, -R * 0.2); c.closePath(); c.fill(); c.stroke(); }
+  if (L.hair === 'bun') { c.beginPath(); c.arc(0, -R * 1.02, R * 0.34, 0, Math.PI * 2); c.fill(); c.stroke(); }
+}
+// hair on top of the face: a cap of hair over the forehead, shaped per style
+function hairFront(c, L, R, lw) {
+  if (L.hair === 'none') return;
+  c.fillStyle = L.hairColor; c.strokeStyle = LINE; c.lineWidth = lw;
+  const p = new Path2D();
+  if (L.hair === 'curly') {                                           // a ring of curls around the crown, a short fringe
+    for (let i = 0; i <= 10; i++) { const t = Math.PI * (1.02 + i * 0.096), cx = Math.cos(t) * R * 0.86, cy = -R * 0.08 + Math.sin(t) * R * 0.95;
+      c.beginPath(); c.arc(cx, cy, R * 0.2, 0, Math.PI * 2); c.fill(); c.stroke(); }
+    p.moveTo(-R * 0.8, -R * 0.2); p.bezierCurveTo(-R * 0.86, -R * 0.98, R * 0.86, -R * 0.98, R * 0.8, -R * 0.2);
+    for (let i = 0; i < 5; i++) { const x1 = R * (0.8 - (i + 1) * 0.32); p.quadraticCurveTo(x1 + R * 0.16, -R * 0.36, x1, -R * 0.5 + (i % 2) * R * 0.06); }
+    c.fill(p); return;
+  } else if (L.hair === 'buzz') {
+    p.moveTo(-R * 0.84, -R * 0.2); p.bezierCurveTo(-R * 0.8, -R * 1.1, R * 0.8, -R * 1.1, R * 0.84, -R * 0.2);
+    p.quadraticCurveTo(0, -R * 0.62, -R * 0.84, -R * 0.2);
+    c.save(); c.globalAlpha = 0.55; c.fill(p); c.restore(); return;
+  } else { // short, long and bun: volume over the crown, a fringe in three soft locks swept to one side
+    p.moveTo(-R * 0.8, -R * 0.22); p.bezierCurveTo(-R * 0.92, -R * 1.02, R * 0.9, -R * 1.1, R * 0.82, -R * 0.26);
+    p.quadraticCurveTo(R * 0.62, -R * 0.36, R * 0.44, -R * 0.52); p.quadraticCurveTo(R * 0.26, -R * 0.4, R * 0.06, -R * 0.56);
+    p.quadraticCurveTo(-R * 0.18, -R * 0.42, -R * 0.4, -R * 0.54); p.quadraticCurveTo(-R * 0.62, -R * 0.4, -R * 0.8, -R * 0.22);
+  }
+  p.closePath(); c.fill(p); c.stroke(p);
+}
+function accessoryFront(c, L, R, lw, eyeY) {
+  c.strokeStyle = LINE; c.lineWidth = lw;
+  if (L.accessory === 'glasses') {                                     // rectangular frames: thick, slightly rounded
+    c.lineWidth = lw * 1.4; c.strokeStyle = L.accessoryColor;
+    for (const sx of [-1, 1]) { c.beginPath(); c.roundRect(sx * R * 0.36 - R * 0.24, eyeY - R * 0.16, R * 0.48, R * 0.32, R * 0.07); c.stroke(); }
+    c.beginPath(); c.moveTo(-R * 0.12, eyeY - R * 0.04); c.lineTo(R * 0.12, eyeY - R * 0.04); c.stroke();
+  } else if (L.accessory === 'headphones') {                           // band over the hair, a cup on each ear
+    c.lineWidth = R * 0.11; c.strokeStyle = L.accessoryColor; c.beginPath(); c.arc(0, -R * 0.05, R * 0.98, Math.PI * 1.08, Math.PI * 1.92); c.stroke();
+    c.fillStyle = L.accessoryColor; c.strokeStyle = LINE; c.lineWidth = lw;
+    for (const sx of [-1, 1]) { c.beginPath(); c.roundRect(sx * R * 0.9 - R * 0.14, -R * 0.1, R * 0.28, R * 0.42, R * 0.1); c.fill(); c.stroke(); }
+  } else if (L.accessory === 'cap') {                                  // a cap with its peak to the front
+    c.fillStyle = L.accessoryColor; c.strokeStyle = LINE; c.lineWidth = lw;
+    c.beginPath(); c.moveTo(-R * 0.88, -R * 0.36); c.bezierCurveTo(-R * 0.86, -R * 1.2, R * 0.86, -R * 1.2, R * 0.88, -R * 0.36); c.closePath(); c.fill(); c.stroke();
+    c.beginPath(); c.moveTo(-R * 0.95, -R * 0.38); c.quadraticCurveTo(R * 0.2, -R * 0.56, R * 1.3, -R * 0.36); c.quadraticCurveTo(R * 1.34, -R * 0.24, R * 1.18, -R * 0.22); c.quadraticCurveTo(R * 0.2, -R * 0.3, -R * 0.95, -R * 0.38); c.closePath(); c.fill(); c.stroke();
+  }
+}
+TOON.person = (c, o) => {
+  const R = o.s, x = o.x, y = o.y, lw = o.lw || Math.max(4, R * 0.05), sq = o.squash || 1, Lk = TOON.look(o.character);
   const pose = o.pose || TOON.POSES.rest;
   c.save(); c.translate(x, y); c.scale(1 / Math.sqrt(sq), sq);
   c.lineJoin = 'round'; c.lineCap = 'round'; c.strokeStyle = LINE; c.lineWidth = lw;
-  const bodyTop = -R * 1.32;
-  const shoulderY = bodyTop + R * 0.32, shL = [-R * 0.42, shoulderY], shR = [R * 0.42, shoulderY];
-  for (const sx of [-1, 1]) {                                          // 腿：两截短圆柱＋白鞋
-    c.fillStyle = SK; c.beginPath(); c.roundRect(sx * R * 0.2 - R * 0.09, -R * 0.24, R * 0.18, R * 0.2, R * 0.05); c.fill(); c.stroke();
-    c.fillStyle = '#FAFAF6'; c.beginPath(); c.ellipse(sx * R * 0.22, -R * 0.03, R * 0.17, R * 0.08, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  const hipY = -R * 0.78, chestY = -R * 1.78, shoulderY = chestY + R * 0.16;
+  const shL = [-R * 0.5, shoulderY], shR = [R * 0.5, shoulderY];
+  for (const sx of [-1, 1]) {                                          // legs: trousers to the ankle, a sneaker each
+    c.fillStyle = Lk.bottomColor; c.beginPath(); c.roundRect(sx * R * 0.2 - R * 0.15, hipY - R * 0.05, R * 0.3, R * 0.78, R * 0.08); c.fill(); c.stroke();
+    c.fillStyle = Lk.shoes; c.beginPath(); c.roundRect(sx * R * 0.22 - R * 0.2 + sx * R * 0.04, -R * 0.13, R * 0.4, R * 0.15, R * 0.07); c.fill(); c.stroke();
+    c.fillStyle = LINE; c.fillRect(sx * R * 0.22 - R * 0.19 + sx * R * 0.04, -R * 0.03, R * 0.38, R * 0.03);
   }
-  const body = new Path2D();                                           // 身体（豆子）
-  body.moveTo(-R * 0.5, -R * 0.2);
-  body.bezierCurveTo(-R * 0.62, -R * 0.75, -R * 0.55, bodyTop + R * 0.05, 0, bodyTop);
-  body.bezierCurveTo(R * 0.55, bodyTop + R * 0.05, R * 0.62, -R * 0.75, R * 0.5, -R * 0.2);
-  body.bezierCurveTo(R * 0.3, -R * 0.12, -R * 0.3, -R * 0.12, -R * 0.5, -R * 0.2); body.closePath();
-  c.fillStyle = SHIRT; c.fill(body);
-  c.save(); c.clip(body); c.fillStyle = SHORTS; c.fillRect(-R, -R * 0.42, R * 2, R * 0.5);
-  c.strokeStyle = LINE; c.lineWidth = lw * 0.6; c.beginPath(); c.moveTo(0, -R * 0.36); c.lineTo(0, -R * 0.12); c.stroke(); c.restore();
-  c.stroke(body);
-  c.beginPath(); c.moveTo(-R * 0.6, -R * 0.42); c.quadraticCurveTo(0, -R * 0.36, R * 0.6, -R * 0.42); c.lineWidth = lw * 0.8; c.stroke(); c.lineWidth = lw;
-  // 面条手臂：肩 → 手（二次曲线，肘自然下垂），双描边做出「管子」
+  const torso = new Path2D();                                          // torso: shoulders wider than the hips
+  torso.moveTo(-R * 0.4, hipY + R * 0.06); torso.lineTo(-R * 0.58, chestY + R * 0.3);
+  torso.quadraticCurveTo(-R * 0.6, chestY, -R * 0.3, chestY - R * 0.04); torso.lineTo(R * 0.3, chestY - R * 0.04);
+  torso.quadraticCurveTo(R * 0.6, chestY, R * 0.58, chestY + R * 0.3); torso.lineTo(R * 0.4, hipY + R * 0.06); torso.closePath();
+  c.fillStyle = Lk.topColor; c.fill(torso); c.stroke(torso);
+  c.save(); c.clip(torso); c.strokeStyle = shade(Lk.topColor, 0.72); c.lineWidth = lw * 0.8;
+  if (Lk.top === 'hoodie') {                                           // pocket, strings
+    c.beginPath(); c.roundRect(-R * 0.3, hipY - R * 0.36, R * 0.6, R * 0.28, R * 0.06); c.stroke();
+    for (const sx of [-1, 1]) { c.beginPath(); c.moveTo(sx * R * 0.1, chestY + R * 0.06); c.lineTo(sx * R * 0.12, chestY + R * 0.42); c.stroke(); }
+  } else if (Lk.top === 'shirt') {                                     // placket and buttons
+    c.beginPath(); c.moveTo(0, chestY + R * 0.06); c.lineTo(0, hipY); c.stroke();
+    c.fillStyle = shade(Lk.topColor, 0.72); for (let i = 0; i < 3; i++) { c.beginPath(); c.arc(R * 0.06, chestY + R * (0.3 + i * 0.25), R * 0.03, 0, Math.PI * 2); c.fill(); }
+  }
+  c.restore();
+  // arms: shoulder → hand on a curve, the sleeve in the top's colour down to the forearm
   const arm = (sh, tgt, side) => {
-    const hx = sh[0] + tgt[0] * R * 0.62, hy = sh[1] + tgt[1] * R * 0.62;
-    const mx = (sh[0] + hx) / 2 + side * R * 0.08, my = Math.max(sh[1], hy) + R * 0.12;
+    const hx = sh[0] + tgt[0] * R * 0.72, hy = sh[1] + tgt[1] * R * 0.72;
+    const mx = (sh[0] + hx) / 2 + side * R * 0.1, my = Math.max(sh[1], hy) + R * 0.1;
     c.beginPath(); c.moveTo(sh[0], sh[1]); c.quadraticCurveTo(mx, my, hx, hy);
-    c.strokeStyle = LINE; c.lineWidth = R * 0.17 + lw; c.stroke(); c.strokeStyle = SK; c.lineWidth = R * 0.17; c.stroke();
-    c.beginPath(); c.moveTo(sh[0], sh[1]); const q = 0.28; c.lineTo(lerp(sh[0], mx, q * 2), lerp(sh[1], my, q * 2));
-    c.strokeStyle = LINE; c.lineWidth = R * 0.26 + lw; c.stroke(); c.strokeStyle = SHIRT; c.lineWidth = R * 0.26; c.stroke();
-    c.fillStyle = SK; c.strokeStyle = LINE; c.lineWidth = lw; c.beginPath(); c.arc(hx, hy, R * 0.13, 0, Math.PI * 2); c.fill(); c.stroke();
-    if (side > 0) {                                                    // 近侧（画右）手腕黑手表
-      const ang = Math.atan2(hy - my, hx - mx), wx = hx - Math.cos(ang) * R * 0.17, wy = hy - Math.sin(ang) * R * 0.17;
-      c.save(); c.translate(wx, wy); c.rotate(ang + Math.PI / 2); c.fillStyle = '#1D1F22'; c.fillRect(-R * 0.1, -R * 0.04, R * 0.2, R * 0.08); c.restore();
-    }
+    c.strokeStyle = LINE; c.lineWidth = R * 0.18 + lw; c.stroke(); c.strokeStyle = Lk.skin; c.lineWidth = R * 0.18; c.stroke();
+    const sleeve = Lk.top === 'tee' ? 0.32 : 0.78;                      // a tee leaves the forearm bare
+    c.beginPath(); c.moveTo(sh[0], sh[1]); c.quadraticCurveTo(lerp(sh[0], mx, sleeve), lerp(sh[1], my, sleeve), lerp(lerp(sh[0], mx, sleeve), lerp(mx, hx, sleeve), sleeve), lerp(lerp(sh[1], my, sleeve), lerp(my, hy, sleeve), sleeve));
+    c.strokeStyle = LINE; c.lineWidth = R * 0.27 + lw; c.stroke(); c.strokeStyle = Lk.topColor; c.lineWidth = R * 0.27; c.stroke();
+    c.fillStyle = Lk.skin; c.strokeStyle = LINE; c.lineWidth = lw; c.beginPath(); c.ellipse(hx, hy, R * 0.13, R * 0.15, 0, 0, Math.PI * 2); c.fill(); c.stroke();
     return [hx, hy];
   };
   c.lineWidth = lw;
   const hl = arm(shL, pose.l, -1), hr = arm(shR, pose.r, 1);
-  // 头：略宽的圆，压在身体上
   c.restore(); c.save(); c.translate(x, y); c.scale(1 / Math.sqrt(sq), sq);
   c.lineJoin = 'round'; c.lineCap = 'round'; c.strokeStyle = LINE; c.lineWidth = lw;
-  const hy = bodyTop - R * 0.78 + (o.bob || 0);
+  c.fillStyle = Lk.skin; c.beginPath(); c.roundRect(-R * 0.16, chestY - R * 0.36, R * 0.32, R * 0.4, R * 0.08); c.fill(); c.stroke();   // neck
+  if (Lk.top === 'hoodie') { c.fillStyle = shade(Lk.topColor, 0.85); c.beginPath(); c.ellipse(0, chestY - R * 0.02, R * 0.42, R * 0.12, 0, 0, Math.PI * 2); c.fill(); c.stroke(); }
+  if (Lk.top === 'shirt') { c.fillStyle = Lk.topColor; for (const sx of [-1, 1]) { c.beginPath(); c.moveTo(0, chestY + R * 0.1); c.lineTo(sx * R * 0.26, chestY - R * 0.06); c.lineTo(sx * R * 0.08, chestY - R * 0.1); c.closePath(); c.fill(); c.stroke(); } }
+  const hy = chestY - R * 0.98 + (o.bob || 0);
   c.translate(0, hy); c.rotate(o.tilt || 0);
-  c.fillStyle = HAIR;                                                  // 鬓角（帽檐下露一点黑发）
-  for (const sx of [-1, 1]) { c.beginPath(); c.ellipse(sx * R * 0.86, -R * 0.12, R * 0.16, R * 0.3, sx * 0.2, 0, Math.PI * 2); c.fill(); }
-  c.fillStyle = SK; c.beginPath(); c.ellipse(0, 0, R * 1.0, R * 0.93, 0, 0, Math.PI * 2); c.fill(); c.stroke();
-  // 帽子：帽冠＋帽带＋往下斜的帽檐
-  const crown = new Path2D(); crown.moveTo(-R * 0.78, -R * 0.42); crown.bezierCurveTo(-R * 0.8, -R * 1.25, R * 0.8, -R * 1.25, R * 0.78, -R * 0.42); crown.closePath();
-  c.fillStyle = HAT; c.fill(crown); c.stroke(crown);
-  c.save(); c.clip(crown); c.fillStyle = BAND; c.fillRect(-R, -R * 0.62, R * 2, R * 0.18); c.restore();
-  c.beginPath(); c.moveTo(-R * 0.79, -R * 0.62); c.quadraticCurveTo(0, -R * 0.7, R * 0.79, -R * 0.62); c.lineWidth = lw * 0.7; c.stroke(); c.lineWidth = lw;
-  const brim = new Path2D(); brim.moveTo(-R * 1.18, -R * 0.24); brim.quadraticCurveTo(0, -R * 0.66, R * 1.18, -R * 0.24);
-  brim.quadraticCurveTo(R * 1.22, -R * 0.12, R * 1.08, -R * 0.12); brim.quadraticCurveTo(0, -R * 0.44, -R * 1.08, -R * 0.12); brim.quadraticCurveTo(-R * 1.22, -R * 0.12, -R * 1.18, -R * 0.24); brim.closePath();
-  c.fillStyle = HAT; c.fill(brim); c.stroke(brim);
-  // 眉毛（表情主载体）：[整体上下, 内端相对外端的高差]（负 = 内端抬高 = 担心/委屈）
-  const ex = o.expr || 'talk', lk = o.look || [0, 0];
+  hairBack(c, Lk, R, lw);
+  c.fillStyle = Lk.skin; c.strokeStyle = LINE; c.lineWidth = lw;
+  for (const sx of [-1, 1]) { c.beginPath(); c.ellipse(sx * R * 0.82, R * 0.1, R * 0.13, R * 0.18, 0, 0, Math.PI * 2); c.fill(); c.stroke(); }   // ears
+  c.beginPath(); c.ellipse(0, 0, R * 0.8, R * 0.92, 0, 0, Math.PI * 2); c.fill(); c.stroke();                                              // face: taller than wide
+  hairFront(c, Lk, R, lw);
+  // brows carry the expression: [up/down, inner end relative to the outer] (negative = inner end raised = worried)
+  const ex = o.expr || 'talk', lk = o.look || [0, 0], eyeY = R * 0.12;
   const brow = { talk: [0, 0], happy: [-0.05, 0.03], blank: [0.03, 0], worry: [-0.02, -0.11], shock: [-0.11, 0.02] }[ex] || [0, 0];
   if (o.browUp) brow[0] -= o.browUp;
-  c.lineWidth = lw * 1.4;
-  for (const sx of [-1, 1]) { const by = -R * 0.13 + brow[0] * R; c.beginPath(); c.moveTo(sx * R * 0.52, by); c.lineTo(sx * R * 0.2, by + brow[1] * R); c.stroke(); }
-  c.lineWidth = lw;
-  // 眼镜：两只圆框（标志物，线比轮廓粗 1.4 倍）＋鼻梁；眼睛是黑点
-  const gy = R * 0.2, gr = R * 0.27;
-  for (const sx of [-1, 1]) {
-    const gx = sx * R * 0.37;
-    c.fillStyle = 'rgba(255,255,255,0.35)'; c.beginPath(); c.arc(gx, gy, gr, 0, Math.PI * 2); c.fill();
-    const pr = ex === 'blank' ? R * 0.035 : ex === 'shock' ? R * 0.05 : R * 0.075;
+  c.strokeStyle = shade(Lk.hairColor, 0.9); c.lineWidth = lw * 1.5;
+  for (const sx of [-1, 1]) { const by = -R * 0.16 + brow[0] * R; c.beginPath(); c.moveTo(sx * R * 0.5, by + R * 0.02); c.quadraticCurveTo(sx * R * 0.35, by - R * 0.04, sx * R * 0.18, by + brow[1] * R); c.stroke(); }
+  c.strokeStyle = LINE; c.lineWidth = lw;
+  for (const sx of [-1, 1]) {                                          // eyes: dark ovals with a highlight, a line when blinking
+    const gx = sx * R * 0.34, pr = ex === 'blank' ? R * 0.04 : ex === 'shock' ? R * 0.055 : R * 0.075;
     c.fillStyle = LINE;
-    if (o.blink) { c.beginPath(); c.moveTo(gx - R * 0.08 + lk[0] * R * 0.08, gy + lk[1] * R * 0.06); c.lineTo(gx + R * 0.08 + lk[0] * R * 0.08, gy + lk[1] * R * 0.06); c.lineWidth = lw; c.stroke(); }
-    else { c.beginPath(); c.ellipse(gx + lk[0] * R * 0.09, gy + lk[1] * R * 0.07, pr, pr * (ex === 'blank' ? 1 : 1.25), 0, 0, Math.PI * 2); c.fill();
-      if (ex !== 'blank') { c.fillStyle = '#fff'; c.beginPath(); c.arc(gx + lk[0] * R * 0.09 - pr * 0.35, gy + lk[1] * R * 0.07 - pr * 0.45, pr * 0.32, 0, Math.PI * 2); c.fill(); } }
-    c.lineWidth = lw * 1.5; c.strokeStyle = LINE; c.beginPath(); c.arc(gx, gy, gr, 0, Math.PI * 2); c.stroke();
+    if (o.blink) { c.beginPath(); c.moveTo(gx - R * 0.09 + lk[0] * R * 0.08, eyeY + lk[1] * R * 0.06); c.quadraticCurveTo(gx + lk[0] * R * 0.08, eyeY + R * 0.04, gx + R * 0.09 + lk[0] * R * 0.08, eyeY + lk[1] * R * 0.06); c.stroke(); }
+    else { c.beginPath(); c.ellipse(gx + lk[0] * R * 0.09, eyeY + lk[1] * R * 0.07, pr, pr * (ex === 'blank' ? 1 : 1.3), 0, 0, Math.PI * 2); c.fill();
+      if (ex !== 'blank') { c.fillStyle = '#fff'; c.beginPath(); c.arc(gx + lk[0] * R * 0.09 - pr * 0.35, eyeY + lk[1] * R * 0.07 - pr * 0.45, pr * 0.32, 0, Math.PI * 2); c.fill(); } }
   }
-  c.beginPath(); c.moveTo(-R * 0.1, gy - R * 0.02); c.quadraticCurveTo(0, gy - R * 0.08, R * 0.1, gy - R * 0.02); c.stroke();
-  c.lineWidth = lw;
-  c.fillStyle = 'rgba(255,140,120,0.35)'; for (const sx of [-1, 1]) { c.beginPath(); c.ellipse(sx * R * 0.68, R * 0.5, R * 0.11, R * 0.06, 0, 0, Math.PI * 2); c.fill(); }
-  // 嘴
-  const m = o.mouth || 0, my = R * 0.6;
+  c.strokeStyle = shade(Lk.skin, 0.7); c.lineWidth = lw * 0.9;                                                                            // nose
+  c.beginPath(); c.moveTo(R * 0.02, eyeY + R * 0.08); c.quadraticCurveTo(R * 0.1, eyeY + R * 0.24, -R * 0.03, eyeY + R * 0.27); c.stroke();
+  c.strokeStyle = LINE; c.lineWidth = lw;
+  c.fillStyle = 'rgba(240,120,110,0.28)'; for (const sx of [-1, 1]) { c.beginPath(); c.ellipse(sx * R * 0.52, R * 0.42, R * 0.1, R * 0.055, 0, 0, Math.PI * 2); c.fill(); }
+  accessoryFront(c, Lk, R, lw, eyeY);
+  const m = o.mouth || 0, my = R * 0.56;                                // mouth: closed per expression, or two open shapes
   c.strokeStyle = LINE; c.lineWidth = lw;
   if (ex === 'blank' && !m) { c.beginPath(); c.moveTo(-R * 0.1, my); c.lineTo(R * 0.1, my); c.stroke(); }
   else if (ex === 'worry' && !m) { c.beginPath(); c.moveTo(-R * 0.13, my + R * 0.03); c.quadraticCurveTo(-R * 0.05, my - R * 0.04, 0, my + R * 0.01); c.quadraticCurveTo(R * 0.06, my + R * 0.05, R * 0.13, my - R * 0.01); c.stroke(); }
-  else if (!m) { c.beginPath(); c.moveTo(-R * 0.13, my - R * 0.02); c.quadraticCurveTo(0, my + R * 0.1, R * 0.13, my - R * 0.02); c.stroke(); }
+  else if (!m) { c.beginPath(); c.moveTo(-R * 0.15, my - R * 0.02); c.quadraticCurveTo(0, my + R * 0.11, R * 0.15, my - R * 0.02); c.stroke(); }
   else {
     const mh = m === 1 ? R * 0.1 : R * 0.2, mw = m === 1 ? R * 0.14 : R * 0.18;
-    c.fillStyle = '#6E2430'; c.beginPath(); c.moveTo(-mw, my - R * 0.03); c.quadraticCurveTo(0, my - R * 0.06, mw, my - R * 0.03); c.quadraticCurveTo(mw * 0.9, my + mh, 0, my + mh); c.quadraticCurveTo(-mw * 0.9, my + mh, -mw, my - R * 0.03); c.closePath(); c.fill();
-    c.save(); c.clip(); c.fillStyle = '#F07B7B'; c.beginPath(); c.ellipse(0, my + mh, mw * 0.6, mh * 0.45, 0, 0, Math.PI * 2); c.fill(); c.restore(); c.stroke();
+    c.fillStyle = '#5A1E28'; c.beginPath(); c.moveTo(-mw, my - R * 0.03); c.quadraticCurveTo(0, my - R * 0.06, mw, my - R * 0.03); c.quadraticCurveTo(mw * 0.9, my + mh, 0, my + mh); c.quadraticCurveTo(-mw * 0.9, my + mh, -mw, my - R * 0.03); c.closePath(); c.fill();
+    c.save(); c.clip(); c.fillStyle = '#E8737A'; c.beginPath(); c.ellipse(0, my + mh, mw * 0.6, mh * 0.45, 0, 0, Math.PI * 2); c.fill(); c.restore(); c.stroke();
   }
   c.restore();
   return { hl, hr, head: [x, y + hy * sq] };
+};
+// The same person from behind, over the shoulder (storytime's insert shot): shoulders, neck, the back of the head.
+// Drawn around (0, 0) in a 1-unit-per-pixel frame where the head is ~190 wide; the caller scales and places it.
+TOON.personBack = (c, character) => {
+  const Lk = TOON.look(character), lw = 7;
+  c.save(); c.lineWidth = lw; c.strokeStyle = LINE; c.lineJoin = 'round';
+  c.fillStyle = Lk.topColor; c.beginPath(); c.ellipse(0, 300, 330, 200, 0, Math.PI, 0); c.fill(); c.stroke();
+  if (Lk.top === 'hoodie') { c.fillStyle = shade(Lk.topColor, 0.85); c.beginPath(); c.ellipse(0, 150, 170, 70, 0, Math.PI, 0); c.fill(); c.stroke(); }
+  c.fillStyle = Lk.skin; c.beginPath(); c.roundRect(-58, 120, 116, 120, 26); c.fill(); c.stroke();
+  for (const k of [-1, 1]) { c.beginPath(); c.ellipse(k * 160, 40, 28, 42, k * 0.15, 0, 7); c.fill(); c.stroke(); }
+  const back = Lk.hair === 'none' || Lk.hair === 'buzz' ? Lk.skin : Lk.hairColor;
+  c.fillStyle = back; c.beginPath(); c.ellipse(0, 10, 160, 175, 0, 0, 7); c.fill(); c.stroke();
+  if (back === Lk.hairColor) {
+    c.save(); c.beginPath(); c.ellipse(0, 10, 160, 175, 0, 0, 7); c.clip();
+    c.strokeStyle = shade(Lk.hairColor, 1.45); c.lineWidth = 10; c.lineCap = 'round';
+    for (const [a, b] of [[-0.9, -0.55], [-0.35, -0.05], [0.25, 0.55]]) { c.beginPath(); c.arc(0, 150, 300, Math.PI * 1.5 + a * 0.45, Math.PI * 1.5 + b * 0.45); c.stroke(); }
+    c.restore();
+    c.fillStyle = Lk.hairColor; c.strokeStyle = LINE; c.lineWidth = lw;
+  }
+  if (Lk.hair === 'buzz') { c.save(); c.globalAlpha = 0.55; c.fillStyle = Lk.hairColor; c.beginPath(); c.ellipse(0, 20, 160, 175, 0, Math.PI * 1.05, Math.PI * 1.95); c.fill(); c.restore(); }
+  if (Lk.hair === 'long') { c.fillStyle = Lk.hairColor; c.beginPath(); c.moveTo(-158, 20); c.bezierCurveTo(-175, 200, -140, 260, -110, 280); c.lineTo(110, 280); c.bezierCurveTo(140, 260, 175, 200, 158, 20); c.fill(); c.stroke(); }
+  if (Lk.hair === 'bun') { c.fillStyle = Lk.hairColor; c.beginPath(); c.arc(0, -170, 60, 0, 7); c.fill(); c.stroke(); }
+  if (Lk.hair === 'curly') { c.fillStyle = Lk.hairColor; for (let i = 0; i < 9; i++) { const a = Math.PI * (1.05 + i * 0.1); c.beginPath(); c.arc(Math.cos(a) * 165, 30 + Math.sin(a) * 185, 34, 0, 7); c.fill(); c.stroke(); } }
+  if (Lk.accessory === 'headphones') { c.strokeStyle = Lk.accessoryColor; c.lineWidth = 26; c.beginPath(); c.arc(0, 40, 175, Math.PI * 1.08, Math.PI * 1.92); c.stroke();
+    c.fillStyle = Lk.accessoryColor; c.strokeStyle = LINE; c.lineWidth = lw; for (const k of [-1, 1]) { c.beginPath(); c.roundRect(k * 168 - 30, 10, 60, 90, 22); c.fill(); c.stroke(); } }
+  if (Lk.accessory === 'cap') { c.fillStyle = Lk.accessoryColor; c.strokeStyle = LINE; c.lineWidth = lw; c.beginPath(); c.moveTo(-168, -10); c.bezierCurveTo(-165, -230, 165, -230, 168, -10); c.closePath(); c.fill(); c.stroke(); }
+  c.restore();
 };
 
 // ---------- pose-to-pose ----------

@@ -15,7 +15,7 @@ las zonas seguras de cada app y un editor en el navegador donde comentas sobre e
 </div>
 
 > **Estado:** en desarrollo, todavía privado. Faltan las plantillas verticales, la ingesta de grabaciones del celular, la
-> exportación por plataforma y el personaje propio. Ver [Hoja de ruta](#hoja-de-ruta).
+> exportación por plataforma y los videos demo propios. Ver [Hoja de ruta](#hoja-de-ruta).
 
 ---
 
@@ -90,7 +90,8 @@ un elemento. Las medidas están en `cli/lib/safezones.js`; las apps las mueven d
 - [x] Zonas seguras en `check` y en el studio
 - [x] Studio que se recupera solo al reiniciarse; textos del motor en español
 - [x] Plantillas y fuentes en español; firma apagada por defecto
-- [ ] Personaje propio (reemplaza al del motor original) y videos demo propios
+- [x] Personaje propio y configurable (piel, pelo, ropa, accesorio) en la plantilla `storytime`
+- [ ] Videos demo propios (`srm demo` todavía abre los del motor original)
 - [ ] 5 plantillas verticales: tipografía, pantalla del celular, cara a cámara, lista, antes/después
 - [ ] Librería de movimientos para shorts y kit de marca (`kit.json`)
 - [ ] Ingesta de grabaciones del celular; portada y exportación por plataforma

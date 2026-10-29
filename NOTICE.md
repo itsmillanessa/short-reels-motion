@@ -18,10 +18,11 @@ What Short Reels Motion changes or adds over huashu-motion 0.3.1:
   `scripts/es/`.
 - The end-of-film signature is off by default.
 - Name, CLI (`srm`; `om` stays as an alias), documentation.
+- The storytime narrator is an original, configurable person (`TOON.person`, `TOON.personBack`): skin, hair, clothes and
+  an accessory come from the film's data, so each creator's narrator can look like them. The upstream "bean Huashu"
+  character, which huashu-motion excludes from its MIT license, is not included.
 
-Pending before the first public release: the "bean Huashu" character (`runtime/clip/lib/toon.js`, the storytime
-template, the demo films in `examples/`), which upstream excludes from its MIT license, is replaced by an original
-character, and the demo films by our own.
+Still from upstream, to be replaced by our own: the demo films in `examples/` (`om demo`).
 
 Third-party pieces keep their own licenses: see `THIRD_PARTY.md` (GSAP, Three.js, fonts under SIL OFL 1.1, the clip
 runtime from huashu-art-motion under MIT).
