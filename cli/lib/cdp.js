@@ -39,6 +39,21 @@ export function cleanupOnInterrupt(fn) {
   return () => { leftovers.delete(fn); if (!leftovers.size) for (const s of ['SIGINT', 'SIGTERM']) process.off(s, onSignal); };
 }
 
+// One 'exit' listener for every browser still running (a render starts up to 8 workers, plus stills and the sound pass:
+// one listener each went past Node's limit of 10 and printed MaxListenersExceededWarning on every render).
+const reapers = new Set();
+const reapAll = () => { for (const fn of reapers) fn(); };
+function reapOnExit(fn) {
+  if (!reapers.size) process.on('exit', reapAll);
+  reapers.add(fn);
+  return () => { reapers.delete(fn); if (!reapers.size) process.off('exit', reapAll); };
+}
+
+// A temp profile is removed once its browser is gone. On Windows Chrome keeps its files open for a moment after it is
+// killed: removing at once failed (EBUSY / EPERM), silently, and every launch left a folder in %TEMP% — hundreds of them.
+// Wait for the exit, then retry the removal for a few seconds.
+const RM_RETRY = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 };
+
 // Start Chrome and return a connection: { send, on, off, once, close, transport, pid }.
 //   conn.send('Page.navigate', { url }, sessionId?) → Promise<result>
 //   conn.on('Runtime.exceptionThrown', (params, sessionId) => …)
@@ -50,13 +65,14 @@ export async function launch(exe, { transport = 'pipe', args = [], timeout = 30_
   const flags = [...CHROME_FLAGS, ...root, `--user-data-dir=${profile}`, ...args, 'about:blank'];
   const conn = transport === 'websocket' ? await viaWebSocket(exe, flags, timeout) : viaPipe(exe, flags);
   conn.profile = profile;
-  const forget = cleanupOnInterrupt(() => { conn._reap(); rmSync(profile, { recursive: true, force: true }); });
+  const forget = cleanupOnInterrupt(() => { conn._reap(); try { rmSync(profile, RM_RETRY); } catch { /* best effort */ } });
   const close = conn.close;
   // fast: a throwaway browser (a render worker) is killed at once instead of asked to shut down; its temp profile goes either way
   conn.close = async ({ fast = false } = {}) => {
     forget();
     await close({ fast });
-    try { await rm(profile, { recursive: true, force: true }); } catch { /* the OS cleans tmp */ }
+    await Promise.race([conn._exited, new Promise((r) => setTimeout(r, 3000).unref())]);
+    try { await rm(profile, RM_RETRY); } catch { /* still locked after the retries: nothing else to do */ }
   };
   return conn;
 }
@@ -67,14 +83,15 @@ function core(child, write, extra = {}) {
   // Chrome starts helper processes (GPU, renderers) that inherit our pipes and can outlive the main process by minutes,
   // keeping Node alive: the browser runs in its own process group and the whole group is killed.
   const reap = () => { try { if (process.platform === 'win32') child.kill('SIGKILL'); else process.kill(-child.pid, 'SIGKILL'); } catch { try { child.kill('SIGKILL'); } catch { /* gone */ } } };
-  process.once('exit', reap);
-  child.once('exit', () => process.off('exit', reap));
+  const forgetReap = reapOnExit(reap);
+  const exited = new Promise((resolve) => child.once('exit', () => { forgetReap(); resolve(); }));
   const pending = new Map(), handlers = new Map();
   const failAll = (why) => { closed = true; for (const p of pending.values()) p.reject(new CdpError(why)); pending.clear(); };
   const conn = {
     ...extra,
     pid: child.pid,
     _reap: reap,
+    _exited: exited,
     send(method, params = {}, sessionId, ms = 60_000) {
       if (closed) return Promise.reject(new CdpError(`${method}: the browser is gone${conn.stderrTail ? ` — ${conn.stderrTail()}` : ''}`));
       const n = ++id;

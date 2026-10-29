@@ -25,6 +25,21 @@ test('browser: only a browser that is already installed is used — nothing is d
   assert.match(NO_CHROME, /install Google Chrome/);
 });
 
-test('browser: version is read from --version', () => {
+test('browser: version is read from --version', { skip: process.platform === 'win32' && 'Windows reads the version folder (next test): a #!/bin/sh fake does not run there' }, () => {
   assert.equal(chromeVersion(fake('v')), '123.4.5.6');
+});
+
+test('browser: on Windows the version comes from the folder next to the exe — the browser is never started', () => {
+  const app = mkdtempSync(join(tmpdir(), 'om-br-'));
+  for (const d of ['155.0.7990.120', '156.0.8078.48', '156.0.812.7', 'Locales', 'SetupMetrics']) mkdirSync(join(app, d));
+  writeFileSync(join(app, 'chrome.exe'), '');   // not a program: running it would fail the test
+  assert.equal(chromeVersion(join(app, 'chrome.exe'), 'win32'), '156.0.8078.48');
+  assert.equal(chromeVersion(join(app, 'nope', 'chrome.exe'), 'win32'), null);
+});
+
+test('browser: per-user installs on Windows (%LOCALAPPDATA%) are candidates too', () => {
+  const paths = chromeCandidates({ env: { LOCALAPPDATA: 'C:\\Users\\a\\AppData\\Local' } }).map((c) => c.path);
+  assert.ok(paths.includes('C:\\Users\\a\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe'), paths.join('\n'));
+  assert.ok(paths.includes('C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe'));
+  assert.ok(!chromeCandidates({ env: {} }).some((c) => /AppData/.test(c.path)));
 });
