@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   splitSentences, tokenize, weight, placeWords, placeSentence, wordsOf, parseSilences, speechIntervals,
   sentenceSpans, alignChars, charTimes, asrChars, captionLines, toSrt, cueTerms, cueMatches, missingCues, repeatedCues, applyVoice, pickVoice, isSpanish, recordingLang,
-  engineTimes, placeExact, levels, voice,
+  engineTimes, placeExact, levels, voice, systemVoice, atempo, venvPython, basePython, sapiVoices,
 } from '../cli/lib/voice.js';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
@@ -205,6 +205,43 @@ test('default voice: a Spanish script gets a Spanish voice, never an English one
   assert.deepEqual(pickVoice('say', 'hello there, this is a test'), { engine: 'say', id: 'Samantha' });
   assert.equal(isSpanish('Make a launch video for the site'), false);
   assert.equal(isSpanish('你好'), false);
+});
+
+test('Windows voices: win picks by the script\'s language, win:Name by name; the system voice stands in for a missing Kokoro', () => {
+  assert.deepEqual(pickVoice('win', 'Hola, esto es una prueba'), { engine: 'sapi', id: '' });
+  assert.deepEqual(pickVoice('win:Sabina', 'Hola'), { engine: 'sapi', id: 'Sabina' });
+  assert.deepEqual(pickVoice('sapi:Zira', 'hello'), { engine: 'sapi', id: 'Zira' });
+  assert.deepEqual(systemVoice('Hola, esto es una prueba de voz', 'win32'), { engine: 'sapi', id: '' });
+  assert.deepEqual(systemVoice('Hola, esto es una prueba de voz', 'darwin'), { engine: 'say', id: 'Paulina' });
+  assert.equal(systemVoice('hello', 'linux'), null);
+});
+
+test('atempo: the speeds a script may ask for, in steps ffmpeg takes (0.5–2 each)', () => {
+  assert.equal(atempo(1.2), 'atempo=1.2');
+  assert.equal(atempo(3), 'atempo=2,atempo=1.5');
+  assert.equal(atempo(0.3), 'atempo=0.5,atempo=0.6');
+});
+
+test('Kokoro\'s venv: python in Scripts\\ on Windows, bin/ elsewhere; a Python 3.10–3.13 is picked to build it', () => {
+  assert.equal(venvPython(join('v'), 'win32'), join('v', 'Scripts', 'python.exe'));
+  assert.equal(venvPython(join('v'), 'linux'), join('v', 'bin', 'python'));
+  // Windows asks the py launcher, newest supported first after 3.12; 3.14 (no kokoro-onnx wheels) is never taken
+  const have = { '-3.13': '3.13', '-3.14': '3.14' };
+  const ask = (cmd, args) => (cmd === 'py' && have[args[0]] ? { status: 0, stdout: have[args[0]] + '\n' } : { status: 103, stdout: '' });
+  assert.deepEqual(basePython('win32', ask), { cmd: 'py', args: ['-3.13'] });
+  assert.equal(basePython('win32', () => ({ status: 0, stdout: '3.14\n' })), null);
+  assert.deepEqual(basePython('linux', (cmd) => (cmd === 'python3' ? { status: 0, stdout: '3.12\n' } : { status: null, error: new Error('ENOENT') })), { cmd: 'python3', args: [] });
+});
+
+test('Windows voice end to end: a script spoken by SAPI, timed and wired into the page', { skip: (process.platform !== 'win32' && 'Windows only') || (!sapiVoices().some((v) => /^en-/i.test(v.culture)) && 'no English Windows voice') }, async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'om-voice-win-'));
+  writeFileSync(join(dir, 'index.html'), HTML);
+  const out = await voice(openProject(dir), { text: 'Here is a short test. It has two sentences.', voice: 'win' });
+  assert.match(out, /tts:sapi:Microsoft \w+/);
+  const words = JSON.parse(readFileSync(join(dir, 'assets', 'voice.words.json'), 'utf8'));
+  assert.deepEqual(words.words.map((w) => w.word), ['Here', 'is', 'a', 'short', 'test', 'It', 'has', 'two', 'sentences']);
+  assert.ok(words.duration > 1.5, `${words.duration}s of speech`);
+  assert.ok(words.words.every((w, i) => w.end > w.start && (i === 0 || w.start >= words.words[i - 1].start)), 'words in order, each with a length');
 });
 
 test('wordsOf flattens timed words across sentences, in order', () => {

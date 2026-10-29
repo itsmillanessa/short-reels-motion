@@ -4,7 +4,7 @@
 // exactly and words are interpolated inside the detected speech; recordings use whisper's per-token
 // times when the model is present, otherwise silence gaps — never a fake "word-accurate" claim.
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, extname, join, resolve } from 'node:path';
 import { OmError, readSource, sha, writeSource } from './project.js';
@@ -604,19 +604,82 @@ function download(url, file, log, what) {
   renameSync(part, file);
 }
 
-const KOKORO_SETUP = `uv venv -p 3.12 ${CACHE}/tts-venv && uv pip install -p ${CACHE}/tts-venv/bin/python kokoro-onnx soundfile`;
+const which = (bin) => {
+  const r = spawnSync(process.platform === 'win32' ? 'where' : 'which', [bin], { encoding: 'utf8' });
+  return (r.status === 0 && r.stdout.split(/\r?\n/)[0].trim()) || null;   // `where` lists every match, one per CRLF line
+};
+
+// A setup step whose output the user watches (pip and uv print their progress).
+function step(cmd, args, what) {
+  const r = spawnSync(cmd, args, { stdio: ['ignore', 'inherit', 'inherit'] });
+  if (r.error || r.status !== 0) throw new OmError(`${what} failed${r.error ? `: ${r.error.message}` : ` (exit ${r.status}, see above)`}`);
+}
+
+// ---------- Kokoro: the free voice, set up once (srm voice --setup) ----------
+
 const KOKORO_FILES = 'https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/';
 const KOKORO_PY = join(dirname(fileURLToPath(import.meta.url)), 'kokoro.py');
+const KOKORO_SETUP = 'srm voice --setup   (one time: a Python venv with kokoro-onnx and the voice model, ~400 MB)';
+// A venv keeps its python in bin/ on macOS and Linux, in Scripts\ on Windows.
+export const venvPython = (venv, platform = process.platform) => (platform === 'win32' ? join(venv, 'Scripts', 'python.exe') : join(venv, 'bin', 'python'));
+// Our Kokoro venv (short path on purpose: espeak-ng silently ignores long data paths). Installs made before the renames
+// live under the old names; a venv can't be moved.
+const KOKORO_VENV = join(CACHE, 'tts-venv');
+export const kokoroPython = () => firstFile(...['short-reels-motion', 'huashu-motion', 'open-motion'].map((d) => venvPython(join(homedir(), '.cache', d, 'tts-venv'))));
+const kokoroModel = () => firstFile(join(CACHE, 'tts', 'kokoro-v1.0.onnx'), join(LEGACY, 'tts', 'models', 'kokoro-v1.0.onnx')) || join(CACHE, 'tts', 'kokoro-v1.0.onnx');
+const kokoroVoices = () => firstFile(join(CACHE, 'tts', 'voices-v1.0.bin'), join(LEGACY, 'tts', 'voices', 'voices-v1.0.bin')) || join(CACHE, 'tts', 'voices-v1.0.bin');
 
 class KokoroMissing extends OmError {}
 
+// The Pythons kokoro-onnx installs on: 3.10 to 3.13 (it has no wheels for 3.14). On Windows the py launcher answers,
+// never a bare `python`, which can be the Microsoft Store stub; elsewhere python3.x on PATH. `ask` is injectable for tests.
+const KOKORO_PYTHONS = ['3.12', '3.13', '3.11', '3.10'];
+const askVersion = (cmd, args) => spawnSync(cmd, [...args, '-c', 'import sys; print("%d.%d" % sys.version_info[:2])'], { encoding: 'utf8', windowsHide: true });
+export function basePython(platform = process.platform, ask = askVersion) {
+  const tries = platform === 'win32' ? KOKORO_PYTHONS.map((v) => ['py', [`-${v}`]]) : [...KOKORO_PYTHONS.map((v) => [`python${v}`, []]), ['python3', []]];
+  for (const [cmd, args] of tries) {
+    const r = ask(cmd, args);
+    if (r.status === 0 && KOKORO_PYTHONS.includes(String(r.stdout).trim())) return { cmd, args };
+  }
+  return null;
+}
+const PYTHON_HINT = {
+  win32: 'winget install astral-sh.uv   (or Python 3.12: winget install Python.Python.3.12)',
+  darwin: 'brew install uv   (or Python 3.12: brew install python@3.12)',
+  linux: 'curl -LsSf https://astral.sh/uv/install.sh | sh   (or your distribution\'s python3.12 with venv)',
+};
+
+// srm voice --setup: Kokoro in one step. A venv with kokoro-onnx (uv when it is there — it fetches a Python 3.12 if the
+// machine has none — otherwise the machine's own Python 3.10–3.13), the model files, and one sentence spoken to prove it.
+export function setupKokoro(log = () => {}) {
+  let python = kokoroPython();
+  if (python) log(`Kokoro venv already there: ${python}`);
+  else {
+    const uv = which('uv'), base = uv ? null : basePython();
+    if (!uv && !base) throw new OmError(`Kokoro needs uv or Python 3.10–3.13 (kokoro-onnx has no wheels for newer ones). Install one and run srm voice --setup again:\n  ${PYTHON_HINT[process.platform] || PYTHON_HINT.linux}`);
+    mkdirSync(CACHE, { recursive: true });
+    python = venvPython(KOKORO_VENV);
+    log(`creating the Kokoro venv: ${KOKORO_VENV} (${uv ? 'uv, Python 3.12' : [base.cmd, ...base.args].join(' ')})`);
+    if (uv) step(uv, ['venv', '-p', '3.12', KOKORO_VENV], 'uv venv');
+    else step(base.cmd, [...base.args, '-m', 'venv', KOKORO_VENV], 'python -m venv');
+    log('installing kokoro-onnx and soundfile…');
+    if (uv) step(uv, ['pip', 'install', '-p', python, 'kokoro-onnx', 'soundfile'], 'uv pip install');
+    else step(python, ['-m', 'pip', 'install', '--disable-pip-version-check', 'kokoro-onnx', 'soundfile'], 'pip install');
+  }
+  const tmp = mkdtempSync(join(tmpdir(), 'om-voice-'));
+  const txt = join(tmp, 'listo.txt'), wav = join(tmp, 'listo.wav');
+  writeFileSync(txt, 'Listo: ya tengo voz.');
+  kokoro(txt, wav, 'ef_dora', 1, log);   // downloads the model files the first time
+  const seconds = probe(wav);
+  rmSync(tmp, { recursive: true, force: true });
+  return [`✓ Kokoro is ready  (${python})`, `  a test sentence came out in ef_dora: ${seconds.toFixed(2)} s`,
+    '  srm voice <dir> --text guion.txt uses it now: ef_dora for Spanish, af_heart for English (--voice to pick another)'].join('\n');
+}
+
 function kokoro(textFile, outFile, voice, speed, log = () => {}) {
-  // Our documented Kokoro venv (short path on purpose: espeak-ng silently ignores long data paths).
-  // (installs made before the rename to huashu-motion live under the old name; a venv can't be moved)
-  const python = firstFile(...['short-reels-motion', 'huashu-motion', 'open-motion'].map((d) => join(homedir(), '.cache', d, 'tts-venv', 'bin', 'python')));
+  const python = kokoroPython();
   if (!python) throw new KokoroMissing(`Kokoro TTS is not set up. One-time setup:\n  ${KOKORO_SETUP}`);
-  const model = firstFile(join(CACHE, 'tts', 'kokoro-v1.0.onnx'), join(LEGACY, 'tts', 'models', 'kokoro-v1.0.onnx')) || join(CACHE, 'tts', 'kokoro-v1.0.onnx');
-  const voices = firstFile(join(CACHE, 'tts', 'voices-v1.0.bin'), join(LEGACY, 'tts', 'voices', 'voices-v1.0.bin')) || join(CACHE, 'tts', 'voices-v1.0.bin');
+  const model = kokoroModel(), voices = kokoroVoices();
   if (!existsSync(model)) download(KOKORO_FILES + 'kokoro-v1.0.onnx', model, log, 'the Kokoro voice model (~325 MB)');
   if (!existsSync(voices)) download(KOKORO_FILES + 'voices-v1.0.bin', voices, log, 'the Kokoro voices (~28 MB)');
   const r = run(python, [KOKORO_PY, model, voices, textFile, voice, String(speed), outFile]);
@@ -629,7 +692,7 @@ function kokoro(textFile, outFile, voice, speed, log = () => {}) {
 }
 
 function say(textFile, outFile, voice, speed) {
-  if (process.platform !== 'darwin') throw new OmError('say: voices are macOS only — use a Kokoro voice like zf_xiaobei');
+  if (process.platform !== 'darwin') throw new OmError(`say: voices are macOS only — use a Kokoro voice like ef_dora (${KOKORO_SETUP})${process.platform === 'win32' ? ', or a Windows voice: --voice win' : ''}`);
   const args = ['-v', voice, '-o', outFile, '-f', textFile];
   if (speed !== 1) args.push('-r', String(Math.round(185 * speed)));
   // The macOS speech service occasionally hangs on a request; give each sentence a deadline and one retry.
@@ -639,6 +702,67 @@ function say(textFile, outFile, voice, speed) {
     if (r.signal && attempt < 2) continue;
     throw new OmError(`say -v ${voice} ${r.signal ? 'timed out' : `failed: ${(r.stderr || '').trim()}`}${/not found|Voice/i.test(r.stderr || '') ? ' — list voices with: say -v "?"' : ''}`);
   }
+}
+
+// ---------- Windows' own voices (SAPI) ----------
+
+// Microsoft Sabina (es-MX), Helena (es-ES), Zira (en-US)…: free and already installed, the Windows counterpart of macOS
+// say. Robotic next to Kokoro, but a script is spoken the first time with nothing to set up. `win:Sabina` picks a voice by
+// name, plain `win` by the script's language. Every sentence goes in one PowerShell call (starting one takes ~1 s).
+// Windows PowerShell (5.1) on purpose: System.Speech is .NET Framework, which PowerShell 7 does not load.
+const SAPI_PS = [
+  "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'",
+  'Add-Type -AssemblyName System.Speech',
+  '$s = New-Object System.Speech.Synthesis.SpeechSynthesizer',
+  '$all = @($s.GetInstalledVoices() | Where-Object { $_.Enabled } | ForEach-Object { $_.VoiceInfo })',
+  "if ($env:SRM_TTS_LIST) { foreach ($v in $all) { [Console]::Out.WriteLine($v.Name + '|' + $v.Culture.Name) }; exit 0 }",
+  '$want = $env:SRM_TTS_VOICE',
+  "if ($want) { $v = $all | Where-Object { $_.Name -like ('*' + $want + '*') } | Select-Object -First 1 }",
+  'else { $v = @($all | Where-Object { $_.Culture.Name -eq $env:SRM_TTS_CULTURE }) + @($all | Where-Object { $_.Culture.TwoLetterISOLanguageName -eq $env:SRM_TTS_LANG }) | Select-Object -First 1 }',
+  "if (-not $v) { [Console]::Error.WriteLine('NOVOICE|' + (($all | ForEach-Object { $_.Name + ' (' + $_.Culture.Name + ')' }) -join ', ')); exit 3 }",
+  '$s.SelectVoice($v.Name)',
+  'foreach ($job in (Get-Content -Raw -Encoding UTF8 $env:SRM_TTS_JOBS | ConvertFrom-Json)) {',
+  '  $s.SetOutputToWaveFile($job.out)',
+  '  $s.Speak([IO.File]::ReadAllText($job.text, [Text.Encoding]::UTF8))',
+  '}',
+  '$s.SetOutputToNull(); $s.Dispose()',
+  "[Console]::Out.WriteLine('VOICE|' + $v.Name + '|' + $v.Culture.Name)",
+].join('\n');
+const CULTURE = { es: 'es-MX', en: 'en-US', zh: 'zh-CN' };
+
+function powershell(script, env) {
+  return spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')],
+    { encoding: 'utf8', env: { ...process.env, ...env }, timeout: 300_000, windowsHide: true });
+}
+
+// The voices Windows has for speech: [{ name, culture }] (empty elsewhere). srm doctor lists them.
+export function sapiVoices() {
+  if (process.platform !== 'win32') return [];
+  const r = powershell(SAPI_PS, { SRM_TTS_LIST: '1' });
+  return r.status === 0 ? r.stdout.split(/\r?\n/).filter((l) => l.includes('|')).map((l) => { const [name, culture] = l.split('|'); return { name, culture }; }) : [];
+}
+
+// Speaks each job ({ text: file, out: wav }) with one voice; returns the voice's full name.
+function sapi(jobs, voice, lang) {
+  if (process.platform !== 'win32') throw new OmError(`win: voices are Windows only — use a Kokoro voice like ef_dora (${KOKORO_SETUP})`);
+  const list = join(dirname(jobs[0].out), 'sapi-jobs.json');
+  writeFileSync(list, JSON.stringify(jobs));
+  const r = powershell(SAPI_PS, { SRM_TTS_JOBS: list, SRM_TTS_VOICE: voice || '', SRM_TTS_LANG: lang, SRM_TTS_CULTURE: CULTURE[lang] || '' });
+  const err = (r.stderr || '').replace(/#< CLIXML\r?\n?/g, '').replace(/<Objs[\s\S]*?<\/Objs>/g, '').trim();   // PowerShell's progress records
+  const none = /NOVOICE\|(.*)/.exec(err);
+  if (none) throw new OmError(`no Windows voice ${voice ? `named like "${voice}"` : `in ${CULTURE[lang] || lang}`} — installed: ${none[1].trim() || 'none'}. Add one in Settings → Time & language → Speech → Add voices, or set up Kokoro: ${KOKORO_SETUP}`);
+  if (r.error || r.status !== 0 || jobs.some((j) => !existsSync(j.out))) throw new OmError(`Windows speech failed: ${r.error?.message || err.split(/\r?\n/).pop() || `exit ${r.status}`}`);
+  return /VOICE\|([^|\r\n]+)/.exec(r.stdout)?.[1] || voice;
+}
+
+// ffmpeg's atempo takes 0.5–2 per instance (older builds): chained for the 0.3–3 a script may ask for.
+export function atempo(speed) {
+  const f = [];
+  let s = speed;
+  while (s > 2) { f.push('atempo=2'); s /= 2; }
+  while (s < 0.5) { f.push('atempo=0.5'); s /= 0.5; }
+  f.push(`atempo=${r3(s)}`);
+  return f.join(',');
 }
 
 // voice id → engine. Default: Chinese on macOS → say:Tingting (Kokoro's Chinese goes through espeak
@@ -655,8 +779,13 @@ export function pickVoice(voice, text, platform = process.platform) {
   if (!voice) return platform === 'darwin' && zh ? { engine: 'say', id: 'Tingting' } : { engine: 'kokoro', id: zh ? 'zf_xiaobei' : isSpanish(text) ? 'ef_dora' : 'af_heart' };
   if (voice === 'say') return { engine: 'say', id: sayFor(text) };
   if (voice.startsWith('say:')) return { engine: 'say', id: voice.slice(4) };
+  if (/^(win|sapi)$/i.test(voice)) return { engine: 'sapi', id: '' };   // by the script's language
+  if (/^(win|sapi):/i.test(voice)) return { engine: 'sapi', id: voice.replace(/^(win|sapi):/i, '') };
   return { engine: 'kokoro', id: voice.replace(/^kokoro:/, '') };
 }
+
+// The voice the system itself has, for when Kokoro is not set up and nobody asked for a voice: macOS say, Windows' SAPI.
+export const systemVoice = (text, platform = process.platform) => (platform === 'darwin' ? { engine: 'say', id: sayFor(text) } : platform === 'win32' ? { engine: 'sapi', id: '' } : null);
 
 const TRIM = 'silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.02,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.04,areverse';
 
@@ -671,7 +800,7 @@ function readText(arg) {
 
 export async function voice(project, opts = {}, log = () => {}) {
   const text = readText(opts.text);
-  if (!text && !opts.audio && !opts.words) throw new OmError('usage: srm voice <dir> --text <script.txt|"文本"> [--voice say:Tingting|zf_xiaobei] [--speed 1]\n       srm voice <dir> --audio <recording> [--text <script>] [--asr on|off] [--speed 1.2]\n       srm voice <dir> --audio <take.mp3> --words <timestamps.json> [--text <script>] [--speed 1.2]   (the times ElevenLabs returns: exact words, no whisper)');
+  if (!text && !opts.audio && !opts.words) throw new OmError('usage: srm voice <dir> --text <guion.txt|"texto"> [--voice ef_dora|win:Sabina|say:Paulina] [--speed 1]\n       srm voice <dir> --audio <recording> [--text <script>] [--asr on|off] [--speed 1.2]\n       srm voice <dir> --audio <take.mp3> --words <timestamps.json> [--text <script>] [--speed 1.2]   (the times ElevenLabs returns: exact words, no whisper)');
   const { html } = readSource(project);
   const keep = cueTerms(html).map((c) => c.term);
   const tmp = mkdtempSync(join(tmpdir(), 'om-voice-'));
@@ -746,23 +875,30 @@ function fromScript(text, keep, tmp, opts, log) {
   const pause = opts.pause == null ? 0.25 : Number(opts.pause);
   let v = pickVoice(opts.voice, text);
   if (v.engine === 'kokoro' && HAN.test(text)) log('note: Kokoro reads Chinese through espeak without tones — whisper could not understand it in our tests. Prefer say:Tingting (macOS) or your own recording (--audio).');
+  const lang = recordingLang(text);
+  const txts = sentences.map((s, i) => { const f = join(tmp, `s${i}.txt`); writeFileSync(f, s); return f; });
+  const rawOf = (i) => join(tmp, `s${i}.${v.engine === 'say' ? 'aiff' : 'wav'}`);
+  // one engine call per sentence; Windows' voices take all the sentences still to speak in one call
+  const speak = (i) => {
+    if (v.engine === 'say') say(txts[i], rawOf(i), v.id, speed);
+    else if (v.engine === 'sapi') { if (!existsSync(rawOf(i))) v = { ...v, id: sapi(txts.slice(i).map((t, k) => ({ text: t, out: rawOf(i + k) })), v.id, lang) }; }
+    else kokoro(txts[i], rawOf(i), v.id, speed, log);
+  };
   const clips = [];
   for (let i = 0; i < sentences.length; i++) {
-    const txt = join(tmp, `s${i}.txt`);
-    writeFileSync(txt, sentences[i]);
-    let raw = join(tmp, `s${i}.${v.engine === 'say' ? 'aiff' : 'wav'}`);
-    log(`tts ${i + 1}/${sentences.length} (${v.engine}:${v.id}) ${sentences[i]}`);
-    try {
-      if (v.engine === 'say') say(txt, raw, v.id, speed); else kokoro(txt, raw, v.id, speed, log);
-    } catch (e) {
-      if (!(e instanceof KokoroMissing) || opts.voice || process.platform !== 'darwin') throw e;
-      v = { engine: 'say', id: sayFor(text) };
-      log(`Kokoro is not set up — using macOS say:${v.id}. (${KOKORO_SETUP})`);
-      raw = join(tmp, `s${i}.aiff`);
-      say(txt, raw, v.id, speed);
+    log(`tts ${i + 1}/${sentences.length} (${v.engine}:${v.id || lang}) ${sentences[i]}`);
+    try { speak(i); } catch (e) {
+      // Kokoro not set up and no voice asked for: the system's own voice speaks (macOS say, Windows' voices)
+      const fallback = e instanceof KokoroMissing && !opts.voice && systemVoice(text);
+      if (!fallback) throw e;
+      v = fallback;
+      log(`Kokoro is not set up — using ${v.engine === 'say' ? `the macOS voice say:${v.id}` : 'a Windows voice (--voice win)'}. For the better free voice, once: ${KOKORO_SETUP}`);
+      speak(i);
     }
     const clip = join(tmp, `c${i}.wav`);
-    ffmpeg(['-i', raw, '-af', TRIM, '-ar', '24000', '-ac', '1', '-c:a', 'pcm_s16le', clip], 'trimming the clip');
+    // Windows' voices have no speed setting worth using: ffmpeg's atempo sets it (pitch kept), before the clip is measured
+    const tempo = v.engine === 'sapi' && speed !== 1 ? `${atempo(speed)},` : '';
+    ffmpeg(['-i', rawOf(i), '-af', tempo + TRIM, '-ar', '24000', '-ac', '1', '-c:a', 'pcm_s16le', clip], 'trimming the clip');
     const duration = probe(clip);
     clips.push({ file: clip, duration, spans: speechOf(clip, duration, '-40dB', 0.12) });
   }
@@ -783,10 +919,40 @@ function fromScript(text, keep, tmp, opts, log) {
   return { wav, duration, sentences: out, source: `tts:${v.engine}:${v.id}`, precision: 'tts' };
 }
 
-function whisperCli() {
-  const which = run(process.platform === 'win32' ? 'where' : 'which', ['whisper-cli']);
-  const found = which.status === 0 && which.stdout.trim().split('\n')[0];
-  return [found, '/opt/homebrew/bin/whisper-cli', '/usr/local/bin/whisper-cli', join(LEGACY, 'whisper', 'whisper.cpp', 'build', 'bin', 'whisper-cli')].find((p) => p && existsSync(p));
+// whisper-cli: on PATH, Homebrew's, the Windows build `srm voice --setup whisper` unpacks into the cache, or an old build.
+const WHISPER_BIN = join(CACHE, 'whisper', 'bin');
+export function whisperCli() {
+  return [which('whisper-cli'), '/opt/homebrew/bin/whisper-cli', '/usr/local/bin/whisper-cli', join(WHISPER_BIN, 'Release', 'whisper-cli.exe'), join(WHISPER_BIN, 'whisper-cli.exe'),
+    join(LEGACY, 'whisper', 'whisper.cpp', 'build', 'bin', 'whisper-cli')].find((p) => p && existsSync(p));
+}
+export const WHISPER_HINT = {
+  win32: 'srm voice --setup whisper',
+  darwin: 'brew install whisper-cpp',
+  linux: 'build whisper.cpp (https://github.com/ggml-org/whisper.cpp) and put whisper-cli on PATH',
+};
+
+// srm voice --setup whisper (Windows): the build whisper.cpp publishes for Windows, unpacked into the cache. The tagged
+// versions (v1.9.5) carry no binaries; the build releases next to them (b5454) do, so the newest one with the file wins.
+// macOS and Linux get the command that installs it there. The ~490 MB model still downloads on first use.
+export async function setupWhisper(log = () => {}, { platform = process.platform, arch = process.arch } = {}) {
+  const have = whisperCli();
+  if (have) return `✓ whisper is ready  (${have})`;
+  if (platform !== 'win32') throw new OmError(`whisper on this system: ${WHISPER_HINT[platform] || WHISPER_HINT.linux}`);
+  const asset = arch === 'arm64' ? 'whisper-bin-win-cpu-arm64.zip' : 'whisper-bin-x64.zip';
+  const res = await fetch('https://api.github.com/repos/ggml-org/whisper.cpp/releases?per_page=20', { headers: { accept: 'application/vnd.github+json', 'user-agent': 'short-reels-motion' } });
+  if (!res.ok) throw new OmError(`could not list whisper.cpp releases (GitHub answered ${res.status}) — download ${asset} from https://github.com/ggml-org/whisper.cpp/releases and unpack it into ${WHISPER_BIN}`);
+  const release = (await res.json()).find((r) => (r.assets || []).some((a) => a.name === asset));
+  if (!release) throw new OmError(`no whisper.cpp release has ${asset} — build it: https://github.com/ggml-org/whisper.cpp`);
+  const archive = join(CACHE, 'whisper', asset);
+  download(release.assets.find((a) => a.name === asset).browser_download_url, archive, log, `whisper.cpp ${release.tag_name} for Windows (${asset}, ~9 MB)`);
+  mkdirSync(WHISPER_BIN, { recursive: true });
+  // Windows' own tar (bsdtar) reads zip; the GNU tar Git Bash puts first on PATH does not
+  const tar = join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'tar.exe');
+  must(existsSync(tar) ? tar : 'tar', ['-xf', archive, '-C', WHISPER_BIN], 'unpacking whisper');
+  rmSync(archive, { force: true });
+  const cli = whisperCli();
+  if (!cli) throw new OmError(`${asset} has no whisper-cli.exe where expected (${WHISPER_BIN}\\Release) — report it: https://github.com/itsmillanessa/short-reels-motion/issues`);
+  return [`✓ whisper ${release.tag_name} is ready  (${cli})`, '  srm voice <dir> --audio voz.m4a --text guion.txt aligns your recording word by word (the model, ~490 MB, downloads the first time)'].join('\n');
 }
 
 // The language whisper listens for: --lang, else the script's, else whisper's own detection.
@@ -847,7 +1013,7 @@ function fromRecording(file, text, keep, tmp, opts, log) {
     const wav16 = join(tmp, 'asr16.wav');
     ffmpeg(['-i', wav, '-ar', '16000', '-ac', '1', '-c:a', 'pcm_s16le', wav16], 'resampling for ASR');
     const cli = whisperCli();
-    if (!cli) throw new OmError(`whisper is not installed — brew install whisper-cpp (macOS) or build whisper.cpp${text ? '; or --asr off for silence alignment' : ''}`);
+    if (!cli) throw new OmError(`whisper is not installed — ${WHISPER_HINT[process.platform] || WHISPER_HINT.linux}${text ? '; or --asr off for silence alignment' : ''}`);
     if (!existsSync(modelPath)) download(`https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-${model}.bin`, modelPath, log, `the whisper ${model} model (~${model.startsWith('small') ? '490' : model.startsWith('base') ? '150' : '?'} MB)`);
     log(`transcribing with whisper ${model} (${lang})…`);
     const args = ['-m', modelPath, '-l', lang, '-ojf', '-of', join(tmp, 'asr'), '-np', '-nfa', '--dtw', model.replace(/-/g, '.'), wav16];
