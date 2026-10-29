@@ -451,14 +451,22 @@ function renderVars() {
   for (const v of S.variables) { const g = v.group || t('vars.group'); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(v); }
   for (const [name, vars] of groups) {
     const g = el('div', { class: 'group' }, el('h4', {}, name));
-    for (const v of vars) g.append(field(v, linked.has(v.id)));
+    for (const v of vars) g.append(field(v, linked.has(v.id), name));
     box.append(g);
   }
   box.querySelector('.field.linked')?.scrollIntoView({ block: 'nearest' });
 }
 
-function field(v, linked) {
-  const row = el('div', { class: 'field' + (linked ? ' linked' : '') }, el('label', { title: v.id }, v.label || v.id));
+// Inside its group a label drops the group's name: in «Gancho», "Gancho · línea 1" reads "Línea 1".
+const shortLabel = (label, group) => {
+  const m = new RegExp('^' + String(group).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*[·:\\-–—]\\s*', 'i').exec(label);
+  const s = m ? label.slice(m[0].length) : label;
+  return s ? s[0].toUpperCase() + s.slice(1) : label;
+};
+function field(v, linked, group = '') {
+  const id = 'var-' + v.id;
+  const label = el('label', { for: id, title: `${v.label || v.id} (${v.id})` }, shortLabel(v.label || v.id, group));
+  const row = el('div', { class: 'field' + (linked ? ' linked' : '') + (v.type === 'boolean' ? ' check' : '') }, label);
   const commit = async (value) => {
     if (value === v.default) return;
     row.classList.add('saving');
@@ -487,7 +495,9 @@ function field(v, linked) {
       ? el('textarea', { rows: 2, onchange: (e) => commit(e.target.value) }, String(v.default ?? ''))
       : el('input', { type: 'text', value: v.default ?? '', onchange: (e) => commit(e.target.value), onkeydown: (e) => e.key === 'Enter' && e.target.blur() });
   }
-  row.append(input);
+  const target = input.matches('input, select, textarea') ? input : input.querySelector('input[type=text]');
+  if (target) target.id = id;
+  if (v.type === 'boolean') row.prepend(input); else row.append(input);   // a checkbox sits before its words
   return row;
 }
 document.addEventListener('focusout', () => setTimeout(() => { if (S.varsDirty && !$('#vars').contains(document.activeElement)) { S.varsDirty = false; renderVars(); } }, 0));
