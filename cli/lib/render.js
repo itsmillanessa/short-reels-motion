@@ -20,7 +20,7 @@ export function nextOutput(project, ext) {
   }
 }
 
-// --transparent: an overlay layer for an editor (剪映 / Premiere / Final Cut). MOV is ProRes 4444
+// --transparent: an overlay layer for an editor (CapCut / Premiere / Final Cut). MOV is ProRes 4444
 // with alpha (WebM VP9 alpha also works); a composition that declares a boolean variable
 // `transparent` gets it set to true for this render (hide the footage, clear the background); the
 // sound is dropped because the edit underneath already has it; and the result is checked for alpha.

@@ -10,11 +10,53 @@ import { claim, comments, pending, resolve as resolveComment, setStatus } from '
 import { findChrome, chromeVersion, NO_CHROME } from './lib/browser.js';
 import { render } from './lib/render.js';
 import { cacheDir } from './lib/brand.js';
+import { cliLang, tr } from './lib/lang.js';
 
 const PKG = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const VERSION = JSON.parse(readFileSync(join(PKG, 'package.json'), 'utf8')).version;
 
-const HELP = `Short Reels Motion ${VERSION} — shorts, reels and TikToks made by your coding agent, edited by pointing at the frame.
+const HELP_ES = `Short Reels Motion ${VERSION} — shorts, reels y TikToks hechos por tu agente de código; señalas el cuadro para cambiarlo.
+(también short-reels-motion; la documentación del motor dice om, que es el mismo comando; basado en huashu-motion de Huashu, MIT)
+
+  srm grab <url|carpeta> [dir]   el material real del producto en <dir>/materials/: capturas de la página, logo, imágenes, sus colores y tipografía (una URL), o las capturas, iconos, medios y colores del propio proyecto (una carpeta)
+  srm new <dir> [--template t]   empezar un proyecto (srm templates las lista)
+  srm templates                  plantillas y para qué sirve cada una
+  srm demo [dir]                 copiar el video de muestra y abrirlo en el studio
+  srm studio [dir] [--lang es|en|zh]   vista previa en vivo, cambios directos, notas para el agente (idioma de la interfaz; también OM_LANG)
+  srm inbox [dir] [--wait]       ver los comentarios; --wait espera, toma el siguiente y lo imprime
+  srm look <id|--at seg> [dir]   guardar el cuadro (y un acercamiento del punto donde hicieron clic) como PNG para verlo
+  srm done <id> [dir] --note …   marcar un comentario como hecho (el studio muestra la nota)
+  srm fonts [add <familia> [dir]]   las tipografías incluidas, o instalar una en un proyecto
+  srm vars [dir]                 las variables editables
+  srm set clave=valor… [dir]     cambiar los valores por defecto de las variables en index.html
+  srm scan [dir]                 mapa JSON de variables, objetos y escenas (para agentes)
+  srm undo [dir]                 volver a la versión guardada anterior
+  srm render [dir] [--format mp4|mov|webm|gif] [--fps 30]   exportar a <dir>/out/
+  srm render [dir] --blur [n]     desenfoque de movimiento: n subcuadros promediados por cuadro (hasta 8 por defecto)
+  srm render [dir] --silent       exportar sin el aviso de «no hay banda sonora»
+  srm render [dir] [--workers n] [--video extract|seek] [--frames jpg|png]   navegadores a la vez (hasta 8), cómo se lee el video, el caché de cuadros
+  srm check [dir] [--samples n] [--source] [--json]   antes de renderizar: estructura, scripts, archivos, reglas de movimiento y cuadros de muestra (texto cortado, tapado, con poco contraste o bajo los botones de las apps)
+  srm qa [dir|video] [--loop]     revisar un render: saltos de un cuadro, tiempo muerto (sin contar las pausas OM.hold), cortes, curva de movimiento, el empalme del loop
+  srm render [dir] --transparent  capa para CapCut/Premiere: ProRes 4444 con alfa (o --format webm), sin sonido
+  srm fork <dir> <dir-nuevo> --size 1080x1920   copiar a otro tamaño de cuadro; la re-maquetación queda en la bandeja
+  srm voice <dir> --text <guion.txt|"texto"> | --audio <archivo> [--voice ef_dora|win:Sabina|say:Paulina] [--speed 1.2] [--fit]   narración, palabras con tiempo, volumen para las bocas, .srt
+  srm voice <dir> --audio toma.mp3 --words tiempos.json [--text guion]   la toma de un motor de voz con los tiempos que devolvió (ElevenLabs): palabras exactas, sin whisper
+  srm voice --setup [whisper]     instalar la voz gratis Kokoro en un paso (~400 MB), o whisper para usar tu propia grabación
+  srm sound [dir] [--list] [--off]   música y efectos de las escenas, golpes OM.sfx y om-score (srm render la actualiza)
+  srm still <página.html|dir> [--at 0,2.5] [--out archivo.png|carpeta]   un PNG de cualquier página; varios tiempos → archivo-0.00s.png, archivo-2.50s.png
+  srm swatch [direcciones.md] [--out archivo]   la paleta: las líneas de las tarjetas de dirección en un PNG, con revisión de contraste
+  srm learn [temas…]             antes de un video: las preferencias de este creador y lo aprendido sobre esos temas
+  srm learn harvest [dir]        después de un video: sus comentarios y cambios del studio, y qué vale la pena guardar
+  srm learn add "…" --kind preference|observed|verified --topics a,b --evidence "…" [--do "…"]   guardar un hallazgo
+  srm samples [build [ids…]]      el paquete de instrumentos reales (piano, cuerdas, batería…; CC0/CC-BY, ~55 MB): estado, o armarlo una vez
+  srm share [dir] [--from s] [--to s]   después del render: un GIF de ≤10 MB (inicio + cuadro final) y share.md (texto para publicar)
+  srm export html [dir] [--out carpeta] [--title …] [--desc …]   página para compartir (reproductor, prompt para remezclar, source.zip)
+  srm doctor                     revisar Node, FFmpeg, el navegador y lo opcional (voces, whisper, el skill)
+  srm kit [set clave=valor… | import <archivo>]   tu kit: handle, cta, colores, lang, platforms, voice, speed, character.* — cada proyecto nuevo arranca con él
+
+Documentación: skills/short-reels-motion/SKILL.md   ·   English: SRM_LANG=en srm help`;
+
+const HELP_EN = `Short Reels Motion ${VERSION} — shorts, reels and TikToks made by your coding agent, edited by pointing at the frame.
 (also short-reels-motion; the engine's docs say om, which is the same command; built on huashu-motion by Huashu, MIT)
 
   srm grab <url|folder> [dir]   the product's real material into <dir>/materials/: page screenshots, logo, images, its colours and type (a URL), or the project's own screenshots, icons, media and stylesheet colours (a folder)
@@ -36,10 +78,11 @@ const HELP = `Short Reels Motion ${VERSION} — shorts, reels and TikToks made b
   srm render [dir] [--workers n] [--video extract|seek] [--frames jpg|png]   browsers at once (default: up to 8), how footage is read, the footage cache
   srm check [dir] [--samples n] [--source] [--json]   before rendering: structure, scripts, files, motion rules, then sampled frames (cut-off, covered or low-contrast text, blank ends, history-dependent frames)
   srm qa [dir|video] [--loop]     check a render: single-frame pops, dead time (minus the film's OM.hold stretches), hard cuts, motion curve, loop seam
-  srm render [dir] --transparent  overlay for 剪映/Premiere: ProRes 4444 with alpha (or --format webm), no sound
+  srm render [dir] --transparent  overlay for CapCut/Premiere: ProRes 4444 with alpha (or --format webm), no sound
   srm fork <dir> <newdir> --size 1080x1920   copy into a new frame size; the re-layout lands in the inbox
-  srm voice <dir> --text <file|"文本"> | --audio <file> [--voice say:Tingting|zf_xiaobei] [--speed 1.2] [--fit]   narration, word cues, loudness for mouths, .srt
+  srm voice <dir> --text <file|"text"> | --audio <file> [--voice af_heart|ef_dora|win:Zira|say:Samantha] [--speed 1.2] [--fit]   narration, word cues, loudness for mouths, .srt
   srm voice <dir> --audio take.mp3 --words timestamps.json [--text script]   a voice engine's take with the times it returned (ElevenLabs): exact words, no whisper
+  srm voice --setup [whisper]     set up the free Kokoro voice in one step (~400 MB), or whisper for your own recording
   srm sound [dir] [--list] [--off]   music + sound effects from the scenes, OM.sfx hits and an om-score (srm render refreshes it)
   srm still <page.html|dir> [--at 0,2.5] [--out file.png|folder]   a PNG of any page (key frames, treatment stills); several times → file-0.00s.png, file-2.50s.png
   srm swatch [directions.md] [--out file]   the Palette: lines of the direction cards as one PNG, with contrast and house-look checks
@@ -49,10 +92,10 @@ const HELP = `Short Reels Motion ${VERSION} — shorts, reels and TikToks made b
   srm samples [build [ids…]]      the real-instrument pack (piano, strings, drums…; CC0/CC-BY, ~55 MB): status, or build it once
   srm share [dir] [--from s] [--to s]   after a render: a ≤10 MB GIF (opening + end frame) and share.md (post, README header)
   srm export html [dir] [--out folder] [--title …] [--desc …]   share page (player, Remix prompt, source.zip) for any static host
-  srm doctor                     check Node, FFmpeg and the renderer (and what is optional: whisper, Kokoro, the skill)
+  srm doctor                     check Node, FFmpeg and the renderer (and what is optional: voices, whisper, the skill)
   srm kit [set key=value… | import <file>]   the creator's kit: handle, cta, colours, lang, platforms, voice, speed, character.* — every new project starts with it
 
-Docs: skills/short-reels-motion/SKILL.md`;
+Docs: skills/short-reels-motion/SKILL.md   ·   en español: SRM_LANG=es srm help`;
 
 function parse(argv) {
   const flags = {}, pos = [];
@@ -111,7 +154,7 @@ async function main() {
   const { flags, pos } = parse(rest);
 
   switch (cmd) {
-    case 'help': case '--help': case '-h': return out(HELP);
+    case 'help': case '--help': case '-h': return out(cliLang() === 'es' ? HELP_ES : HELP_EN);
     case 'version': case '--version': case '-v': return out(VERSION);
 
     case 'new': {
@@ -147,7 +190,9 @@ async function main() {
         return { id: n, ...meta };
       });
       if (flags.json) return out(list);
-      return out(list.map((t) => `${t.id.padEnd(16)} ${t.summary || ''}${t.best_for ? `\n${' '.repeat(17)}good for: ${t.best_for.join(', ')}` : ''}`).join('\n'));
+      // the column fits the longest name (short-antes-despues ran into its summary)
+      const w = Math.max(...list.map((t) => t.id.length)) + 1, goodFor = tr({ es: 'sirve para', en: 'good for' });
+      return out(list.map((t) => `${t.id.padEnd(w)} ${t.summary || ''}${t.best_for ? `\n${' '.repeat(w + 1)}${goodFor}: ${t.best_for.join(', ')}` : ''}`).join('\n'));
     }
 
     case 'demo': {
@@ -350,7 +395,16 @@ async function main() {
       return out(`samples  ${pack.dir}\n         ${ids.length} instruments: ${ids.join(' ')}\n         credits: ${pack.dir}/NOTICE.txt`);
     }
     case 'voice': {
-      const { voice } = await import('./lib/voice.js');
+      const { voice, setupKokoro, setupWhisper } = await import('./lib/voice.js');
+      // srm voice --setup [kokoro|whisper|all]: what needs a one-time install, no project needed
+      if (flags.setup) {
+        const what = flags.setup === true ? 'kokoro' : String(flags.setup).toLowerCase();
+        if (!['kokoro', 'whisper', 'all'].includes(what)) throw new OmError('usage: srm voice --setup [kokoro|whisper|all]   (kokoro: the free voice; whisper: your own recording, word by word)');
+        const log = (l) => process.stderr.write(l + '\n'), done = [];
+        if (what !== 'whisper') done.push(setupKokoro(log));
+        if (what !== 'kokoro') done.push(await setupWhisper(log));
+        return out(done.join('\n'));
+      }
       // the kit's voice and speed when no flag says otherwise: a generated voice (a script, or a voice engine's take with its
       // --words) gets the kit's speed; a recording keeps its own pace
       const { readKit } = await import('./lib/kit.js');
@@ -398,11 +452,11 @@ async function main() {
       }
       if (sub) throw new OmError('usage: srm kit · srm kit set key=value… · srm kit import <file>');
       const kit = readKit();
-      if (!Object.keys(kit).length) return out(`no kit yet (${kitFile()})\nsrm kit set handle=@your_handle accent=#E4007C cta="SÍGUEME PARA MÁS" lang=es-MX\nkeys: ${Object.keys(KEYS).join(', ')}, character.<${CHARACTER.join('|')}>`);
+      if (!Object.keys(kit).length) return out(`${tr({ es: 'todavía no hay kit', en: 'no kit yet' })} (${kitFile()})\nsrm kit set handle=${tr({ es: '@tu_usuario', en: '@your_handle' })} accent=#E4007C cta="SÍGUEME PARA MÁS" lang=es-MX\n${tr({ es: 'claves', en: 'keys' })}: ${Object.keys(KEYS).join(', ')}, character.<${CHARACTER.join('|')}>`);
       return out(`${kitFile()}\n${JSON.stringify(kit, null, 2)}`);
     }
 
-    default: throw new OmError(`unknown command "${cmd}"\n\n${HELP}`);
+    default: throw new OmError(`${tr({ es: 'comando desconocido', en: 'unknown command' })} "${cmd}"\n\n${cliLang() === 'es' ? HELP_ES : HELP_EN}`);
   }
 }
 
@@ -424,36 +478,50 @@ async function studio(dir, flags) {
   await new Promise(() => {});
 }
 
-function doctor() {
-  const report = [];
+async function doctor() {
+  const { kokoroPython, sapiVoices, whisperCli, WHISPER_HINT } = await import('./lib/voice.js');
+  const win = process.platform === 'win32', report = [];
   const major = Number(process.versions.node.split('.')[0]);
-  report.push([major >= 22, `Node ${process.versions.node}`, major >= 22 ? '' : 'need Node 22 or newer — https://nodejs.org']);
-  const has = (bin) => spawnSync(process.platform === 'win32' ? 'where' : 'which', [bin], { stdio: 'ignore' }).status === 0;
+  report.push([major >= 22, `Node ${process.versions.node}`, major >= 22 ? '' : tr({ es: 'se necesita Node 22 o más nuevo — https://nodejs.org', en: 'need Node 22 or newer — https://nodejs.org' })]);
+  const has = (bin) => spawnSync(win ? 'where' : 'which', [bin], { stdio: 'ignore' }).status === 0;
   const ff = (args) => spawnSync('ffmpeg', ['-hide_banner', ...args], { encoding: 'utf8' }).stdout || '';
   const hasFf = has('ffmpeg') && has('ffprobe');
-  report.push([hasFf, 'FFmpeg + ffprobe (render, sound, qa)', 'brew install ffmpeg  /  apt install ffmpeg  /  winget install ffmpeg']);
+  report.push([hasFf, tr({ es: 'FFmpeg + ffprobe (render, sonido, qa)', en: 'FFmpeg + ffprobe (render, sound, qa)' }), { win32: 'winget install Gyan.FFmpeg', darwin: 'brew install ffmpeg' }[process.platform] || 'apt install ffmpeg']);
   if (hasFf) {
     const enc = ff(['-encoders']);
     const missing = ['libx264', 'prores_ks', 'libvpx-vp9', 'libopus'].filter((e) => !enc.includes(e));
-    report.push([!missing.includes('libx264'), `encoders ${missing.length ? `missing ${missing.join(', ')}` : 'mp4 · mov · webm · gif'}`, missing.length ? 'mp4 needs libx264; mov needs prores_ks; webm needs libvpx-vp9 and libopus — a full FFmpeg build has them all' : '']);
+    report.push([!missing.includes('libx264'), `encoders ${missing.length ? `${tr({ es: 'faltan', en: 'missing' })} ${missing.join(', ')}` : 'mp4 · mov · webm · gif'}`, missing.length ? tr({ es: 'mp4 necesita libx264; mov, prores_ks; webm, libvpx-vp9 y libopus — un FFmpeg completo los trae todos', en: 'mp4 needs libx264; mov needs prores_ks; webm needs libvpx-vp9 and libopus — a full FFmpeg build has them all' }) : '']);
   }
   const browser = findChrome();
-  report.push([!!browser, browser ? `Chrome ${chromeVersion(browser) || ''} (${browser})` : 'Chrome (preview, render, stills, sound)', browser ? '' : NO_CHROME]);
+  report.push([!!browser, browser ? `Chrome ${chromeVersion(browser) || ''} (${browser})`.replace('  ', ' ') : tr({ es: 'Chrome (vista previa, render, cuadros, sonido)', en: 'Chrome (preview, render, stills, sound)' }), browser ? '' : NO_CHROME]);
   // optional: not needed to make a short, but each one opens a way of working (· = not there yet)
-  const home = homedir(), cache = cacheDir();
+  const home = homedir();
   const optional = [
-    [has('whisper-cli'), 'whisper (your own recording as the voice, word by word)', 'brew install whisper-cpp'],
-    [existsSync(join(cache, 'tts-venv', 'bin', 'python')) || existsSync(join(cache, 'tts-venv', 'Scripts', 'python.exe')), 'Kokoro (free voice, better than the system one)', '`srm voice` prints the one-line setup the first time'],
-    [existsSync(join(home, '.claude', 'skills', 'short-reels-motion')), 'skill for Claude Code (~/.claude/skills/short-reels-motion)', 'run the installer, or link skills/short-reels-motion there'],
-    [existsSync(join(home, '.codex', 'skills', 'short-reels-motion')), 'skill for Codex (~/.codex/skills/short-reels-motion)', 'only if you use Codex: run the installer'],
+    [!!kokoroPython(), tr({ es: 'Kokoro (voz gratis, mejor que la del sistema)', en: 'Kokoro (free voice, better than the system one)' }), tr({ es: 'srm voice --setup (una vez, ~400 MB)', en: 'srm voice --setup (once, ~400 MB)' })],
   ];
+  if (win) {
+    // Windows' own voices: the free voice with nothing to install (srm voice --voice win), and the fallback without Kokoro
+    const voices = sapiVoices(), es = voices.filter((v) => /^es-/i.test(v.culture));
+    optional.push([es.length > 0, `${tr({ es: 'voces de Windows', en: 'Windows voices' })}: ${voices.length ? voices.map((v) => `${v.name.replace(/^Microsoft | Desktop$/g, '')} (${v.culture})`).join(', ') : tr({ es: 'ninguna', en: 'none' })}`,
+      tr({ es: 'para una voz en español: Configuración → Hora e idioma → Voz → Agregar voces → Español (México)', en: 'for a Spanish voice: Settings → Time & language → Speech → Add voices → Spanish (Mexico)' })]);
+  }
+  const whisper = whisperCli();
+  optional.push([!!whisper, tr({ es: 'whisper (tu propia grabación como voz, palabra por palabra)', en: 'whisper (your own recording as the voice, word by word)' }), WHISPER_HINT[process.platform] || WHISPER_HINT.linux]);
+  optional.push([existsSync(join(home, '.claude', 'skills', 'short-reels-motion')), tr({ es: 'skill para Claude Code', en: 'skill for Claude Code' }) + ' (~/.claude/skills/short-reels-motion)', tr({ es: 'corre el instalador, o enlaza ahí skills/short-reels-motion', en: 'run the installer, or link skills/short-reels-motion there' })]);
+  optional.push([existsSync(join(home, '.codex', 'skills', 'short-reels-motion')), tr({ es: 'skill para Codex', en: 'skill for Codex' }) + ' (~/.codex/skills/short-reels-motion)', tr({ es: 'solo si usas Codex: corre el instalador', en: 'only if you use Codex: run the installer' })]);
   // another program called srm (the old secure-delete tool) earlier on PATH would run instead of this one
-  const which = spawnSync(process.platform === 'win32' ? 'where' : 'which', ['srm'], { encoding: 'utf8' }).stdout.split(/\r?\n/)[0].trim();
+  const which = spawnSync(win ? 'where' : 'which', ['srm'], { encoding: 'utf8' }).stdout.split(/\r?\n/)[0].trim();
   let ours = !which;
   try { ours = !which || realpathSync(which).startsWith(realpathSync(PKG)) || readFileSync(which, 'utf8').includes('short-reels-motion'); } catch { /* not readable */ }
-  if (!ours) report.push([false, `another program answers to "srm" (${which})`, 'use `short-reels-motion` instead, or put the npm global bin first on PATH']);
+  if (!ours) report.push([false, tr({ es: `otro programa responde a «srm» (${which})`, en: `another program answers to "srm" (${which})` }), tr({ es: 'usa `short-reels-motion`, o pon primero en el PATH la carpeta global de npm', en: 'use `short-reels-motion` instead, or put the npm global bin first on PATH' })]);
+  // Windows PowerShell runs npm's srm.ps1 only when scripts are allowed (a new Windows has them Restricted)
+  if (win) {
+    const policy = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', 'Get-ExecutionPolicy'], { encoding: 'utf8', windowsHide: true }).stdout?.trim();
+    if (/^(Restricted|AllSigned)$/i.test(policy || '')) optional.push([false, tr({ es: `PowerShell no deja correr srm.ps1 (ExecutionPolicy ${policy})`, en: `PowerShell will not run srm.ps1 (ExecutionPolicy ${policy})` }), tr({ es: 'Set-ExecutionPolicy -Scope CurrentUser RemoteSigned   (o usa srm desde cmd o Git Bash)', en: 'Set-ExecutionPolicy -Scope CurrentUser RemoteSigned   (or run srm from cmd or Git Bash)' })]);
+  }
+  const optionalWord = tr({ es: 'opcional', en: 'optional' });
   out([...report.map(([ok, what, hint]) => `${ok ? '✓' : '✗'} ${what}${hint && !ok ? `  — ${hint}` : ''}`),
-    ...optional.map(([ok, what, hint]) => `${ok ? '✓' : '·'} ${what}${hint && !ok ? `  — optional: ${hint}` : ''}`)].join('\n'));
+    ...optional.map(([ok, what, hint]) => `${ok ? '✓' : '·'} ${what}${hint && !ok ? `  — ${optionalWord}: ${hint}` : ''}`)].join('\n'));
   if (report.some(([ok]) => !ok)) process.exitCode = 2;
 }
 
