@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="es-MX" data-composition-variables='[
+  {"id":"kicker","type":"string","label":"Gancho · texto chico de arriba","default":"LA DIFERENCIA ES BRUTAL","group":"Gancho"},
+  {"id":"hook1","type":"string","label":"Gancho · línea 1","default":"ANTES Y","group":"Gancho"},
+  {"id":"hook2","type":"string","label":"Gancho · línea 2 (con fondo de color)","default":"DESPUÉS","group":"Gancho"},
+  {"id":"hook3","type":"string","label":"Gancho · línea 3 (vacío = no sale)","default":"DE USAR IA PARA TUS CORREOS","group":"Gancho"},
+  {"id":"beforeLabel","type":"string","label":"Antes · etiqueta","default":"ANTES","group":"Antes"},
+  {"id":"beforeTitle","type":"string","label":"Antes · título (*palabra* = acento)","default":"UN CORREO DIFÍCIL","group":"Antes"},
+  {"id":"beforePoints","type":"string","label":"Antes · puntos (separados con |)","default":"45 minutos en blanco|3 borradores|lo mandas con miedo","group":"Antes"},
+  {"id":"beforeImg","type":"string","label":"Antes · imagen opcional (en assets/)","default":"","group":"Antes"},
+  {"id":"beforeAt","type":"number","label":"Antes · entra en el segundo (con narración: la palabra de beforeWord)","default":2.4,"min":0.3,"max":60,"step":0.1,"group":"Antes"},
+  {"id":"beforeWord","type":"string","label":"Antes · entra al decir esta palabra (vacío = usa el segundo)","default":"","group":"Antes"},
+  {"id":"afterLabel","type":"string","label":"Después · etiqueta","default":"DESPUÉS","group":"Después"},
+  {"id":"afterTitle","type":"string","label":"Después · título (*palabra* = acento)","default":"CON UN *BORRADOR* DE IA","group":"Después"},
+  {"id":"afterPoints","type":"string","label":"Después · puntos (separados con |)","default":"5 minutos|un borrador claro|tú solo lo ajustas","group":"Después"},
+  {"id":"afterImg","type":"string","label":"Después · imagen opcional (en assets/)","default":"","group":"Después"},
+  {"id":"afterAt","type":"number","label":"Después · entra en el segundo (con narración: la palabra de afterWord)","default":5.6,"min":0.5,"max":90,"step":0.1,"group":"Después"},
+  {"id":"afterWord","type":"string","label":"Después · entra al decir esta palabra (vacío = usa el segundo)","default":"","group":"Después"},
+  {"id":"metricFrom","type":"number","label":"Resultado · número de antes","default":45,"step":1,"group":"Resultado"},
+  {"id":"metricTo","type":"number","label":"Resultado · número de después","default":5,"step":1,"group":"Resultado"},
+  {"id":"metricUnit","type":"string","label":"Resultado · unidad","default":"MIN","group":"Resultado"},
+  {"id":"metricLabel","type":"string","label":"Resultado · texto de abajo","default":"por correo","group":"Resultado"},
+  {"id":"metricAt","type":"number","label":"Resultado · entra en el segundo (0 = sin resultado; con narración: metricWord)","default":8.8,"min":0,"max":120,"step":0.1,"group":"Resultado"},
+  {"id":"metricWord","type":"string","label":"Resultado · entra al decir esta palabra (vacío = usa el segundo)","default":"","group":"Resultado"},
+  {"id":"endAt","type":"number","label":"Cierre · empieza en el segundo (con narración: la palabra de endWord)","default":10.8,"min":1,"max":120,"step":0.1,"group":"Cierre"},
+  {"id":"endWord","type":"string","label":"Cierre · empieza al decir esta palabra (vacío = usa el segundo)","default":"","group":"Cierre"},
+  {"id":"handle","type":"string","label":"Cierre · tu @usuario","default":"@tu_usuario","group":"Cierre"},
+  {"id":"cta","type":"string","label":"Cierre · texto de abajo","default":"SÍGUEME PARA MÁS","group":"Cierre"},
+  {"id":"endHold","type":"number","label":"Cierre · dura (s)","default":1.6,"min":0.6,"max":6,"step":0.1,"group":"Cierre"},
+  {"id":"cover","type":"boolean","label":"Portada en los 2 primeros cuadros (para elegirla en TikTok)","default":true,"group":"Portada"},
+  {"id":"coverTitle","type":"string","label":"Portada · título","default":"ANTES Y DESPUÉS DE USAR IA","group":"Portada"},
+  {"id":"ground","type":"color","label":"Fondo","default":"#0F1012","group":"Colores"},
+  {"id":"ink","type":"color","label":"Texto","default":"#F4F1EA","group":"Colores"},
+  {"id":"accent","type":"color","label":"Acento","default":"#FFD23F","group":"Colores"},
+  {"id":"accentInk","type":"color","label":"Texto sobre el acento","default":"#0F1012","group":"Colores"}
+]'>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080, height=1920">
+<title>Short Reels Motion · Antes y después</title>
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/om.js"></script>
+<script src="vendor/srm.js"></script>
+<style id="om-fonts">
+@font-face { font-family: "Inter"; src: url("assets/fonts/Inter-var.woff") format("woff"); font-weight: 100 900; font-style: normal; }
+</style>
+<style>
+  :root { --ground: #0F1012; --ink: #F4F1EA; --accent: #FFD23F; --accentInk: #0F1012; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: var(--ground); }
+  #film { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--ground); color: var(--ink); font-family: "Inter", sans-serif; }
+  #film * { box-sizing: border-box; }
+  .light { position: absolute; inset: 0; background: radial-gradient(820px 640px at 50% 40%, #ffffff0b, transparent 72%); }
+  .flash { position: absolute; inset: 0; background: var(--accent); opacity: 0; pointer-events: none; z-index: 40; }
+  section { position: absolute; inset: 0; visibility: hidden; }
+  #s-hook { visibility: visible; }                                   /* painted before any seek: frame 0 is the poster */
+  #hook3 { visibility: hidden; }
+  h1, h2, p { margin: 0; }
+
+  /* Safe area of the feeds (srm check warns about it): text lives between y 230 and 1480 and left of x 920 below y 760. */
+  .kick { position: absolute; left: 80px; top: 600px; font-weight: 800; font-size: 34px; letter-spacing: .2em; color: var(--accent); white-space: nowrap; }
+  .hook { position: absolute; left: 80px; width: 840px; font-weight: 900; letter-spacing: -.045em; line-height: .95; white-space: nowrap; }
+  .hook1 { top: 690px; font-size: 140px; }
+  .hook2 { top: 850px; font-size: 140px; }
+  .hook3 { top: 1040px; font-size: 48px; letter-spacing: -.01em; white-space: normal; opacity: .9; }
+  .pillw { position: relative; display: inline-block; padding: .02em .14em .06em; color: var(--accentInk); isolation: isolate; }
+  .pillw .pill { position: absolute; inset: 0; background: var(--accent); z-index: -1; }
+
+  /* each side: label, title, points (an image above the points when there is one) */
+  .side { background: var(--ground); }
+  .side .box { position: absolute; left: 80px; width: 840px; top: 330px; height: 1130px; display: flex; flex-direction: column; justify-content: center; gap: 30px; }
+  .tag { align-self: flex-start; padding: 10px 18px 12px; font-weight: 900; font-size: 40px; letter-spacing: .14em; }
+  #s-before .tag { background: #ffffff1f; color: var(--ink); }
+  #s-after .tag { background: var(--accent); color: var(--accentInk); }
+  .title { font-weight: 900; letter-spacing: -.045em; line-height: 1.06; }   /* room for Á É Í Ó Ú under the line above */
+  .title em { font-style: normal; color: var(--accent); }
+  .pts { display: flex; flex-direction: column; gap: 18px; }
+  .pt { position: relative; align-self: flex-start; font-weight: 700; font-size: 54px; line-height: 1.1; letter-spacing: -.02em; padding-left: 74px; }
+  .pt::before { content: '—'; position: absolute; left: 0; top: 0; opacity: .5; }
+  #s-after .pt::before { content: '+'; color: var(--accent); opacity: 1; font-weight: 900; }
+  .pt i { position: absolute; left: 66px; right: -6px; top: .58em; height: 7px; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; }
+  .pic { width: 840px; height: 400px; object-fit: cover; border-radius: 22px; box-shadow: 0 30px 80px #0009; }
+  .edge { position: absolute; top: 0; bottom: 0; left: 0; width: 14px; background: var(--accent); visibility: hidden; z-index: 5; }
+
+  /* result: from one number to the other */
+  .was { position: absolute; left: 80px; top: 520px; font-weight: 800; font-size: 54px; letter-spacing: .04em; opacity: .55; }
+  .was i { position: absolute; left: -6px; right: -6px; top: .55em; height: 7px; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; }
+  .now { position: absolute; left: 80px; top: 620px; font-weight: 900; font-size: 360px; line-height: .85; letter-spacing: -.06em; color: var(--accent); transform-origin: 0 80%; }
+  .unit { font-size: 120px; letter-spacing: -.03em; margin-left: 18px; }
+  .mlabel { position: absolute; left: 80px; width: 840px; top: 1000px; font-weight: 700; font-size: 60px; letter-spacing: -.02em; }
+
+  /* closing */
+  .handle { position: absolute; left: 80px; width: 850px; top: 820px; text-align: center; font-weight: 900; font-size: 112px; letter-spacing: -.045em; white-space: nowrap; }
+  .cta { position: absolute; left: 80px; width: 850px; top: 980px; text-align: center; font-weight: 800; font-size: 36px; letter-spacing: .18em; color: var(--accent); }
+
+  /* cover: the first two frames, for TikTok's "pick a frame" */
+  #s-cover { z-index: 50; background: var(--ground); }
+  .cvTitle { position: absolute; left: 80px; width: 840px; top: 640px; font-size: 140px; line-height: .92; font-weight: 900; letter-spacing: -.05em; }
+  .cvHandle { position: absolute; left: 80px; width: 850px; top: 1300px; text-align: center; font-size: 56px; font-weight: 900; color: var(--accent); }
+</style>
+</head>
+<body>
+<!--
+  Antes y después (short-antes-despues): a comparison.
+  Hook in frame 0 → BEFORE (label, title, points; they get struck through at the end) → AFTER comes in with a curtain from
+  the right (label in the accent, title, points) → the result counts from one number to the other → closing card.
+
+  Points are written with | between them. Each side takes an optional image (beforeImg / afterImg in assets/): a
+  screenshot of the before and of the after says more than a list. metricAt 0 leaves the result out.
+  With narration, every part can anchor to a word (beforeWord, afterWord, metricWord, endWord).
+-->
+<div id="film" data-composition-id="film" data-width="1080" data-height="1920" data-platforms="tiktok,reels,shorts">
+  <div class="light"></div>
+
+  <section id="s-hook" data-om-id="gancho">
+    <p class="kick" id="kick" data-om-id="kicker" data-var-text="kicker"></p>
+    <h1 class="hook hook1" id="hook1" data-om-id="hook1" data-var-text="hook1"></h1>
+    <h1 class="hook hook2" id="hook2" data-om-id="hook2"><span class="pillw"><span class="pill" id="pill2"></span><span id="hook2t"></span></span></h1>
+    <h2 class="hook hook3" id="hook3" data-om-id="hook3" data-var-text="hook3"></h2>
+  </section>
+
+  <section id="s-before" class="side" data-om-id="antes" data-layout-allow-occlusion><div class="box" id="beforeBox"></div></section>
+  <section id="s-after" class="side" data-om-id="despues"><div class="box" id="afterBox"></div></section>
+  <div class="edge" id="edge"></div>
+
+  <section id="s-metric" data-om-id="resultado">
+    <p class="was" id="was"><span id="wasT"></span><i></i></p>
+    <p class="now" id="now"><span id="nowN"></span><span class="unit" id="nowU"></span></p>
+    <p class="mlabel" id="mlabel" data-var-text="metricLabel"></p>
+  </section>
+
+  <section id="s-end" data-om-id="cierre">
+    <p class="handle" id="handle" data-om-id="handle" data-var-text="handle"></p>
+    <p class="cta" id="cta" data-om-id="cta" data-var-text="cta"></p>
+  </section>
+
+  <section id="s-cover" data-om-id="portada">
+    <h1 class="cvTitle" id="cvTitle" data-var-text="coverTitle"></h1>
+    <p class="cvHandle" id="cvHandle"></p>
+  </section>
+
+  <div class="flash" id="flash"></div>
+</div>
+
+<script>
+  const V = OM.vars();
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  for (const k of ['ground', 'ink', 'accent', 'accentInk']) document.documentElement.style.setProperty('--' + k, V[k]);
+  OM.music({ product: 'explainer', bpm: 108 });
+
+  // ---- content
+  $('#hook2t').textContent = V.hook2;
+  SRM.fit('#hook1', V.hook1, 140); SRM.fit('#hook2', V.hook2, 140);   // the hook lines fit the safe width whatever they say
+  $('#cvHandle').textContent = V.handle;
+  const titleSize = (t) => { const plain = String(t || '').replace(/\*/g, ''), longest = Math.max(1, ...plain.split(/\s+/).map((w) => w.length));
+    return Math.max(72, Math.min(Math.floor(840 / (longest * 0.64)), plain.length <= 16 ? 130 : plain.length <= 28 ? 108 : 90)); };
+  const side = (id, label, title, points, img) => {
+    const pts = String(points || '').split('|').map((p) => p.trim()).filter(Boolean);
+    $(id).innerHTML = `<p class="tag">${esc(label)}</p><h1 class="title" style="font-size:${titleSize(title)}px">${esc(title).replace(/\*([^*]+)\*/g, '<em>$1</em>')}</h1>` +
+      (img ? `<img class="pic" src="${esc(img)}" alt="">` : '') + `<div class="pts">${pts.map((p) => `<p class="pt">${esc(p)}<i></i></p>`).join('')}</div>`;
+  };
+  side('#beforeBox', V.beforeLabel, V.beforeTitle, V.beforePoints, V.beforeImg);
+  side('#afterBox', V.afterLabel, V.afterTitle, V.afterPoints, V.afterImg);
+  const fmt = (n) => (Number.isInteger(n) ? Math.round(n).toLocaleString('es-MX') : n.toFixed(1));
+  $('#wasT').textContent = `${V.beforeLabel} ${fmt(Number(V.metricFrom))} ${V.metricUnit}`.trim();
+  $('#nowN').textContent = fmt(Number(V.metricTo));   // the final value is written in the page; the count runs to it
+  $('#nowU').textContent = V.metricUnit;
+
+  // ---- timing: seconds, or the narration's words when there is one
+  const tBefore = SRM.when({ word: V.beforeWord, at: V.beforeAt });
+  const tAfter = Math.max(tBefore + 1.2, SRM.when({ word: V.afterWord, at: V.afterAt }));
+  const hasMetric = Number(V.metricAt) > 0 || String(V.metricWord).trim();
+  const tMetric = hasMetric ? Math.max(tAfter + 1.2, SRM.when({ word: V.metricWord, at: V.metricAt })) : null;
+  const tEnd = Math.max((tMetric ?? tAfter) + 1, SRM.when({ word: V.endWord, at: V.endAt }));
+  const tl = gsap.timeline({ paused: true });
+  tl.set(['#s-before', '#s-after', '#s-metric', '#s-end'], { autoAlpha: 0 }, 0);
+  tl.set(['#hook3', '#handle', '#cta'], { autoAlpha: 0 }, 0);
+
+  // cover (2 frames): painted before any seek, like the hook (a set at t=0 is not applied when frame 0 is asked for)
+  const c0 = V.cover ? 2 / 30 : 0;
+  if (V.cover) { const cv = $('#s-cover'); cv.style.visibility = 'visible'; cv.style.opacity = '1'; tl.set(cv, { autoAlpha: 0 }, c0); }
+
+  // hook
+  tl.addLabel('scene:gancho', 0);
+  tl.set('#s-hook', { autoAlpha: 1 }, 0);
+  tl.fromTo('#hook1', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0); OM.sfx('impact', c0, { gain: 0.6 });
+  tl.fromTo('#hook2', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0 + 0.08);
+  tl.fromTo('#pill2', { scaleX: 0.6 }, { scaleX: 1, duration: 0.4, ease: 'expo.out', immediateRender: false, transformOrigin: '0 50%' }, c0 + 0.08);
+  tl.fromTo('#kick', { x: -24 }, { x: 0, duration: 0.4, ease: 'power3.out', immediateRender: false }, c0);
+  if (String(V.hook3).trim()) SRM.kickIn(tl, '#hook3', c0 + 1.1);
+  SRM.whipOut(tl, '#s-hook', tBefore);
+
+  // a side: label, title, image, points one by one; the title breathes while it holds
+  const showSide = (sec, at, until) => {
+    const box = $(sec + ' .box'), tag = box.querySelector('.tag'), title = box.querySelector('.title'), pic = box.querySelector('.pic'), pts = [...box.querySelectorAll('.pt')];
+    SRM.kickIn(tl, tag, at + 0.05);
+    SRM.slam(tl, title, at + 0.1, { scale: 1.25, dur: 0.34, sound: 'pop', gain: 0.5 });
+    if (pic) tl.fromTo(pic, { autoAlpha: 0, y: 50, scale: 0.95 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.5, ease: 'expo.out', immediateRender: false }, at + 0.4);
+    const step = Math.min(0.5, Math.max(0.25, (until - at - 1.4) / Math.max(1, pts.length)));
+    pts.forEach((p, i) => { SRM.kickIn(tl, p, at + 0.6 + i * step); OM.sfx('tick', at + 0.6 + i * step, { note: i, gain: 0.35 }); });
+    tl.fromTo(title, { scale: 1 }, { scale: 1.04, duration: Math.max(0.3, until - at - 0.6), ease: 'none', immediateRender: false, transformOrigin: '0 50%' }, at + 0.5);
+    return pts;
+  };
+
+  // BEFORE, then its points get struck through just before the curtain
+  tl.addLabel('scene:antes', tBefore);
+  tl.set('#s-before', { autoAlpha: 1 }, tBefore);
+  const bPts = showSide('#s-before', tBefore, tAfter);
+  const tStrike = Math.max(tBefore + 0.9, tAfter - 0.75);
+  if (bPts.length) {
+    tl.fromTo(bPts.map((p) => p.querySelector('i')), { scaleX: 0 }, { scaleX: 1, duration: 0.25, stagger: 0.08, ease: 'power2.out', immediateRender: false }, tStrike);
+    tl.to(bPts, { opacity: 0.45, duration: 0.2, stagger: 0.08 }, tStrike + 0.15); OM.sfx('whip', tStrike, { gain: 0.45 });
+  }
+
+  // AFTER: a curtain from the right, an accent edge riding on it
+  tl.addLabel('scene:despues', tAfter);
+  tl.set('#s-after', { autoAlpha: 1 }, tAfter);
+  tl.fromTo('#s-after', { clipPath: 'inset(0px 0px 0px 1080px)' }, { clipPath: 'inset(0px 0px 0px 0px)', duration: 0.55, ease: 'power3.inOut', immediateRender: false }, tAfter);
+  tl.set('#edge', { autoAlpha: 1 }, tAfter);
+  tl.fromTo('#edge', { x: 1080 }, { x: -14, duration: 0.55, ease: 'power3.inOut', immediateRender: false }, tAfter);
+  tl.set('#edge', { autoAlpha: 0 }, tAfter + 0.56);
+  tl.set('#s-before', { autoAlpha: 0 }, tAfter + 0.56);
+  OM.sfx('whoosh', tAfter, { gain: 0.5 });
+  const untilAfter = tMetric ?? tEnd;
+  showSide('#s-after', tAfter + 0.3, untilAfter);
+  const em = $('#s-after .title em');
+  if (em && untilAfter - tAfter > 2.4) { tl.fromTo(em, { scale: 1 }, { scale: 1.12, duration: 0.2, yoyo: true, repeat: 1, ease: 'power2.out', immediateRender: false, display: 'inline-block', transformOrigin: '0 60%' }, tAfter + 2.2); OM.sfx('tick', tAfter + 2.2, { gain: 0.3 }); }
+
+  // RESULT: the old number struck, the new one counting down (or up) to its value
+  if (tMetric != null) {
+    SRM.whipOut(tl, '#s-after', tMetric);
+    tl.addLabel('scene:resultado', tMetric);
+    tl.set('#s-metric', { autoAlpha: 1 }, tMetric);
+    SRM.kickIn(tl, '#was', tMetric + 0.02);
+    tl.fromTo('#was i', { scaleX: 0 }, { scaleX: 1, duration: 0.25, ease: 'power2.out', immediateRender: false }, tMetric + 0.35);
+    SRM.slam(tl, '#now', tMetric + 0.3, { scale: 1.4, dur: 0.36, sound: 'impact', gain: 0.55 });
+    const from = Number(V.metricFrom), to = Number(V.metricTo), o = { n: from };
+    tl.fromTo(o, { n: from }, { n: to, duration: 0.9, ease: 'power2.out', immediateRender: false, onUpdate: () => { $('#nowN').textContent = fmt(Number.isInteger(to) && Number.isInteger(from) ? Math.round(o.n) : o.n); } }, tMetric + 0.3);
+    SRM.kickIn(tl, '#mlabel', tMetric + 0.9);
+    tl.fromTo('#now', { scale: 1 }, { scale: 1.04, duration: Math.max(0.3, tEnd - tMetric - 1.2), ease: 'none', immediateRender: false }, tMetric + 1.2);
+  } else {
+    SRM.whipOut(tl, '#s-after', tEnd);
+  }
+
+  // closing: the handle lands
+  if (tMetric != null) SRM.whipOut(tl, '#s-metric', tEnd);
+  tl.addLabel('scene:cierre', tEnd);
+  tl.set('#s-end', { autoAlpha: 1 }, tEnd);
+  SRM.slam(tl, '#handle', tEnd + 0.02, { scale: 1.3 });
+  SRM.flash(tl, tEnd + 0.02);
+  SRM.kickIn(tl, '#cta', tEnd + 0.4);
+  tl.to({}, { duration: V.endHold }, tEnd + 0.4);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines['film'] = tl;
+</script>
+</body>
+</html>

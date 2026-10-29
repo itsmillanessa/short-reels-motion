@@ -89,7 +89,8 @@ Pide las grabaciones **antes** de construir. Lo que llega del teléfono necesita
 | Frases con tipografía, sin material | `short-tipografia` | Vertical nativa. Cada frase es un golpe (`fx`: slam, rise, count, strike); `*acento*`, `~tachado~`; el tamaño se ajusta solo |
 | Datos y cifras | `finance-chart` → fork | Una sola anotación por gráfica |
 | Lista / top 3 | `short-lista` | Vertical nativa. Un número gigante por punto, título y explicación (imagen opcional), barritas de avance, orden 1→N o cuenta regresiva |
-| Antes y después | `blank` → fork y escribirlo con `vendor/srm.js` | `SRM.slam`, `SRM.between`, `SRM.counter` |
+| Antes y después | `short-antes-despues` | Vertical nativa. ANTES con puntos que se tachan, DESPUÉS con cortina, resultado que cuenta de un número a otro; imagen opcional por lado |
+| Otro formato | `blank` → `srm fork … --size 1080x1920` y escribirlo con `vendor/srm.js` | `SRM.slam`, `SRM.between`, `SRM.counter`, `SRM.fit` |
 
 `srm fork` deja un comentario de re-maquetación en la bandeja: `srm inbox <dir>-9x16 --wait` y acomoda para vertical.
 Una plantilla que no trae `vendor/srm.js` lo puede usar copiando `runtime/srm-motion.js` del paquete a `vendor/srm.js`.
@@ -128,6 +129,8 @@ Detalles que ya costaron rondas:
 - Un destello ≤ .22 de opacidad, sostenido 2 cuadros (`SRM.flash`); más corto se ve como falla.
 - Los números con decimales se escriben en el HTML y se revelan; pasarlos por `textContent` en un tween convierte «38.00» en 38.
 - `h1`/`p` con `margin: 0`: el margen del navegador baja el texto y choca con la línea siguiente.
+- Títulos en mayúsculas de dos o más líneas: interlineado ≥ 1.04. Más apretado, el acento de una Í o una Ó de abajo
+  choca con la letra de arriba (una «C» se vuelve «Ç»).
 - Lo que se ve en el cuadro 0 se pinta en el CSS, no con un `tl.set` en el tiempo 0 (al buscar el cuadro 0 no se aplica).
 - Texto grande encima de una grabación real: encoge la grabación hacia arriba y usa la banda libre, no pises su texto.
 

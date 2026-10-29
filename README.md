@@ -57,7 +57,7 @@ ln -sfn "$PWD/skills/short-reels-motion" ~/.claude/skills/short-reels-motion
 ## Cómo se usa
 
 ```sh
-srm new mi-reel --template short-pantalla   # vertical desde el inicio (srm templates lista las 13)
+srm new mi-reel --template short-pantalla   # vertical desde el inicio (srm templates lista las 17)
 srm voice mi-reel --audio voz.m4a      # tu grabación, alineada palabra por palabra
 srm sound mi-reel                      # música y efectos, bajo la voz
 srm studio mi-reel                     # editor en el navegador: C para comentar sobre el cuadro
@@ -93,7 +93,7 @@ completo, sin guías encima. `data-platforms="tiktok,reels"` en la raíz del vid
 - [x] Personaje propio y configurable (piel, pelo, ropa, accesorio) en la plantilla `storytime`
 - [ ] Videos demo propios (`srm demo` todavía abre los del motor original)
 - [x] Plantilla vertical `short-pantalla`: grabación del celular con gancho, textos clave, toques, zoom y cierre
-- [ ] 4 plantillas verticales más: tipografía, cara a cámara, lista, antes/después
+- [x] 4 plantillas verticales más: `short-tipografia`, `short-cara`, `short-lista`, `short-antes-despues`
 - [x] Librería de movimientos para shorts (`runtime/srm-motion.js` → `vendor/srm.js`)
 - [x] La narración reconoce palabras con acento («Sígueme», «más») como anclas
 - [ ] Kit de marca (`kit.json`)

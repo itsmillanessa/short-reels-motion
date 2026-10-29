@@ -1,0 +1,18 @@
+{
+  "title": "Antes y después (vertical)",
+  "summary": "Short vertical 9:16 de comparación: gancho desde el cuadro 0, el ANTES con sus puntos (que se tachan al final), el DESPUÉS que entra con una cortina, un resultado que cuenta de un número a otro (45 → 5 minutos) y cierre con tu @usuario. Imagen opcional para cada lado. Todo el texto dentro de las zonas seguras.",
+  "best_for": [
+    "mostrar el cambio de usar una herramienta",
+    "transformaciones y comparaciones",
+    "«así lo hacía, así lo hago ahora»",
+    "resultados con números"
+  ],
+  "aspect": "9:16",
+  "copy": {
+    "templates/blank/vendor": "vendor",
+    "runtime/srm-motion.js": "vendor/srm.js",
+    "fonts/Inter-var.woff": "assets/fonts/Inter-var.woff",
+    "fonts/OFL.txt": "assets/fonts/OFL.txt",
+    "fonts/LICENSES.md": "assets/fonts/LICENSES.md"
+  }
+}
