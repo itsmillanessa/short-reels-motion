@@ -16,7 +16,7 @@
   {"id":"handle","type":"string","label":"Cierre · tu @usuario","default":"@tu_usuario","group":"Cierre"},
   {"id":"cta","type":"string","label":"Cierre · texto de abajo","default":"SÍGUEME PARA MÁS TRUCOS","group":"Cierre"},
   {"id":"endHold","type":"number","label":"Cierre · dura (s)","default":1.6,"min":0.6,"max":6,"step":0.1,"group":"Cierre"},
-  {"id":"cover","type":"boolean","label":"Portada en los 2 primeros cuadros (para elegirla en TikTok)","default":false,"group":"Portada"},
+  {"id":"cover","type":"boolean","label":"Portada en los 2 primeros cuadros (para elegirla en TikTok)","default":true,"group":"Portada"},
   {"id":"coverTitle","type":"string","label":"Portada · título","default":"QUÉ COCINAR CON LO QUE TIENES","group":"Portada"},
   {"id":"ground","type":"color","label":"Fondo","default":"#0F1012","group":"Colores"},
   {"id":"ink","type":"color","label":"Texto","default":"#F4F1EA","group":"Colores"},
@@ -140,12 +140,12 @@
   const tPhone = SRM.when({ word: V.phoneWord, at: V.phoneAt });
   const tEnd = Math.max(tPhone + 1, SRM.when({ word: V.endWord, at: V.endAt }));
   const tl = gsap.timeline({ paused: true });
-  tl.set(['#s-screen', '#s-end', '#s-cover'], { autoAlpha: 0 }, 0);
+  tl.set(['#s-screen', '#s-end'], { autoAlpha: 0 }, 0);
   tl.set(['#hook3', '#handle', '#cta', '.point'], { autoAlpha: 0 }, 0);
 
-  // cover (2 frames)
+  // cover (2 frames): painted before any seek, like the hook (a set at t=0 is not applied when frame 0 is asked for)
   const c0 = V.cover ? 2 / 30 : 0;
-  if (V.cover) { tl.set('#s-cover', { autoAlpha: 1 }, 0); tl.set('#s-cover', { autoAlpha: 0 }, c0); }
+  if (V.cover) { const cv = $('#s-cover'); cv.style.visibility = 'visible'; cv.style.opacity = '1'; tl.set(cv, { autoAlpha: 0 }, c0); }
 
   // hook: the big promise is there from the first frame
   tl.addLabel('scene:gancho', 0);

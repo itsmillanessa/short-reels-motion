@@ -148,7 +148,7 @@ Detalles que ya costaron rondas:
 
 - **Portada:** el cuadro 0 es la portada. Para Instagram, que acepta imagen aparte:
   `srm still <dir> --at 0 --out out/portada.png`. Para TikTok, que solo deja elegir un cuadro, pon la portada en los
-  2 primeros cuadros (`short-pantalla` trae la opción `cover`).
+  2 primeros cuadros (`short-pantalla` la trae activada: variable `cover`, grupo «Portada»).
 - **Video:** `srm render <dir>` → MP4 1080×1920, 30 fps, H.264, −14 LUFS. El mismo archivo sirve para TikTok, Reels y Shorts.
 - **Texto de la publicación:** escribe `out/publicacion.md` en el idioma del creador: 3 opciones de descripción
   (≤ 150 caracteres), 3–5 hashtags y un título para Shorts.
