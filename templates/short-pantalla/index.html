@@ -44,6 +44,7 @@
   #s-hook { visibility: visible; }                                   /* painted before any seek: frame 0 is the poster */
   #hook3 { visibility: hidden; }
   h1, h2, p { margin: 0; }
+  .sw { display: inline-block; }
 
   /* Safe area of the feeds (srm check warns about it): text lives between y 230 and 1480 and left of x 920 below y 760 (the hook sits mid-frame: it is also the poster). */
   .kick { position: absolute; left: 80px; top: 600px; font-weight: 800; font-size: 34px; letter-spacing: .2em; color: var(--accent); white-space: nowrap; }
@@ -95,7 +96,7 @@
     <p class="kick" id="kick" data-om-id="kicker" data-var-text="kicker"></p>
     <h1 class="hook hook1" id="hook1" data-om-id="hook1" data-var-text="hook1"></h1>
     <h1 class="hook hook2" id="hook2" data-om-id="hook2"><span class="pillw"><span class="pill" id="pill2"></span><span id="hook2t"></span></span></h1>
-    <h2 class="hook hook3" id="hook3" data-om-id="hook3" data-var-text="hook3"></h2>
+    <h2 class="hook hook3" id="hook3" data-om-id="hook3" data-om-var="hook3"></h2>
   </section>
 
   <section id="s-screen" data-om-id="pantalla">
@@ -130,6 +131,7 @@
 
   // ---- content
   $('#hook2t').textContent = V.hook2;
+  SRM.words('#hook3', V.hook3);
   SRM.fit('#hook1', V.hook1, 112); SRM.fit('#hook2', V.hook2, 112);   // the hook lines fit the safe width whatever they say
   $('#cvHandle').textContent = V.handle;
   const points = json(V.points, []), taps = json(V.taps, []), zooms = json(V.zooms, []);
@@ -153,11 +155,7 @@
   tl.set('#s-hook', { autoAlpha: 1 }, 0);
   // the whole promise is on screen from the first frame (it is the poster feeds show); it only settles into place
   tl.set(['#hook1', '#hook2', '#kick'], { autoAlpha: 1 }, c0);
-  tl.fromTo('#hook1', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0); OM.sfx('impact', c0, { gain: 0.6 });
-  tl.fromTo('#hook2', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0 + 0.08);
-  tl.fromTo('#pill2', { scaleX: 0.6 }, { scaleX: 1, duration: 0.4, ease: 'expo.out', immediateRender: false, transformOrigin: '0 50%' }, c0 + 0.08);
-  tl.fromTo('#kick', { x: -24 }, { x: 0, duration: 0.4, ease: 'power3.out', immediateRender: false }, c0);
-  if (String(V.hook3).trim()) SRM.kickIn(tl, '#hook3', c0 + 1.2);
+  SRM.hook(tl, c0, tPhone, V);                                         // settles, breathes, punches each line as it is said
   SRM.whipOut(tl, '#s-hook', tPhone);
 
   // the recording: slides in, plays from tPhone

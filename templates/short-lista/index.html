@@ -62,7 +62,8 @@
   .w { position: relative; display: inline-block; overflow: hidden; vertical-align: top; padding: .2em 0 .16em; margin: -.2em .2em -.16em 0; }
   .w > span { display: inline-block; }
   .w.em > span { color: var(--accent); }
-  .sub { font-weight: 600; font-size: 46px; line-height: 1.15; letter-spacing: -.01em; opacity: .72; }
+  .sub { font-weight: 600; font-size: 50px; line-height: 1.15; letter-spacing: -.01em; opacity: .72; }
+  .sw { display: inline-block; }
   .pic { width: 840px; height: 440px; object-fit: cover; border-radius: 22px; box-shadow: 0 30px 80px #0009; }
 
   /* closing */
@@ -91,7 +92,7 @@
     <p class="kick" id="kick" data-om-id="kicker" data-var-text="kicker"></p>
     <h1 class="hook hook1" id="hook1" data-om-id="hook1" data-var-text="hook1"></h1>
     <h1 class="hook hook2" id="hook2" data-om-id="hook2"><span class="pillw"><span class="pill" id="pill2"></span><span id="hook2t"></span></span></h1>
-    <h2 class="hook hook3" id="hook3" data-om-id="hook3" data-var-text="hook3"></h2>
+    <h2 class="hook hook3" id="hook3" data-om-id="hook3" data-om-var="hook3"></h2>
   </section>
 
   <section id="s-list" data-om-id="lista">
@@ -122,6 +123,7 @@
 
   // ---- content
   $('#hook2t').textContent = V.hook2;
+  SRM.words('#hook3', V.hook3);
   SRM.fit('#hook1', V.hook1, 150); SRM.fit('#hook2', V.hook2, 92);   // the hook lines fit the safe width whatever they say
   $('#cvHandle').textContent = V.handle;
   const words = (raw) => {
@@ -145,7 +147,7 @@
     const ws = words(it.title), n = V.countdown ? N - i : i + 1;
     const title = ws.map((x) => `<span class="w${x.em ? ' em' : ''}"><span>${esc(x.w)}</span></span>`).join('');
     return `<div class="item${it.img ? ' with-img' : ''}" id="it${i}" data-om-id="punto-${i + 1}"><p class="num">${String(n).padStart(2, '0')}</p>` +
-      `<h1 class="title" data-layout-allow-overlap style="font-size:${sizeOf(ws)}px">${title}</h1>${it.sub ? `<p class="sub">${esc(it.sub)}</p>` : ''}` +
+      `<h1 class="title" data-layout-allow-overlap style="font-size:${sizeOf(ws)}px">${title}</h1>${it.sub ? `<p class="sub">${String(it.sub).split(/\s+/).filter(Boolean).map((w) => `<span class="sw">${esc(w)}</span>`).join(' ')}</p>` : ''}` +
       `${it.img ? `<img class="pic" src="${esc(it.img)}" alt="">` : ''}</div>`;
   }).join('');
 
@@ -164,11 +166,7 @@
   // hook: the number and the promise from the first frame
   tl.addLabel('scene:gancho', 0);
   tl.set('#s-hook', { autoAlpha: 1 }, 0);
-  tl.fromTo('#hook1', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0); OM.sfx('impact', c0, { gain: 0.6 });
-  tl.fromTo('#hook2', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0 + 0.08);
-  tl.fromTo('#pill2', { scaleX: 0.6 }, { scaleX: 1, duration: 0.4, ease: 'expo.out', immediateRender: false, transformOrigin: '0 50%' }, c0 + 0.08);
-  tl.fromTo('#kick', { x: -24 }, { x: 0, duration: 0.4, ease: 'power3.out', immediateRender: false }, c0);
-  if (String(V.hook3).trim()) SRM.kickIn(tl, '#hook3', c0 + 1.1);
+  SRM.hook(tl, c0, tFirst, V);                                         // settles, breathes, punches each line as it is said
   SRM.whipOut(tl, '#s-hook', tFirst);
 
   // the points: number slams, title rises, the line follows; the next one pushes it out to the left
@@ -177,15 +175,27 @@
   list.forEach(({ el, bar, at }, i) => {
     const until = Math.min(i + 1 < list.length ? list[i + 1].at : tEnd, tEnd);
     const num = el.querySelector('.num'), title = el.querySelector('.title'), sub = el.querySelector('.sub'), pic = el.querySelector('.pic');
+    const tw = [...title.querySelectorAll('.w')], sw = sub ? [...sub.querySelectorAll('.sw')] : [];
     tl.set(el, { autoAlpha: 1, x: 0 }, at);
     SRM.slam(tl, num, at, { scale: 1.5, dur: 0.36, sound: 'impact', gain: 0.45 });
-    tl.fromTo(title.querySelectorAll('.w > span'), { yPercent: 120 }, { yPercent: 0, duration: 0.5, stagger: 0.07, ease: 'expo.out', immediateRender: false }, at + 0.18);
-    if (sub) SRM.kickIn(tl, sub, at + 0.5);
-    if (pic) tl.fromTo(pic, { autoAlpha: 0, y: 60, scale: 0.94 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.5, ease: 'expo.out', immediateRender: false }, at + 0.35);
+    if (i === 0) SRM.flash(tl, at);                                       // the cut from the hook to the content is the first burst
+    // with narration the title and its line come word by word as they are said (SRM.sync); without it, all at once
+    const times = SRM.sync([...tw, ...sw].map((w) => w.textContent), at, until);
+    const events = [at];
+    if (times) {
+      tl.set(tw.map((w) => w.firstElementChild), { yPercent: 120, autoAlpha: 0 }, at);
+      tw.forEach((w, k) => { tl.fromTo(w.firstElementChild, { yPercent: 120, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.42, ease: 'expo.out', immediateRender: false }, Math.max(at + 0.12, times[k])); events.push(times[k]); });
+      if (sw.length) { tl.set(sw, { autoAlpha: 0 }, at); sw.forEach((w, k) => tl.fromTo(w, { autoAlpha: 0, y: 26 }, { autoAlpha: 1, y: 0, duration: 0.26, ease: 'back.out(2)', immediateRender: false }, times[tw.length + k])); }
+    } else {
+      tl.fromTo(title.querySelectorAll('.w > span'), { yPercent: 120 }, { yPercent: 0, duration: 0.5, stagger: 0.07, ease: 'expo.out', immediateRender: false }, at + 0.18);
+      if (sub) SRM.kickIn(tl, sub, at + 0.5);
+      events.push(at + 0.18, at + 0.5);
+    }
+    if (pic) { tl.fromTo(pic, { autoAlpha: 0, y: 60, scale: 0.94 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.5, ease: 'expo.out', immediateRender: false }, at + 0.35); events.push(at + 0.35); }
     tl.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: Math.max(0.3, until - at), ease: 'none', immediateRender: false }, at);
-    // the pulse scales the whole masked word: scaling the word inside its mask would clip its edges
-    const pulse = title.querySelectorAll('.w.em');
-    if (pulse.length && until - at > 1.6) { tl.fromTo(pulse, { scale: 1 }, { scale: 1.1, duration: 0.18, yoyo: true, repeat: 1, ease: 'power2.out', immediateRender: false, transformOrigin: '0 60%' }, at + 1.2); OM.sfx('tick', at + 1.2, { gain: 0.3 }); }
+    // where nothing new happens for more than a second: the accent words (or the number) pulse; the whole masked word scales
+    const pulse = title.querySelectorAll('.w.em').length ? title.querySelectorAll('.w.em') : num;
+    for (const p of SRM.gaps(events, at, until, { every: 0.8 })) { tl.fromTo(pulse, { scale: 1 }, { scale: 1.08, duration: 0.18, yoyo: true, repeat: 1, ease: 'power2.out', immediateRender: false, transformOrigin: '0 60%' }, p); OM.sfx('tick', p, { gain: 0.25 }); }
     tl.fromTo(num, { scale: 1 }, { scale: 1.05, duration: Math.max(0.3, until - at - 0.6), ease: 'none', immediateRender: false }, at + 0.5);
     if (i + 1 < list.length) { tl.to(el, { x: -160, autoAlpha: 0, duration: 0.24, ease: 'power2.in' }, Math.max(at + 0.6, until - 0.24)); OM.sfx('whip', Math.max(at + 0.6, until - 0.24), { gain: 0.45 }); tl.set(el, { autoAlpha: 0 }, until); }
     else tl.set(el, { autoAlpha: 0 }, until);

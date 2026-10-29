@@ -26,6 +26,68 @@
     return size;
   };
 
+  // When each written word is said: the words on screen land on the narration said between `from` and `until`. A written
+  // word matches a spoken one with the same letters (case, accents kept, punctuation aside); the ones not said as written
+  // (a «100%» read as «cien por ciento») are spread between their neighbours. Without narration: null.
+  SRM.sync = (tokens, from, until) => {
+    const said = (OM.words ? OM.words() : []).filter((w) => w && w.start >= from - 0.05 && w.start < until);
+    if (!said.length) return null;
+    const norm = (x) => String(x).toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+    const times = tokens.map(() => null);
+    let j = 0;
+    tokens.forEach((t, i) => { const n = norm(t); if (!n) return; for (let k = j; k < said.length; k++) if (norm(said[k].word) === n) { times[i] = said[k].start; j = k + 1; break; } });
+    let prev = -1, prevT = from;
+    for (let i = 0; i <= tokens.length; i++) {
+      if (i < tokens.length && times[i] == null) continue;
+      const next = i < tokens.length ? times[i] : null;
+      for (let k = prev + 1; k < i; k++) times[k] = next == null ? Math.min(until - 0.15, prevT + 0.22 * (k - prev)) : prevT + (next - prevT) * (k - prev) / (i - prev);
+      if (i < tokens.length) { prev = i; prevT = times[i]; }
+    }
+    for (let i = 1; i < times.length; i++) times[i] = Math.max(times[i], times[i - 1]);
+    return times;
+  };
+  // Where nothing new happens for longer than `max` seconds between `from` and `until`, given the times things start:
+  // the moments, inside each long stretch, where a small second beat keeps the frame alive (one every ~`every` s).
+  SRM.gaps = (events, from, until, { max = 1.1, every = 1.0 } = {}) => {
+    const t = [from, ...events.filter((e) => e > from && e < until).sort((a, b) => a - b), until], out = [];
+    for (let i = 1; i < t.length; i++) {
+      const a = t[i - 1] + 0.45, b = t[i] - 0.15;   // an animation takes ~.45 s after it starts
+      if (b - a <= max - 0.6) continue;
+      const n = Math.max(1, Math.floor((b - a) / every));
+      for (let k = 1; k <= n; k++) out.push(a + (b - a) * k / (n + 1));
+    }
+    return out;
+  };
+
+  // Words of a line as spans (class .sw), so they can come one by one as they are said.
+  SRM.words = (el, text) => {
+    const node = typeof el === 'string' ? document.querySelector(el) : el;
+    if (node) node.innerHTML = String(text || '').split(/\s+/).filter(Boolean).map((w) => `<span class="sw">${w.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])}</span>`).join(' ');
+    return node;
+  };
+  // The hook every vertical template opens with (#s-hook: #kick, #hook1, #hook2 with #pill2, optional #hook3 built with
+  // SRM.words): painted from frame 0, it settles, breathes while it holds, punches each line as it is said and, with
+  // narration, lets its third line in word by word. `c0` is where it starts (after a cover), `until` where it leaves.
+  SRM.hook = (tl, c0, until, V) => {
+    const has = (s) => document.querySelector(s);
+    tl.fromTo('#hook1', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0); sfx('impact', c0, { gain: 0.6 });
+    tl.fromTo('#hook2', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0 + 0.08);
+    if (has('#pill2')) tl.fromTo('#pill2', { scaleX: 0.6 }, { scaleX: 1, duration: 0.4, ease: 'expo.out', immediateRender: false, transformOrigin: '0 50%' }, c0 + 0.08);
+    if (has('#kick')) tl.fromTo('#kick', { x: -24 }, { x: 0, duration: 0.4, ease: 'power3.out', immediateRender: false }, c0);
+    const h3 = has('#hook3');
+    if (h3 && String(V.hook3 || '').trim()) {
+      const hw = [...h3.querySelectorAll('.sw')], ht = hw.length ? SRM.sync(hw.map((w) => w.textContent), c0 + 0.3, until) : null;
+      if (ht) { tl.set(h3, { autoAlpha: 1 }, c0); tl.set(hw, { autoAlpha: 0 }, c0); hw.forEach((w, k) => tl.fromTo(w, { autoAlpha: 0, y: 26 }, { autoAlpha: 1, y: 0, duration: 0.26, ease: 'back.out(2)', immediateRender: false }, ht[k])); }
+      else SRM.kickIn(tl, h3, c0 + 1.1);
+    }
+    tl.fromTo('#s-hook', { scale: 1 }, { scale: 1.05, duration: Math.max(0.3, until - c0 - 0.45), ease: 'none', immediateRender: false, transformOrigin: '80px 50%' }, c0 + 0.45);
+    const n1 = String(V.hook1 || '').split(/\s+/).filter(Boolean).length;
+    const said = SRM.sync(`${V.hook1 || ''} ${V.hook2 || ''}`.split(/\s+/).filter(Boolean), c0, until);
+    if (said) for (const [el, t] of [['#hook1', said[n1 - 1]], ['#hook2', said[said.length - 1]]]) {
+      if (t > c0 + 0.5 && t < until - 0.3) { tl.fromTo(el, { scale: 1 }, { scale: 1.08, duration: 0.16, yoyo: true, repeat: 1, ease: 'power2.out', immediateRender: false, transformOrigin: '0 50%' }, t); sfx('pop', t, { gain: 0.35 }); }
+    }
+  };
+
   // In: lands big and settles (the hook, a keyword).
   SRM.slam = (tl, el, at, { scale = 1.6, dur = 0.38, sound = 'impact', gain = 0.6 } = {}) => {
     tl.fromTo(el, { autoAlpha: 0, scale }, { autoAlpha: 1, scale: 1, duration: dur, ease: 'expo.out', immediateRender: false }, at);

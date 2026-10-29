@@ -72,6 +72,9 @@ Pide las grabaciones **antes** de construir. Lo que llega del teléfono necesita
 
 - Velocidad: `ffmpeg -i voz.mp3 -filter:a atempo=1.2 voz-1.2x.mp3` **antes** de `srm voice --audio`; la alineación sale
   ya con los tiempos rápidos.
+- Con narración, las plantillas verticales sincronizan solas: cada palabra grande cae cuando se dice, la línea chica
+  sale con sus palabras y los huecos de más de un segundo reciben un pulso. Tú solo anclas cada frase o punto a la
+  primera palabra que la dice (una que no se repita antes).
 - Ancla el movimiento a palabras: `OM.cue('receta')`, `OM.cue('paso', 2)` (la segunda vez), `OM.cue('listo', 1, 'end')`.
   La coincidencia es de palabra completa (con acentos); si una palabra se repite, usa `nth` o una palabra única de la frase.
   En las plantillas, los pasos aceptan `{ "word": "receta" }` en lugar de `{ "at": 5.0 }`.
@@ -121,6 +124,10 @@ Cada función recibe el timeline y un tiempo, y devuelve el tiempo:
 | `SRM.flash(tl, at)` | Destello del acento, alineado a cuadros y sostenido 2 cuadros |
 | `SRM.when({ word, at })` | El tiempo de un paso: la palabra si hay narración, si no los segundos |
 | `SRM.fit(el, texto, max)` | Ajusta el tamaño de una línea (del gancho) a su largo para que quepa en el ancho seguro |
+| `SRM.sync(palabras, desde, hasta)` | Cuándo se dice cada palabra escrita (las que no se dicen igual, como «100%», se reparten entre sus vecinas) |
+| `SRM.gaps(eventos, desde, hasta)` | Dónde no pasa nada por más de un segundo, para poner ahí un segundo golpe (pulso) |
+| `SRM.hook(tl, c0, hasta, V)` | El gancho de las plantillas: se asienta, respira, golpea cada línea al decirse y su tercera línea sale palabra por palabra |
+| `SRM.words(el, texto)` | Parte una línea en palabras (`.sw`) para que salgan una por una |
 
 Detalles que ya costaron rondas:
 

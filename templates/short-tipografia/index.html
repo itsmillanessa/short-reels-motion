@@ -55,7 +55,8 @@
   .w > span { display: inline-block; }
   .w.em > span { color: var(--accent); }
   .w > i { position: absolute; left: -.04em; right: -.04em; top: .56em; height: .12em; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; }
-  .small { font-weight: 600; font-size: 46px; line-height: 1.15; letter-spacing: -.01em; color: var(--ink); opacity: .7; }
+  .small { font-weight: 600; font-size: 52px; line-height: 1.15; letter-spacing: -.01em; color: var(--ink); opacity: .7; }
+  .sw { display: inline-block; }
 
   /* closing */
   .handle { position: absolute; left: 80px; width: 850px; top: 820px; text-align: center; font-weight: 900; font-size: 112px; letter-spacing: -.045em; white-space: nowrap; }
@@ -84,7 +85,7 @@
     <p class="kick" id="kick" data-om-id="kicker" data-var-text="kicker"></p>
     <h1 class="hook hook1" id="hook1" data-om-id="hook1" data-var-text="hook1"></h1>
     <h1 class="hook hook2" id="hook2" data-om-id="hook2"><span class="pillw"><span class="pill" id="pill2"></span><span id="hook2t"></span></span></h1>
-    <h2 class="hook hook3" id="hook3" data-om-id="hook3" data-var-text="hook3"></h2>
+    <h2 class="hook hook3" id="hook3" data-om-id="hook3" data-om-var="hook3"></h2>
   </section>
 
   <section id="s-beats" data-om-id="frases"><div id="beats"></div></section>
@@ -112,6 +113,7 @@
 
   // ---- content
   $('#hook2t').textContent = V.hook2;
+  SRM.words('#hook3', V.hook3);
   SRM.fit('#hook1', V.hook1, 128); SRM.fit('#hook2', V.hook2, 128);   // the hook lines fit the safe width whatever they say
   $('#cvHandle').textContent = V.handle;
   // "*a b*" accent, "~a~" struck: read word by word, so a mark can span several words
@@ -144,7 +146,7 @@
       if (b.fx === 'count' && !counted && /\d/.test(x.w)) { counted = true; inner = esc(x.w).replace(/\d[\d,.]*/, (n) => `<b class="num" data-n="${n.replace(/,/g, '')}">${n}</b>`); }
       return `<span class="w${x.em ? ' em' : ''}${x.st ? ' st' : ''}"><span>${inner}</span>${x.st ? '<i></i>' : ''}</span>`;
     }).join('');
-    return `<div class="beat" id="b${i}" data-om-id="frase-${i + 1}"><h1 class="big" data-layout-allow-overlap style="font-size:${sizeOf(ws)}px">${html}</h1>${b.small ? `<p class="small">${esc(b.small)}</p>` : ''}</div>`;
+    return `<div class="beat" id="b${i}" data-om-id="frase-${i + 1}"><h1 class="big" data-layout-allow-overlap style="font-size:${sizeOf(ws)}px">${html}</h1>${b.small ? `<p class="small">${String(b.small).split(/\s+/).filter(Boolean).map((w) => `<span class="sw">${esc(w)}</span>`).join(' ')}</p>` : ''}</div>`;
   }).join('');
 
   // ---- timing: seconds, or the narration's words when there is one
@@ -162,12 +164,8 @@
   tl.addLabel('scene:gancho', 0);
   tl.set('#s-hook', { autoAlpha: 1 }, 0);
   tl.set(['#hook1', '#hook2', '#kick'], { autoAlpha: 1 }, c0);
-  tl.fromTo('#hook1', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0); OM.sfx('impact', c0, { gain: 0.6 });
-  tl.fromTo('#hook2', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0 + 0.08);
-  tl.fromTo('#pill2', { scaleX: 0.6 }, { scaleX: 1, duration: 0.4, ease: 'expo.out', immediateRender: false, transformOrigin: '0 50%' }, c0 + 0.08);
-  tl.fromTo('#kick', { x: -24 }, { x: 0, duration: 0.4, ease: 'power3.out', immediateRender: false }, c0);
-  if (String(V.hook3).trim()) SRM.kickIn(tl, '#hook3', c0 + 1.1);
   const tFirst = list.length ? list[0].at : tEnd;
+  SRM.hook(tl, c0, tFirst, V);                                          // settles, breathes, punches each line as it is said
   SRM.whipOut(tl, '#s-hook', tFirst);
 
   // beats: each one from its time to the next; never quite still while it holds
@@ -176,26 +174,52 @@
   list.forEach(({ b, el, at }, i) => {
     const until = Math.min(i + 1 < list.length ? list[i + 1].at : tEnd, tEnd);
     const big = el.querySelector('.big'), small = el.querySelector('.small');
+    const bigWords = [...el.querySelectorAll('.big .w')], smallWords = [...el.querySelectorAll('.small .sw')];
     tl.set(el, { autoAlpha: 1 }, at);
-    if (b.fx === 'rise') {
+    if (i === 0) SRM.flash(tl, at);                                       // the cut from the hook to the content is the first burst
+    // with narration every word lands as it is said (SRM.sync); without it the phrase lands at once and its line follows
+    const times = SRM.sync([...bigWords, ...smallWords].map((w) => w.textContent), at, until);
+    const tBig = times ? times.slice(0, bigWords.length) : bigWords.map(() => at);
+    const tSmall = times ? times.slice(bigWords.length) : smallWords.map(() => at + 0.3);
+    const events = [at];
+    if (times) {
+      const spans = bigWords.map((w) => w.firstElementChild);
+      tl.set(spans, { yPercent: 120, autoAlpha: 0 }, at);                  // hidden until they are said
+      spans.forEach((sp, k) => {
+        if (k === 0) { tl.set(sp, { yPercent: 0, autoAlpha: 1 }, tBig[0]); tl.fromTo(bigWords[0], { autoAlpha: 0, scale: 1.55 }, { autoAlpha: 1, scale: 1, duration: 0.36, ease: 'expo.out', immediateRender: false, transformOrigin: '0 60%' }, tBig[0]); }
+        else tl.fromTo(sp, { yPercent: 120, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.42, ease: 'expo.out', immediateRender: false }, tBig[k]);
+        events.push(tBig[k]);
+      });
+      OM.sfx(b.fx === 'rise' ? 'whoosh' : 'pop', at, { gain: 0.45 });
+    } else if (b.fx === 'rise') {
       tl.fromTo(el.querySelectorAll('.w > span'), { yPercent: 120 }, { yPercent: 0, duration: 0.5, stagger: 0.07, ease: 'expo.out', immediateRender: false }, at);
       OM.sfx('whoosh', at, { gain: 0.3 });
     } else {
       SRM.slam(tl, big, at, { scale: 1.35, dur: 0.34, sound: 'pop', gain: 0.5 });
     }
+    if (small) {
+      // the line's words are small: they come with their word but do not count as a beat (the pulses below still fill)
+      if (times) { tl.set(smallWords, { autoAlpha: 0 }, at); smallWords.forEach((w, k) => tl.fromTo(w, { autoAlpha: 0, y: 26 }, { autoAlpha: 1, y: 0, duration: 0.26, ease: 'back.out(2)', immediateRender: false }, tSmall[k])); }
+      else { SRM.kickIn(tl, small, at + 0.3); events.push(at + 0.3); }
+    }
     if (b.fx === 'count') {
       const num = el.querySelector('.num');
-      if (num) { const n = Number(num.dataset.n) || 0; SRM.counter(tl, num, at + 0.05, Math.min(until - 0.3, at + 1.0), n, (v) => (Number.isInteger(n) ? Math.round(v).toLocaleString('es-MX') : v.toFixed(1))); OM.sfx('tick', at + 0.9, { gain: 0.4 }); }
+      if (num) {
+        const k = bigWords.findIndex((w) => w.contains(num)), t0 = (k >= 0 ? tBig[k] : at) + 0.05, n = Number(num.dataset.n) || 0;
+        SRM.counter(tl, num, t0, Math.min(until - 0.3, t0 + 0.95), n, (v) => (Number.isInteger(n) ? Math.round(v).toLocaleString('es-MX') : v.toFixed(1)));
+        OM.sfx('tick', t0 + 0.9, { gain: 0.4 }); events.push(t0, t0 + 0.5);
+      }
     }
     if (b.fx === 'strike') {
       const lines = el.querySelectorAll('.st > i');
-      if (lines.length) { tl.fromTo(lines, { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: 'power2.out', immediateRender: false }, at + 0.5); tl.to(el.querySelectorAll('.st > span'), { opacity: 0.45, duration: 0.2 }, at + 0.65); OM.sfx('whip', at + 0.5, { gain: 0.45 }); }
+      // the strike comes with the line that denies it («ni de chiste»), or just after the phrase
+      const ts = times ? (tSmall.length ? tSmall[0] : tBig[tBig.length - 1] + 0.5) : at + 0.5;
+      if (lines.length) { tl.fromTo(lines, { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: 'power2.out', immediateRender: false }, ts); tl.to(el.querySelectorAll('.st > span'), { opacity: 0.45, duration: 0.2 }, ts + 0.15); OM.sfx('whip', ts, { gain: 0.45 }); events.push(ts); }
     }
-    if (small) SRM.kickIn(tl, small, at + 0.3);
-    // a long phrase gets a second beat: its accent words (or its small line) pulse once, so it never sits still
-    // the pulse scales the whole masked word: scaling the word inside its mask would clip its edges
-    const pulse = el.querySelectorAll('.w.em').length ? el.querySelectorAll('.w.em') : small;
-    if (pulse && until - at > 1.5) { tl.fromTo(pulse, { scale: 1 }, { scale: 1.1, duration: 0.18, yoyo: true, repeat: 1, ease: 'power2.out', immediateRender: false, transformOrigin: '0 60%' }, at + 1.0); OM.sfx('tick', at + 1.0, { gain: 0.3 }); }
+    // where nothing new happens for more than a second, a second beat: the accent words (or the line) pulse once.
+    // The pulse scales the whole masked word: scaling the word inside its mask would clip its edges.
+    const pulse = el.querySelectorAll('.w.em').length ? el.querySelectorAll('.w.em') : (small || big);
+    for (const p of SRM.gaps(events, at, until, { every: 0.8 })) { tl.fromTo(pulse, { scale: 1 }, { scale: 1.08, duration: 0.18, yoyo: true, repeat: 1, ease: 'power2.out', immediateRender: false, transformOrigin: '0 60%' }, p); OM.sfx('tick', p, { gain: 0.25 }); }
     tl.fromTo(big, { scale: 1 }, { scale: 1.04, duration: Math.max(0.3, until - at - 0.6), ease: 'none', immediateRender: false }, at + 0.5);
     if (i + 1 < list.length) SRM.squash(tl, el, until); else tl.set(el, { autoAlpha: 0 }, until);
   });

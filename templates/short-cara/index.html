@@ -160,10 +160,7 @@
   // hook: on screen from the first frame, in a box over the top of the footage
   tl.addLabel('scene:gancho', 0);
   tl.set('#s-hook', { autoAlpha: 1 }, 0);
-  tl.fromTo('#hook1', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0); OM.sfx('impact', c0, { gain: 0.55 });
-  tl.fromTo('#hook2', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0 + 0.08);
-  tl.fromTo('#pill2', { scaleX: 0.6 }, { scaleX: 1, duration: 0.4, ease: 'expo.out', immediateRender: false, transformOrigin: '0 50%' }, c0 + 0.08);
-  tl.fromTo('#kick', { x: -24 }, { x: 0, duration: 0.4, ease: 'power3.out', immediateRender: false }, c0);
+  SRM.hook(tl, c0, tHook, V);                                         // settles, breathes, punches each line as it is said
   SRM.whipOut(tl, '#s-hook', tHook);
   tl.to('#scrimTop', { autoAlpha: 0.35, duration: 0.4 }, tHook);
 
