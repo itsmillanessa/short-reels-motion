@@ -2,7 +2,7 @@
 // playable copy of the film, the om player, and the source as a zip, so whoever watches it can
 // remix it in their own agent. Viewing it makes no network request; the only outside link is REPO_URL.
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, relative, resolve, sep } from 'node:path';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import zlib from 'node:zlib';
 import { OmError, readSource, scan } from './project.js';
@@ -106,7 +106,9 @@ export function exportHtml(project, { out, title, description, name, back } = {}
   const meta = readMeta(project.root, html);
   const dir = out ? resolve(out) : freeDir(join(project.root, 'out'), `${name}-share`);
   if (existsSync(dir) && readdirSync(dir).length) throw new OmError(`${dir} already exists and is not empty — pick a new folder (om never overwrites an export)`);
-  if (relative(project.root, dir) && !relative(project.root, dir).startsWith('..') && shipped(relative(project.root, dir))) {
+  // a folder on another drive (Windows) has no path relative to the project: relative() hands it back absolute
+  const rel = relative(project.root, dir);
+  if (rel && !rel.startsWith('..') && !isAbsolute(rel) && shipped(rel)) {
     throw new OmError('export into the project\'s out/ folder or outside the project, so the export does not end up in its own source');
   }
 

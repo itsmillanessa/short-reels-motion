@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {
   splitSentences, tokenize, weight, placeWords, placeSentence, wordsOf, parseSilences, speechIntervals,
   sentenceSpans, alignChars, charTimes, asrChars, captionLines, toSrt, cueTerms, cueMatches, missingCues, repeatedCues, applyVoice, pickVoice, isSpanish, recordingLang,
-  engineTimes, placeExact, levels, voice, systemVoice, atempo, venvPython, basePython, sapiVoices,
+  engineTimes, placeExact, levels, voice, systemVoice, atempo, venvPython, basePython, sapiVoices, powershellEnv,
 } from '../cli/lib/voice.js';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { openProject } from '../cli/lib/project.js';
@@ -222,6 +222,10 @@ test('atempo: the speeds a script may ask for, in steps ffmpeg takes (0.5–2 ea
   assert.equal(atempo(0.3), 'atempo=0.5,atempo=0.6');
 });
 
+test('Windows PowerShell gets its own module path, never the one PowerShell 7 hands down (any spelling)', () => {
+  assert.deepEqual(powershellEnv({ Path: 'C:\\bin', PSModulePath: 'C:\\Program Files\\PowerShell\\7\\Modules', PSMODULEPATH: 'x', SRM_LANG: 'es' }), { Path: 'C:\\bin', SRM_LANG: 'es' });
+});
+
 test('Kokoro\'s venv: python in Scripts\\ on Windows, bin/ elsewhere; a Python 3.10–3.13 is picked to build it', () => {
   assert.equal(venvPython(join('v'), 'win32'), join('v', 'Scripts', 'python.exe'));
   assert.equal(venvPython(join('v'), 'linux'), join('v', 'bin', 'python'));
@@ -379,4 +383,17 @@ test('srm voice --words: a take with its ElevenLabs times — sped up here with 
   assert.doesNotMatch(c.source, /×/);
   close(c.duration, 2.0);
   close(c.words[1].start, 1.0);
+});
+
+test('srm voice takes its temp folder with it, when the take works and when it fails', { skip: !HAS_FF && 'no ffmpeg' }, async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'srm-tmp-'));
+  writeFileSync(join(dir, 'index.html'), HTML);
+  const temps = () => readdirSync(tmpdir()).filter((n) => n.startsWith('om-voice-')).sort();
+  const before = temps();
+  const take = join(dir, 'take.wav');
+  assert.equal(spawnSync('ffmpeg', ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'sine=frequency=220:duration=1', '-ar', '48000', take]).status, 0);
+  writeFileSync(join(dir, 'times.json'), JSON.stringify({ alignment: { characters: [...'Hola'], character_start_times_seconds: [0, 0.2, 0.4, 0.6], character_end_times_seconds: [0.2, 0.4, 0.6, 0.8] } }));
+  assert.match(await voice(openProject(dir), { audio: take, words: join(dir, 'times.json') }), /alignment/);
+  await assert.rejects(voice(openProject(dir), { words: join(dir, 'times.json') }), /no audio in it/);
+  assert.deepEqual(temps(), before);
 });

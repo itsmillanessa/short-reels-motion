@@ -126,7 +126,9 @@ try {
     Refresh-Path
     Ok 'srm instalado'
     # PowerShell runs npm's srm.ps1 only when scripts are allowed; a new Windows has them Restricted
-    $policy = [string](Get-ExecutionPolicy)
+    # (only advice: a PowerShell that cannot load Get-ExecutionPolicy, like one started under PowerShell 7, goes on)
+    $policy = ''
+    try { $policy = [string](Get-ExecutionPolicy) } catch { }
     if ($policy -match '^(Restricted|AllSigned)$') {
       if ($Yes) {
         try { Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force; Ok 'PowerShell ya puede correr srm (ExecutionPolicy RemoteSigned para tu usuario)' }

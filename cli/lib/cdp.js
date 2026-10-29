@@ -84,7 +84,12 @@ function core(child, write, extra = {}) {
   // keeping Node alive: the browser runs in its own process group and the whole group is killed.
   const reap = () => { try { if (process.platform === 'win32') child.kill('SIGKILL'); else process.kill(-child.pid, 'SIGKILL'); } catch { try { child.kill('SIGKILL'); } catch { /* gone */ } } };
   const forgetReap = reapOnExit(reap);
-  const exited = new Promise((resolve) => child.once('exit', () => { forgetReap(); resolve(); }));
+  // a browser that never started (no such file) sends 'error', with no pid, and never 'exit'
+  const exited = new Promise((resolve) => {
+    const gone = () => { forgetReap(); resolve(); };
+    child.once('exit', gone);
+    child.once('error', () => { if (child.pid === undefined) gone(); });
+  });
   const pending = new Map(), handlers = new Map();
   const failAll = (why) => { closed = true; for (const p of pending.values()) p.reject(new CdpError(why)); pending.clear(); };
   const conn = {

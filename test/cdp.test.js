@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { findChrome } from '../cli/lib/browser.js';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CdpError, LOCAL_STATE, launch, newPage } from '../cli/lib/cdp.js';
 
@@ -47,4 +47,13 @@ test('cdp: every profile starts with the blank-password answer cached, so Chrome
 
 test('cdp: a browser that cannot start is reported, not hung', async () => {
   await assert.rejects(() => launch('/no/such/chrome', { transport: 'pipe' }).then((c) => c.send('Browser.getVersion')), /Chrome|ENOENT|gone/);
+});
+
+// close() waits for the browser to exit before it removes the profile, but one that never started never exits
+test('cdp: closing a browser that never started takes no wait, and removes its profile', async () => {
+  const conn = await launch('/no/such/chrome', { transport: 'pipe' });
+  const t0 = Date.now();
+  await conn.close();
+  assert.ok(Date.now() - t0 < 1000, `close took ${Date.now() - t0} ms`);
+  assert.ok(!existsSync(conn.profile), `${conn.profile} is still there`);
 });

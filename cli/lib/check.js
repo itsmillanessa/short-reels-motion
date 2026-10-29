@@ -114,7 +114,8 @@ export function checkSource(project) {
     if (!clean || seen.has(clean)) continue;
     seen.add(clean);
     const file = isAbsolute(clean) ? clean : resolve(project.root, clean);
-    if (relative(project.root, file).startsWith('..')) add('error', 'outside-project', `${ref} is outside the project folder — copy it into assets/ (an export or another machine will not have it)`, i);
+    const rel = relative(project.root, file);   // absolute for a file on another drive (Windows)
+    if (rel.startsWith('..') || isAbsolute(rel)) add('error', 'outside-project', `${ref} is outside the project folder — copy it into assets/ (an export or another machine will not have it)`, i);
     else if (!existsSync(file)) add('error', 'missing-file', `${ref} does not exist`, i);
   }
 
