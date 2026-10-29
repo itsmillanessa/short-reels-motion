@@ -99,7 +99,8 @@ completo, sin guías encima. `data-platforms="tiktok,reels"` en la raíz del vid
 - [ ] Kit de marca (`kit.json`)
 - [ ] Ingesta de grabaciones del celular; portada y exportación por plataforma
 - [ ] ElevenLabs como opción de voz; Kokoro en un paso
-- [ ] Skill «director de shorts»; instalador para Mac y Windows
+- [x] Skill «director de shorts» en español (`skills/short-reels-motion/SKILL.md` + `references/shorts.md`)
+- [ ] Instalador de una línea para Mac y Windows
 
 ## Créditos y licencia
 
