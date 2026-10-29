@@ -1,0 +1,63 @@
+# The test suite on the three systems creators use, and the macOS/Linux installer in a sandbox (the Windows installer is
+# tested by test/install.test.js on the Windows job). Windows checks out with core.autocrlf=true, like a creator's PC.
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: FFmpeg (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg -y --no-progress
+      - name: FFmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
+      - name: FFmpeg, and Chrome's sandbox (Linux)
+        if: runner.os == 'Linux'
+        # Ubuntu 24.04 blocks the unprivileged user namespaces Chrome's sandbox needs
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - run: node cli/om.js doctor
+      - run: npm test
+        env:
+          SRM_LANG: en
+
+  install-sh:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: FFmpeg
+        run: if [ "$RUNNER_OS" = macOS ]; then brew install ffmpeg; else sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; fi
+      - name: install.sh from this checkout, into a throwaway home
+        run: |
+          mkdir -p "$RUNNER_TEMP/home/.codex"
+          HOME="$RUNNER_TEMP/home" SRM_SRC="$GITHUB_WORKSPACE" bash install.sh --no-global
+          test -L "$RUNNER_TEMP/home/.claude/skills/short-reels-motion"
+          test -L "$RUNNER_TEMP/home/.codex/skills/short-reels-motion"
+          "$RUNNER_TEMP/home/.claude/skills/short-reels-motion/bin/srm" --version
