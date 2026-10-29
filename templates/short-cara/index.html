@@ -13,7 +13,7 @@
   {"id":"nameFor","type":"number","label":"Rótulo · dura (s)","default":2.4,"min":0.8,"max":10,"step":0.1,"group":"Rótulo"},
   {"id":"labels","type":"string","label":"Palabras clave · JSON [{at o word, text}] (*palabra* = color de acento)","default":"[{\"at\":3.6,\"text\":\"*GRATIS* ALCANZA PARA EMPEZAR\"},{\"at\":6.0,\"text\":\"PAGA SI LA USAS *DIARIO*\"},{\"at\":8.2,\"text\":\"PRUEBA *UN MES* Y DECIDE\"}]","group":"Palabras clave"},
   {"id":"captions","type":"boolean","label":"Subtítulos de tu voz (salen cuando hay narración: srm voice)","default":true,"group":"Subtítulos"},
-  {"id":"endAt","type":"number","label":"Cierre · empieza en el segundo (con narración: la palabra de endWord)","default":10.2,"min":1,"max":120,"step":0.1,"group":"Cierre"},
+  {"id":"endAt","type":"number","label":"Cierre · empieza en el segundo (con narración: la palabra de endWord)","default":9.9,"min":1,"max":120,"step":0.1,"group":"Cierre"},
   {"id":"endWord","type":"string","label":"Cierre · empieza al decir esta palabra (vacío = usa el segundo)","default":"","group":"Cierre"},
   {"id":"handle","type":"string","label":"Cierre · tu @usuario","default":"@tu_usuario","group":"Cierre"},
   {"id":"cta","type":"string","label":"Cierre · texto de abajo","default":"SÍGUEME PARA MÁS","group":"Cierre"},
@@ -66,9 +66,10 @@
   .label em { font-style: normal; color: var(--accent); }
   .cap { position: absolute; left: 80px; width: 840px; top: 1330px; text-align: center; font-weight: 900; font-size: 58px; line-height: 1.08; letter-spacing: -.02em; color: #fff; text-shadow: 0 3px 0 #000, 0 0 18px #000000cc; }
 
-  /* closing: over the footage, dimmed */
+  /* closing: over the footage, dimmed. The call to action sits on an accent pill: accent-coloured text over footage
+     only reads with a light accent (a creator's magenta came out at 2.3:1 over a bright frame) */
   .handle { position: absolute; left: 80px; width: 850px; top: 820px; text-align: center; font-weight: 900; font-size: 112px; letter-spacing: -.045em; white-space: nowrap; }
-  .cta { position: absolute; left: 80px; width: 850px; top: 980px; text-align: center; font-weight: 800; font-size: 36px; letter-spacing: .18em; color: var(--accent); }
+  .cta { position: absolute; left: 80px; right: 150px; width: fit-content; max-width: 850px; margin: 0 auto; top: 980px; padding: 10px calc(22px - .18em) 12px 22px; text-align: center; font-weight: 800; font-size: 36px; letter-spacing: .18em; color: var(--accentInk); background: var(--accent); }
 
   /* cover: the first two frames, for TikTok's "pick a frame" */
   #s-cover { z-index: 50; background: var(--ground); }
@@ -193,6 +194,7 @@
   SRM.flash(tl, tEnd + 0.02);
   SRM.kickIn(tl, '#cta', tEnd + 0.4);
   tl.to({}, { duration: V.endHold }, tEnd + 0.4);
+  if (V.endHold > 0) OM.hold(tEnd + 0.4, tEnd + 0.4 + V.endHold);   // the end card is there to be read: not dead time for srm qa
 
   window.__timelines = window.__timelines || {};
   window.__timelines['film'] = tl;

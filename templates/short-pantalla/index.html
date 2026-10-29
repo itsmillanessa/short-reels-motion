@@ -189,6 +189,7 @@
   SRM.flash(tl, tEnd + 0.02);
   SRM.kickIn(tl, '#cta', tEnd + 0.4);
   tl.to({}, { duration: V.endHold }, tEnd + 0.4);
+  if (V.endHold > 0) OM.hold(tEnd + 0.4, tEnd + 0.4 + V.endHold);   // the end card is there to be read: not dead time for srm qa
 
   window.__timelines = window.__timelines || {};
   window.__timelines['film'] = tl;
