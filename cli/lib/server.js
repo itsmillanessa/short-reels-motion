@@ -127,6 +127,7 @@ export function startStudio(project, { port = 4848, host = '127.0.0.1', lang = p
         return;
       }
       if (STATIC[path]) return serveFile(res, STATIC[path]);
+      if (path.startsWith('/_om/fonts/')) return serveFile(res, safeJoin(join(PKG, 'fonts'), path.slice(11)));   // the studio's own typefaces
       if (path.startsWith('/_om/')) return serveFile(res, safeJoin(join(PKG, 'studio'), path.slice(5)));
       if (path.startsWith('/out/')) return serveFile(res, safeJoin(project.root, path.slice(1)));
       if (path.startsWith('/p/')) {
