@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es-MX" data-composition-variables='[
+  {"id":"kicker","type":"string","label":"Gancho · texto chico de arriba","default":"GUÁRDALO PARA DESPUÉS","group":"Gancho"},
+  {"id":"hook1","type":"string","label":"Gancho · línea 1","default":"3 TRUCOS","group":"Gancho"},
+  {"id":"hook2","type":"string","label":"Gancho · línea 2 (con fondo de color)","default":"PARA TUS PROMPTS","group":"Gancho"},
+  {"id":"hook3","type":"string","label":"Gancho · línea 3 (vacío = no sale)","default":"EL TERCERO CAMBIA TODO","group":"Gancho"},
+  {"id":"items","type":"string","label":"Puntos · JSON [{at o word, title, sub, img}] (*palabra* = acento; img opcional en assets/)","default":"[{\"at\":2.4,\"title\":\"DALE *CONTEXTO*\",\"sub\":\"quién eres y para qué lo quieres\"},{\"at\":5.0,\"title\":\"PIDE UN *FORMATO*\",\"sub\":\"lista, tabla o 3 opciones\"},{\"at\":7.6,\"title\":\"DALE UN *EJEMPLO*\",\"sub\":\"uno bueno vale por diez instrucciones\"}]","group":"Puntos"},
+  {"id":"countdown","type":"boolean","label":"Cuenta regresiva (3, 2, 1) en vez de 1, 2, 3","default":false,"group":"Puntos"},
+  {"id":"endAt","type":"number","label":"Cierre · empieza en el segundo (con narración: la palabra de endWord)","default":10.2,"min":1,"max":120,"step":0.1,"group":"Cierre"},
+  {"id":"endWord","type":"string","label":"Cierre · empieza al decir esta palabra (vacío = usa el segundo)","default":"","group":"Cierre"},
+  {"id":"handle","type":"string","label":"Cierre · tu @usuario","default":"@tu_usuario","group":"Cierre"},
+  {"id":"cta","type":"string","label":"Cierre · texto de abajo","default":"GUÁRDALO Y SÍGUEME","group":"Cierre"},
+  {"id":"endHold","type":"number","label":"Cierre · dura (s)","default":1.6,"min":0.6,"max":6,"step":0.1,"group":"Cierre"},
+  {"id":"cover","type":"boolean","label":"Portada en los 2 primeros cuadros (para elegirla en TikTok)","default":true,"group":"Portada"},
+  {"id":"coverTitle","type":"string","label":"Portada · título","default":"3 TRUCOS PARA TUS PROMPTS","group":"Portada"},
+  {"id":"ground","type":"color","label":"Fondo","default":"#0F1012","group":"Colores"},
+  {"id":"ink","type":"color","label":"Texto","default":"#F4F1EA","group":"Colores"},
+  {"id":"accent","type":"color","label":"Acento","default":"#FFD23F","group":"Colores"},
+  {"id":"accentInk","type":"color","label":"Texto sobre el acento","default":"#0F1012","group":"Colores"}
+]'>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080, height=1920">
+<title>Short Reels Motion · Lista</title>
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/om.js"></script>
+<script src="vendor/srm.js"></script>
+<style id="om-fonts">
+@font-face { font-family: "Inter"; src: url("assets/fonts/Inter-var.woff") format("woff"); font-weight: 100 900; font-style: normal; }
+</style>
+<style>
+  :root { --ground: #0F1012; --ink: #F4F1EA; --accent: #FFD23F; --accentInk: #0F1012; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: var(--ground); }
+  #film { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--ground); color: var(--ink); font-family: "Inter", sans-serif; }
+  #film * { box-sizing: border-box; }
+  .light { position: absolute; inset: 0; background: radial-gradient(820px 640px at 50% 40%, #ffffff0b, transparent 72%); }
+  .flash { position: absolute; inset: 0; background: var(--accent); opacity: 0; pointer-events: none; z-index: 40; }
+  section { position: absolute; inset: 0; visibility: hidden; }
+  #s-hook { visibility: visible; }                                   /* painted before any seek: frame 0 is the poster */
+  #hook3 { visibility: hidden; }
+  h1, h2, p { margin: 0; }
+
+  /* Safe area of the feeds (srm check warns about it): text lives between y 230 and 1480 and left of x 920 below y 760. */
+  .kick { position: absolute; left: 80px; top: 600px; font-weight: 800; font-size: 34px; letter-spacing: .2em; color: var(--accent); white-space: nowrap; }
+  .hook { position: absolute; left: 80px; width: 840px; font-weight: 900; letter-spacing: -.045em; line-height: .95; white-space: nowrap; }
+  .hook1 { top: 690px; font-size: 150px; }
+  .hook2 { top: 860px; font-size: 92px; }
+  .hook3 { top: 1000px; font-size: 48px; letter-spacing: -.01em; white-space: normal; opacity: .9; }
+  .pillw { position: relative; display: inline-block; padding: .02em .14em .06em; color: var(--accentInk); isolation: isolate; }
+  .pillw .pill { position: absolute; inset: 0; background: var(--accent); z-index: -1; }
+
+  /* progress: one bar per point, top of the safe area */
+  .bars { position: absolute; left: 80px; width: 840px; top: 262px; display: flex; gap: 12px; }
+  .bars i { flex: 1; height: 8px; background: #ffffff26; }
+  .bars i b { display: block; height: 100%; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; }
+
+  /* one point at a time */
+  .item { position: absolute; left: 80px; width: 840px; top: 330px; height: 1120px; display: flex; flex-direction: column; justify-content: center; gap: 26px; visibility: hidden; }
+  .item.with-img { justify-content: flex-start; }
+  .num { font-weight: 900; font-size: 300px; line-height: .8; letter-spacing: -.06em; color: var(--accent); transform-origin: 0 100%; }
+  .title { font-weight: 900; letter-spacing: -.045em; line-height: .98; }
+  .w { position: relative; display: inline-block; overflow: hidden; vertical-align: top; padding: .2em 0 .16em; margin: -.2em .2em -.16em 0; }
+  .w > span { display: inline-block; }
+  .w.em > span { color: var(--accent); }
+  .sub { font-weight: 600; font-size: 46px; line-height: 1.15; letter-spacing: -.01em; opacity: .72; }
+  .pic { width: 840px; height: 440px; object-fit: cover; border-radius: 22px; box-shadow: 0 30px 80px #0009; }
+
+  /* closing */
+  .handle { position: absolute; left: 80px; width: 850px; top: 820px; text-align: center; font-weight: 900; font-size: 112px; letter-spacing: -.045em; white-space: nowrap; }
+  .cta { position: absolute; left: 80px; width: 850px; top: 980px; text-align: center; font-weight: 800; font-size: 36px; letter-spacing: .18em; color: var(--accent); }
+
+  /* cover: the first two frames, for TikTok's "pick a frame" */
+  #s-cover { z-index: 50; background: var(--ground); }
+  .cvTitle { position: absolute; left: 80px; width: 840px; top: 640px; font-size: 140px; line-height: .92; font-weight: 900; letter-spacing: -.05em; }
+  .cvHandle { position: absolute; left: 80px; width: 850px; top: 1300px; text-align: center; font-size: 56px; font-weight: 900; color: var(--accent); }
+</style>
+</head>
+<body>
+<!--
+  Lista / top 3 (short-lista): numbered points, one per screen.
+  Hook with the number in frame 0 → each point: a huge number, its title rising word by word and a line under it (an
+  image if the point has one) → closing card with the creator's handle. Bars on top fill as the points go by.
+
+  Each point: { "at": seconds | "word": a word of the narration, "title": "…", "sub": "…", "img": "assets/…" (optional) }.
+  *palabra* paints a word in the accent. countdown numbers them N…1 (the best last). Keep it to 3–5 points.
+-->
+<div id="film" data-composition-id="film" data-width="1080" data-height="1920" data-platforms="tiktok,reels,shorts">
+  <div class="light"></div>
+
+  <section id="s-hook" data-om-id="gancho">
+    <p class="kick" id="kick" data-om-id="kicker" data-var-text="kicker"></p>
+    <h1 class="hook hook1" id="hook1" data-om-id="hook1" data-var-text="hook1"></h1>
+    <h1 class="hook hook2" id="hook2" data-om-id="hook2"><span class="pillw"><span class="pill" id="pill2"></span><span id="hook2t"></span></span></h1>
+    <h2 class="hook hook3" id="hook3" data-om-id="hook3" data-var-text="hook3"></h2>
+  </section>
+
+  <section id="s-list" data-om-id="lista">
+    <div class="bars" id="bars"></div>
+    <div id="items"></div>
+  </section>
+
+  <section id="s-end" data-om-id="cierre">
+    <p class="handle" id="handle" data-om-id="handle" data-var-text="handle"></p>
+    <p class="cta" id="cta" data-om-id="cta" data-var-text="cta"></p>
+  </section>
+
+  <section id="s-cover" data-om-id="portada">
+    <h1 class="cvTitle" id="cvTitle" data-var-text="coverTitle"></h1>
+    <p class="cvHandle" id="cvHandle"></p>
+  </section>
+
+  <div class="flash" id="flash"></div>
+</div>
+
+<script>
+  const V = OM.vars();
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const json = (s, fallback) => { try { const v = JSON.parse(s); return Array.isArray(v) ? v : fallback; } catch (e) { console.warn('[short-lista] JSON: ' + e.message); return fallback; } };
+  for (const k of ['ground', 'ink', 'accent', 'accentInk']) document.documentElement.style.setProperty('--' + k, V[k]);
+  OM.music({ product: 'explainer', bpm: 116 });
+
+  // ---- content
+  $('#hook2t').textContent = V.hook2;
+  SRM.fit('#hook1', V.hook1, 150); SRM.fit('#hook2', V.hook2, 92);   // the hook lines fit the safe width whatever they say
+  $('#cvHandle').textContent = V.handle;
+  const words = (raw) => {
+    const out = []; let em = false;
+    for (let w of String(raw || '').split(/\s+/).filter(Boolean)) {
+      if (w.startsWith('*')) { em = true; w = w.slice(1); }
+      const close = /\*[^\p{L}\p{N}]*$/u.test(w);
+      out.push({ w: w.replace(/\*/g, ''), em });
+      if (close) em = false;
+    }
+    return out;
+  };
+  const sizeOf = (ws) => {
+    const longest = Math.max(1, ...ws.map((x) => x.w.length)), total = ws.reduce((n, x) => n + x.w.length + 1, 0);
+    return Math.max(72, Math.min(Math.floor(840 / (longest * 0.64)), total <= 14 ? 140 : total <= 26 ? 116 : 96));
+  };
+  const items = json(V.items, []);
+  const N = items.length;
+  $('#bars').innerHTML = items.map(() => '<i><b></b></i>').join('');
+  $('#items').innerHTML = items.map((it, i) => {
+    const ws = words(it.title), n = V.countdown ? N - i : i + 1;
+    const title = ws.map((x) => `<span class="w${x.em ? ' em' : ''}"><span>${esc(x.w)}</span></span>`).join('');
+    return `<div class="item${it.img ? ' with-img' : ''}" id="it${i}" data-om-id="punto-${i + 1}"><p class="num">${String(n).padStart(2, '0')}</p>` +
+      `<h1 class="title" data-layout-allow-overlap style="font-size:${sizeOf(ws)}px">${title}</h1>${it.sub ? `<p class="sub">${esc(it.sub)}</p>` : ''}` +
+      `${it.img ? `<img class="pic" src="${esc(it.img)}" alt="">` : ''}</div>`;
+  }).join('');
+
+  // ---- timing: seconds, or the narration's words when there is one
+  const list = items.map((it, i) => ({ el: $('#it' + i), bar: $('#bars').children[i].firstChild, at: SRM.when(it, 2.4 + i * 2.6) })).sort((a, b) => a.at - b.at);
+  const tFirst = list.length ? list[0].at : 2.4;
+  const tEnd = Math.max((list.length ? list[list.length - 1].at : tFirst) + 1, SRM.when({ word: V.endWord, at: V.endAt }));
+  const tl = gsap.timeline({ paused: true });
+  tl.set(['#s-list', '#s-end'], { autoAlpha: 0 }, 0);
+  tl.set(['#hook3', '#handle', '#cta'], { autoAlpha: 0 }, 0);
+
+  // cover (2 frames): painted before any seek, like the hook (a set at t=0 is not applied when frame 0 is asked for)
+  const c0 = V.cover ? 2 / 30 : 0;
+  if (V.cover) { const cv = $('#s-cover'); cv.style.visibility = 'visible'; cv.style.opacity = '1'; tl.set(cv, { autoAlpha: 0 }, c0); }
+
+  // hook: the number and the promise from the first frame
+  tl.addLabel('scene:gancho', 0);
+  tl.set('#s-hook', { autoAlpha: 1 }, 0);
+  tl.fromTo('#hook1', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0); OM.sfx('impact', c0, { gain: 0.6 });
+  tl.fromTo('#hook2', { scale: 1.12 }, { scale: 1, duration: 0.45, ease: 'expo.out', immediateRender: false }, c0 + 0.08);
+  tl.fromTo('#pill2', { scaleX: 0.6 }, { scaleX: 1, duration: 0.4, ease: 'expo.out', immediateRender: false, transformOrigin: '0 50%' }, c0 + 0.08);
+  tl.fromTo('#kick', { x: -24 }, { x: 0, duration: 0.4, ease: 'power3.out', immediateRender: false }, c0);
+  if (String(V.hook3).trim()) SRM.kickIn(tl, '#hook3', c0 + 1.1);
+  SRM.whipOut(tl, '#s-hook', tFirst);
+
+  // the points: number slams, title rises, the line follows; the next one pushes it out to the left
+  tl.addLabel('scene:lista', tFirst);
+  tl.set('#s-list', { autoAlpha: 1 }, tFirst);
+  list.forEach(({ el, bar, at }, i) => {
+    const until = Math.min(i + 1 < list.length ? list[i + 1].at : tEnd, tEnd);
+    const num = el.querySelector('.num'), title = el.querySelector('.title'), sub = el.querySelector('.sub'), pic = el.querySelector('.pic');
+    tl.set(el, { autoAlpha: 1, x: 0 }, at);
+    SRM.slam(tl, num, at, { scale: 1.5, dur: 0.36, sound: 'impact', gain: 0.45 });
+    tl.fromTo(title.querySelectorAll('.w > span'), { yPercent: 120 }, { yPercent: 0, duration: 0.5, stagger: 0.07, ease: 'expo.out', immediateRender: false }, at + 0.18);
+    if (sub) SRM.kickIn(tl, sub, at + 0.5);
+    if (pic) tl.fromTo(pic, { autoAlpha: 0, y: 60, scale: 0.94 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.5, ease: 'expo.out', immediateRender: false }, at + 0.35);
+    tl.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: Math.max(0.3, until - at), ease: 'none', immediateRender: false }, at);
+    // the pulse scales the whole masked word: scaling the word inside its mask would clip its edges
+    const pulse = title.querySelectorAll('.w.em');
+    if (pulse.length && until - at > 1.6) { tl.fromTo(pulse, { scale: 1 }, { scale: 1.1, duration: 0.18, yoyo: true, repeat: 1, ease: 'power2.out', immediateRender: false, transformOrigin: '0 60%' }, at + 1.2); OM.sfx('tick', at + 1.2, { gain: 0.3 }); }
+    tl.fromTo(num, { scale: 1 }, { scale: 1.05, duration: Math.max(0.3, until - at - 0.6), ease: 'none', immediateRender: false }, at + 0.5);
+    if (i + 1 < list.length) { tl.to(el, { x: -160, autoAlpha: 0, duration: 0.24, ease: 'power2.in' }, Math.max(at + 0.6, until - 0.24)); OM.sfx('whip', Math.max(at + 0.6, until - 0.24), { gain: 0.45 }); tl.set(el, { autoAlpha: 0 }, until); }
+    else tl.set(el, { autoAlpha: 0 }, until);
+  });
+
+  // closing: the handle lands
+  SRM.whipOut(tl, '#s-list', tEnd);
+  tl.addLabel('scene:cierre', tEnd);
+  tl.set('#s-end', { autoAlpha: 1 }, tEnd);
+  SRM.slam(tl, '#handle', tEnd + 0.02, { scale: 1.3 });
+  SRM.flash(tl, tEnd + 0.02);
+  SRM.kickIn(tl, '#cta', tEnd + 0.4);
+  tl.to({}, { duration: V.endHold }, tEnd + 0.4);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines['film'] = tl;
+</script>
+</body>
+</html>

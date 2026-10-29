@@ -88,7 +88,8 @@ Pide las grabaciones **antes** de construir. Lo que llega del teléfono necesita
 | Historia o chiste con personaje | `storytime` → fork a 1080×1920 | El personaje se configura en el grupo «Personaje» (piel, pelo, ropa, accesorio, barba, tatuajes…) |
 | Frases con tipografía, sin material | `short-tipografia` | Vertical nativa. Cada frase es un golpe (`fx`: slam, rise, count, strike); `*acento*`, `~tachado~`; el tamaño se ajusta solo |
 | Datos y cifras | `finance-chart` → fork | Una sola anotación por gráfica |
-| Lista / top 3, antes y después | `blank` → fork y escribirlo con `vendor/srm.js` | `SRM.slam`, `SRM.between`, `SRM.counter` |
+| Lista / top 3 | `short-lista` | Vertical nativa. Un número gigante por punto, título y explicación (imagen opcional), barritas de avance, orden 1→N o cuenta regresiva |
+| Antes y después | `blank` → fork y escribirlo con `vendor/srm.js` | `SRM.slam`, `SRM.between`, `SRM.counter` |
 
 `srm fork` deja un comentario de re-maquetación en la bandeja: `srm inbox <dir>-9x16 --wait` y acomoda para vertical.
 Una plantilla que no trae `vendor/srm.js` lo puede usar copiando `runtime/srm-motion.js` del paquete a `vendor/srm.js`.
@@ -118,6 +119,7 @@ Cada función recibe el timeline y un tiempo, y devuelve el tiempo:
 | `SRM.zoom(tl, el, at, { fx, fy, scale, hold })` | Acercamiento a una parte de la pantalla y regreso |
 | `SRM.flash(tl, at)` | Destello del acento, alineado a cuadros y sostenido 2 cuadros |
 | `SRM.when({ word, at })` | El tiempo de un paso: la palabra si hay narración, si no los segundos |
+| `SRM.fit(el, texto, max)` | Ajusta el tamaño de una línea (del gancho) a su largo para que quepa en el ancho seguro |
 
 Detalles que ya costaron rondas:
 

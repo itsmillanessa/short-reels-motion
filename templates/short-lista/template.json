@@ -1,0 +1,18 @@
+{
+  "title": "Lista / top 3 (vertical)",
+  "summary": "Short vertical 9:16 de puntos numerados: gancho con el número desde el cuadro 0, un número gigante por punto con su título y explicación (imagen opcional), barritas de avance arriba para que se vea cuántos faltan, orden ascendente o cuenta regresiva, y cierre con tu @usuario. Todo el texto dentro de las zonas seguras.",
+  "best_for": [
+    "top 3 / top 5 de apps, trucos o errores",
+    "pasos de un proceso",
+    "listas que la gente guarda para después",
+    "cuenta regresiva hasta el mejor"
+  ],
+  "aspect": "9:16",
+  "copy": {
+    "templates/blank/vendor": "vendor",
+    "runtime/srm-motion.js": "vendor/srm.js",
+    "fonts/Inter-var.woff": "assets/fonts/Inter-var.woff",
+    "fonts/OFL.txt": "assets/fonts/OFL.txt",
+    "fonts/LICENSES.md": "assets/fonts/LICENSES.md"
+  }
+}

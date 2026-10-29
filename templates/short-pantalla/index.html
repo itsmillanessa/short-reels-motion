@@ -130,6 +130,7 @@
 
   // ---- content
   $('#hook2t').textContent = V.hook2;
+  SRM.fit('#hook1', V.hook1, 112); SRM.fit('#hook2', V.hook2, 112);   // the hook lines fit the safe width whatever they say
   $('#cvHandle').textContent = V.handle;
   const points = json(V.points, []), taps = json(V.taps, []), zooms = json(V.zooms, []);
   $('#points').innerHTML = points.map((p, i) => `<p class="point" id="pt${i}" data-om-id="texto-${i + 1}">${esc(p.text || '').replace(/\*([^*]+)\*/g, '<em>$1</em>')}</p>`).join('');

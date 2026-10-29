@@ -128,6 +128,7 @@
 
   // ---- content
   $('#hook2t').textContent = V.hook2;
+  SRM.fit('#hook1', V.hook1, 104); SRM.fit('#hook2', V.hook2, 104);   // the hook lines fit the safe width whatever they say
   $('#cvHandle').textContent = V.handle;
   $('#tagName').textContent = V.name; $('#tagRole').textContent = V.role;
   const labels = json(V.labels, []);

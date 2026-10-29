@@ -17,6 +17,15 @@
     return step && step.at != null ? Number(step.at) : fallback;
   };
 
+  // A line that has to stay on one line inside the safe width (a hook line): its size follows its length, whatever the
+  // creator writes (Inter 900 caps ≈ .64 em per letter). Returns the size in px.
+  SRM.fit = (el, text, max, { width = 800, min = 56, em = 0.64 } = {}) => {
+    const node = typeof el === 'string' ? document.querySelector(el) : el;
+    const size = Math.max(min, Math.min(max, Math.floor(width / (Math.max(1, String(text || '').length) * em))));
+    if (node) node.style.fontSize = size + 'px';
+    return size;
+  };
+
   // In: lands big and settles (the hook, a keyword).
   SRM.slam = (tl, el, at, { scale = 1.6, dur = 0.38, sound = 'impact', gain = 0.6 } = {}) => {
     tl.fromTo(el, { autoAlpha: 0, scale }, { autoAlpha: 1, scale: 1, duration: dur, ease: 'expo.out', immediateRender: false }, at);

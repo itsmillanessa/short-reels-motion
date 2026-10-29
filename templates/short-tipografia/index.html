@@ -112,6 +112,7 @@
 
   // ---- content
   $('#hook2t').textContent = V.hook2;
+  SRM.fit('#hook1', V.hook1, 128); SRM.fit('#hook2', V.hook2, 128);   // the hook lines fit the safe width whatever they say
   $('#cvHandle').textContent = V.handle;
   // "*a b*" accent, "~a~" struck: read word by word, so a mark can span several words
   const words = (raw) => {
@@ -192,7 +193,8 @@
     }
     if (small) SRM.kickIn(tl, small, at + 0.3);
     // a long phrase gets a second beat: its accent words (or its small line) pulse once, so it never sits still
-    const pulse = el.querySelectorAll('.w.em > span').length ? el.querySelectorAll('.w.em > span') : small;
+    // the pulse scales the whole masked word: scaling the word inside its mask would clip its edges
+    const pulse = el.querySelectorAll('.w.em').length ? el.querySelectorAll('.w.em') : small;
     if (pulse && until - at > 1.5) { tl.fromTo(pulse, { scale: 1 }, { scale: 1.1, duration: 0.18, yoyo: true, repeat: 1, ease: 'power2.out', immediateRender: false, transformOrigin: '0 60%' }, at + 1.0); OM.sfx('tick', at + 1.0, { gain: 0.3 }); }
     tl.fromTo(big, { scale: 1 }, { scale: 1.04, duration: Math.max(0.3, until - at - 0.6), ease: 'none', immediateRender: false }, at + 0.5);
     if (i + 1 < list.length) SRM.squash(tl, el, until); else tl.set(el, { autoAlpha: 0 }, until);
