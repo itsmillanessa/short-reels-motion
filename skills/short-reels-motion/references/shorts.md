@@ -61,6 +61,8 @@ Pide las grabaciones **antes** de construir. Lo que llega del teléfono necesita
   prompts de trabajo. Tápalo (`drawbox=x=…:y=…:w=…:h=…:color=black@1:t=fill`), recórtalo o pregunta.
 - **HDR:** `srm check` marca `hdr-video`. Pide grabar sin HDR o convierte a SDR (bt709) antes de usarla.
 - Guarda los originales fuera del proyecto o en una carpeta ignorada; al proyecto solo va lo que usa el video.
+- **Recreación a propósito:** si no hay producto que mostrar y el video recrea algo (un chat, una historia en dibujos),
+  marca la raíz con `data-om-illustrative` y `srm check` deja de pedir material real. Si hay una app real, se muestra la app.
 
 ## 4. La voz
 
@@ -68,10 +70,15 @@ Pide las grabaciones **antes** de construir. Lo que llega del teléfono necesita
 |---|---|
 | Grabación del creador | `srm voice <dir> --audio voz.m4a --text guion.txt` (whisper alinea palabra por palabra; necesita `whisper-cli`) |
 | Voz generada gratis | `srm voice <dir> --text guion.txt` (un guion en español usa una voz en español: Kokoro `ef_dora`, o `say:Paulina` en Mac) |
-| ElevenLabs u otra voz clonada | El creador genera el audio (o tú con su API, con la key en una variable de entorno, nunca impresa) y entra con `--audio` |
+| ElevenLabs u otra voz clonada | El creador genera la toma **con sus tiempos** (o tú con su API, `text-to-speech/{voz}/with-timestamps`, con la key en una variable de entorno, nunca impresa) y entra con `--audio toma.mp3 --words tiempos.json`: cada palabra con su inicio y fin exactos, sin whisper. El JSON tal como lo devuelve ElevenLabs sirve (con `audio_base64` adentro basta `--words`) |
 
-- Velocidad: `ffmpeg -i voz.mp3 -filter:a atempo=1.2 voz-1.2x.mp3` **antes** de `srm voice --audio`; la alineación sale
-  ya con los tiempos rápidos.
+- Velocidad: `srm voice … --speed 1.2` acelera la toma (sin cambiar el tono) y todos sus tiempos; con `--words` usa sola
+  la velocidad del kit. Si la toma ya se aceleró después de generarla (la de 1× con sus tiempos a 1×), `srm voice` lo
+  detecta y escala los tiempos sin acelerarla otra vez. Para tiempos exactos, pásale la toma de 1×.
+- **Bocas:** `srm voice` mide el volumen de la voz 30 veces por segundo. `OM.env(t)` da 0–1 y `TOON.mouth(t)` da la forma
+  (0 cerrada, 1 media, 2 abierta): la boca de un personaje abre en las sílabas y se cierra en cada pausa, también entre
+  palabras. El personaje de `storytime` ya la usa cuando hay narración. No animes la boca con `OM.words()`: con whisper o
+  la voz generada las palabras van pegadas y la boca nunca cierra.
 - Con narración, las plantillas verticales sincronizan solas: cada palabra grande cae cuando se dice, la línea chica
   sale con sus palabras y los huecos de más de un segundo reciben un pulso. Tú solo anclas cada frase o punto a la
   primera palabra que la dice (una que no se repita antes).
@@ -147,7 +154,9 @@ Detalles que ya costaron rondas:
 
 1. `srm check <dir>`: 0 errores, 0 `unsafe-zone` y 0 `cue-repeated`. El texto que recorta un contenedor (la pantalla de
    un celular con `overflow: hidden`) se juzga solo por la parte que se ve; `text-clipped` avisa que algo lo corta.
-2. `srm render <dir>` y `srm qa <dir>`: sin parpadeos de un cuadro, cuadro 0 lleno, nada quieto ≥ 1 s salvo el cierre.
+2. `srm render <dir>` y `srm qa <dir>`: sin parpadeos de un cuadro, cuadro 0 lleno, nada quieto ≥ 1 s salvo el cierre o
+   una pausa de lectura marcada a propósito: `OM.hold(desde, hasta)` en el timeline (acepta tiempos de la narración:
+   `OM.hold(OM.cue('lee'), OM.cue('lee') + 2)`), que `qa` reporta como pausa y no como tiempo muerto.
 3. **Hoja de contacto, un cuadro por segundo**, y mírala completa:
    ```sh
    ffmpeg -i out/<nombre>-vN.mp4 -vf "fps=1,scale=216:-1,tile=10x5" out/hoja.png

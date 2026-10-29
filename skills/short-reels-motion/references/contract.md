@@ -63,6 +63,8 @@ One paused timeline at `window.__timelines[<composition-id>]`. Without `data-dur
   - `OM3.film(stage, tl, duration, cam, update)` — one clock: poses the camera, calls `update(t)`, renders once after the seek, focused on the camera's target.
   - `OM3.region(id, object, stage, label)` — the object's projected box, pickable in the studio. `OM3.ready(promise)` — wait for (and redraw after) anything else.
 - `OM.cue('word', nth?, 'start'|'end')` — when a narration word is spoken (from `om voice`); motion anchored to words follows a new recording automatically.
+- `OM.env(t)` — how loud the narration is at `t`, 0–1 (measured by `om voice`, 30 times a second; `null` without one): what a drawn mouth follows, closing in every pause. `TOON.mouth(t)` turns it into 0/1/2 mouth shapes.
+- `OM.hold(from, to)` — a stretch that stands still on purpose (a card to read, the end card): `om qa` reports it as held, not as dead time. Returns `from`.
 - `OM.vars()` — the variables.
 - `OM.sfx(name, at, opts)` — a sound effect at `at` (returns `at`); `OM.music({ product, drop, ending, marks, bpm })` — a built-in direction, or `<script type="text/vnd.abc" id="om-score">` — your own score, its `!mark:name!`s landing on `scene:name`; `OM.beat(n)` — n beats in seconds. `om sound` synthesizes them into `assets/sound.wav` + `<audio id="om-sound">` ([sound.md](sound.md)).
 

@@ -3,7 +3,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { OmError, openProject, readSource, readVariables, scan, setVariables, undo, writeSource, snapshot } from './lib/project.js';
 import { claim, comments, pending, resolve as resolveComment, setStatus } from './lib/inbox.js';
@@ -35,10 +35,11 @@ const HELP = `Short Reels Motion ${VERSION} — shorts, reels and TikToks made b
   srm render [dir] --silent       export without the "no soundtrack" warning
   srm render [dir] [--workers n] [--video extract|seek] [--frames jpg|png]   browsers at once (default: up to 8), how footage is read, the footage cache
   srm check [dir] [--samples n] [--source] [--json]   before rendering: structure, scripts, files, motion rules, then sampled frames (cut-off, covered or low-contrast text, blank ends, history-dependent frames)
-  srm qa [dir|video] [--loop]     check a render: single-frame pops, dead time, hard cuts, motion curve, loop seam
+  srm qa [dir|video] [--loop]     check a render: single-frame pops, dead time (minus the film's OM.hold stretches), hard cuts, motion curve, loop seam
   srm render [dir] --transparent  overlay for 剪映/Premiere: ProRes 4444 with alpha (or --format webm), no sound
   srm fork <dir> <newdir> --size 1080x1920   copy into a new frame size; the re-layout lands in the inbox
-  srm voice <dir> --text <file|"文本"> | --audio <file> [--voice say:Tingting|zf_xiaobei] [--fit]   narration, word cues, .srt
+  srm voice <dir> --text <file|"文本"> | --audio <file> [--voice say:Tingting|zf_xiaobei] [--speed 1.2] [--fit]   narration, word cues, loudness for mouths, .srt
+  srm voice <dir> --audio take.mp3 --words timestamps.json [--text script]   a voice engine's take with the times it returned (ElevenLabs): exact words, no whisper
   srm sound [dir] [--list] [--off]   music + sound effects from the scenes, OM.sfx hits and an om-score (srm render refreshes it)
   srm still <page.html|dir> [--at 0,2.5] [--out file.png|folder]   a PNG of any page (key frames, treatment stills); several times → file-0.00s.png, file-2.50s.png
   srm swatch [directions.md] [--out file]   the Palette: lines of the direction cards as one PNG, with contrast and house-look checks
@@ -282,6 +283,8 @@ async function main() {
     case 'check': {
       const { check, report } = await import('./lib/check.js');
       const project = openProject(pos[0] || '.');
+      // check the film with the runtime it will be rendered with (render refreshes an old vendor/om.js too)
+      (await import('./lib/sound.js')).refreshRuntime(project, (l) => process.stderr.write(l + '\n'));
       const found = await check(project, { page: !flags.source, samples: flags.samples ? Number(flags.samples) : 24, onLog: (l) => process.stderr.write(l + '\n') });
       if (found.some((f) => f.level === 'error')) process.exitCode = 1;
       return out(flags.json ? found : report(found, { root: project.root }));
@@ -289,15 +292,20 @@ async function main() {
 
     case 'qa': {
       // srm qa [dir|video] [--loop]: checks the newest render of a project, or a given video file.
-      const { qa, report } = await import('./lib/qa.js');
-      let file = pos[0] || '.';
+      const { qa, report, holdsOf } = await import('./lib/qa.js');
+      let file = pos[0] || '.', project = null;
       if (!/\.(mp4|mov|webm)$/i.test(file)) {
-        const project = openProject(file), dir = join(project.root, 'out');
+        project = openProject(file);
+        const dir = join(project.root, 'out');
         const vids = existsSync(dir) ? readdirSync(dir).filter((n) => /\.(mp4|webm|mov)$/i.test(n)).map((n) => join(dir, n)) : [];
         if (!vids.length) throw new OmError('nothing rendered yet — run `srm render` first, or pass a video file');
         file = vids.sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0];
+      } else if (basename(dirname(resolve(file))) === 'out' && existsSync(join(dirname(dirname(resolve(file))), 'index.html'))) {
+        project = openProject(dirname(dirname(resolve(file))));   // a render in a project's out/: the film's holds apply
       }
-      const r = qa(resolve(file), { loop: !!flags.loop });
+      const h = project ? await holdsOf(project, resolve(file)) : { holds: [] };
+      const r = qa(resolve(file), { loop: !!flags.loop, holds: h.holds });
+      if (h.note) r.holdsNote = h.note;
       return out(flags.json ? r : report(r));
     }
 
@@ -343,12 +351,15 @@ async function main() {
     }
     case 'voice': {
       const { voice } = await import('./lib/voice.js');
-      // the kit's voice and speed when no flag says otherwise (a generated voice; a recording keeps its own pace)
+      // the kit's voice and speed when no flag says otherwise: a generated voice (a script, or a voice engine's take with its
+      // --words) gets the kit's speed; a recording keeps its own pace
       const { readKit } = await import('./lib/kit.js');
       const kit = readKit();
-      if (!flags.voice && kit.voice && !flags.audio) { if (/^elevenlabs:/i.test(kit.voice)) process.stderr.write('kit voice is an ElevenLabs voice: generate the audio there and pass it with --audio\n'); else flags.voice = kit.voice; }
-      if (flags.speed == null && kit.speed && !flags.audio) flags.speed = kit.speed;
-      return out(await voice(openProject(pos[0] || '.'), flags, (l) => process.stderr.write(l + '\n')));
+      if (!flags.voice && kit.voice && !flags.audio && !flags.words) { if (/^elevenlabs:/i.test(kit.voice)) process.stderr.write('kit voice is an ElevenLabs voice: generate the take there with its timestamps and pass both: --audio take.mp3 --words timestamps.json\n'); else flags.voice = kit.voice; }
+      if (flags.speed == null && kit.speed && (!flags.audio || flags.words)) { flags.speed = kit.speed; flags.speedFrom = 'kit'; }
+      const project = openProject(pos[0] || '.');
+      (await import('./lib/sound.js')).refreshRuntime(project, (l) => process.stderr.write(l + '\n'));   // OM.env reads what voice measures
+      return out(await voice(project, flags, (l) => process.stderr.write(l + '\n')));
     }
 
     case 'grab': {

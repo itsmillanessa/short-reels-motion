@@ -3,8 +3,9 @@
 // (stretches where nothing moves), hard cuts, whether the last frame matches the first (loops), and
 // the motion curve per second so a flat film is visible as a flat line.
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { OmError } from './project.js';
+import { existsSync, readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { OmError, readSource } from './project.js';
 
 const W = 96, H = 54;
 
@@ -27,7 +28,44 @@ function frames(file) {
 const diff = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += Math.abs(a[i] - b[i]); return s / a.length; };
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[s.length >> 1] : 0; };
 
-export function qa(file, { loop = false } = {}) {
+// Stretches the film holds still on purpose (OM.hold): what they cover is not dead time. A hold reaches 0.25 s past its
+// edges, for the settle of the move into it and out of it. Returns the parts of each still stretch no hold covers (those of
+// 1 s or more stay dead time) and the stretches a hold covered.
+export function heldApart(dead, holds) {
+  const out = [], held = [];
+  const hs = (holds || []).map((h) => [h.from - 0.25, h.to + 0.25]).sort((a, b) => a[0] - b[0]);
+  for (const d of dead) {
+    let rest = [[d.from, d.to]];
+    for (const [a, b] of hs) rest = rest.flatMap(([x, y]) => (b <= x || a >= y ? [[x, y]] : [[x, Math.min(y, a)], [Math.max(x, b), y]].filter(([p, q]) => q - p > 1e-6)));
+    const left = rest.reduce((n, [x, y]) => n + y - x, 0);
+    if (left < d.seconds - 1e-6) held.push(d);
+    for (const [x, y] of rest) if (y - x >= 1 - 1e-6) out.push({ from: +x.toFixed(2), to: +y.toFixed(2), seconds: +(y - x).toFixed(2) });
+  }
+  return { dead: out, held };
+}
+
+// The holds a film declares, read from its page (they are usually times of the narration: OM.hold(OM.cue('lee'), …)).
+// Only opens the page when index.html calls OM.hold. { holds, note } — the note says why they could not be read, or that
+// the render being judged is of an older index.html.
+export async function holdsOf(project, video) {
+  const { html, token } = readSource(project);
+  if (!/\bOM\.hold\s*\(/.test(html.replace(/<!--[\s\S]*?-->/g, ''))) return { holds: [] };
+  const { openFilm } = await import('./capture.js');
+  let film;
+  try { film = await openFilm(project.index, { lenient: true, video: 'seek' }); } catch (e) { return { holds: [], note: `OM.hold not read (${e.message})` }; }
+  try {
+    const holds = await film.evaluate('window.__om && window.__om.holds ? window.__om.holds() : null');
+    if (!holds) return { holds: [], note: 'OM.hold not read: vendor/om.js is older than OM.hold (srm render updates it)' };
+    let note = null;
+    try {
+      const last = readFileSync(join(project.om, 'renders.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l)).filter((r) => resolve(r.out) === resolve(video)).at(-1);
+      if (last && last.token !== token) note = 'holds read from the current index.html, which changed after this render';
+    } catch { /* no render log: a video from elsewhere */ }
+    return { holds, note };
+  } finally { await film.close(); }
+}
+
+export function qa(file, { loop = false, holds = [] } = {}) {
   if (!existsSync(file)) throw new OmError(`no such file ${file}`);
   const info = probe(file), f = frames(file), fps = info.fps;
   const d = f.slice(1).map((x, i) => diff(x, f[i]));
@@ -45,12 +83,13 @@ export function qa(file, { loop = false } = {}) {
     if (d[i] > 14 && d[i] > 4 * (local + 1) && !pops.some((p) => Math.abs(p.at - t(i + 1)) < 0.05)) cuts.push(t(i + 1));
   }
   // Dead time: ≥ 1 s where consecutive frames barely change.
-  const dead = [];
+  const still = [];
   let run = 0;
   for (let i = 0; i <= d.length; i++) {
     if (i < d.length && d[i] < 0.25) run++;
-    else { if (run / fps >= 1) dead.push({ from: t(i - run), to: t(i), seconds: +(run / fps).toFixed(2) }); run = 0; }
+    else { if (run / fps >= 1) still.push({ from: t(i - run), to: t(i), seconds: +(run / fps).toFixed(2) }); run = 0; }
   }
+  const { dead, held } = heldApart(still, holds);
   const perSec = [];
   for (let s = 0; s * fps < d.length; s++) {
     const seg = d.slice(Math.round(s * fps), Math.round((s + 1) * fps));
@@ -87,7 +126,7 @@ export function qa(file, { loop = false } = {}) {
   const firstFrame = { far: +c0.far.toFixed(3), edges: +c0.edges.toFixed(3), empty: c0.far < 0.03 && c0.edges < 0.012, contentAt: arrives };
   return {
     file, ...info, frames: f.length,
-    pops, cuts, dead,
+    pops, cuts, dead, held, holds,
     motion: { perSecond: perSec, mean: +mean.toFixed(2), contrast: +(sd / (mean + 1e-6)).toFixed(2) },
     opening, flatFilm, firstFrame,
     loop: { firstLastDiff: loopGap, seamless: loopGap < 1.5, checked: loop },
@@ -97,7 +136,9 @@ export function qa(file, { loop = false } = {}) {
 export function report(r) {
   const lines = [`${r.file}  ${r.width}×${r.height}  ${r.fps.toFixed(2)} fps  ${r.duration.toFixed(2)} s`];
   lines.push(r.pops.length ? `✗ ${r.pops.length} single-frame pop(s): ${r.pops.slice(0, 12).map((p) => p.at + 's').join(', ')} — look at these frames (srm look <dir> --at …); usually an element shown one frame early or a fromTo rendering its start state` : '✓ no single-frame pops');
-  lines.push(r.dead.length ? `${r.dead.some((x) => x.seconds > 2) ? '✗' : '·'} still for ≥1 s: ${r.dead.map((x) => `${x.from}–${x.to}s`).join(', ')} — fine for a reading hold or an end card, dead time anywhere else` : '✓ no stretch of ≥1 s without motion');
+  lines.push(r.dead.length ? `${r.dead.some((x) => x.seconds > 2) ? '✗' : '·'} still for ≥1 s: ${r.dead.map((x) => `${x.from}–${x.to}s`).join(', ')} — fine for a reading hold or an end card (mark it: OM.hold(from, to)), dead time anywhere else` : `✓ no stretch of ≥1 s without motion${r.held?.length ? ' outside the holds' : ''}`);
+  if (r.held?.length) lines.push(`· held on purpose (OM.hold): ${r.held.map((x) => `${x.from}–${x.to}s`).join(', ')}`);
+  if (r.holdsNote) lines.push(`· ${r.holdsNote}`);
   lines.push(`· ${r.cuts.length} hard cut(s)${r.cuts.length ? ': ' + r.cuts.slice(0, 20).join(', ') + 's' : ''}  (average shot ${(r.duration / (r.cuts.length + 1)).toFixed(1)} s)`);
   lines.push(`· motion per second: ${r.motion.perSecond.join(' ')}  (contrast ${r.motion.contrast}${r.motion.contrast < 0.35 ? ' — very even: the film may feel flat; give it fast and slow moments' : ''})`);
   if (r.firstFrame && r.firstFrame.empty) lines.push(`✗ frame 0 is nearly empty — it is the poster feeds, players and README GIFs show before the film plays${r.firstFrame.contentAt != null ? `; the frame fills at ${r.firstFrame.contentAt}s` : ''}. Open on the subject already in frame (in motion), not on a blank, a black or a lone small mark the film builds from`);

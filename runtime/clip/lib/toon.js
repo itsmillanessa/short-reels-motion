@@ -23,7 +23,9 @@ TOON.ellipse = (x, y, rx, ry, a = 0) => { const p = new Path2D(); p.ellipse(x, y
 
 // ---------- 口型：读口播包络 ----------
 // window.VO_ENV = {fps, a:[...]}（0..1 的 RMS 包络，由音频脚本从口播 wav 生成）。口型「一拍二」：每 1/12 秒才换一次形。
-TOON.env = t => { const E = window.VO_ENV; if (!E) return 0; const i = Math.round(t * E.fps); return i < 0 || i >= E.a.length ? 0 : E.a[i]; };
+// Without a VO_ENV, the loudness srm voice measured (OM.env): a film with narration moves the mouth with the voice by itself.
+TOON.env = t => { const E = window.VO_ENV; if (!E) return (window.OM && OM.env && OM.env(t)) || 0; const i = Math.round(t * E.fps); return i < 0 || i >= E.a.length ? 0 : E.a[i]; };
+TOON.hasEnv = () => !!window.VO_ENV || !!(window.OM && OM.env && OM.env(0) != null);
 TOON.mouth = (t, fps = 12) => { const v = TOON.env(MO.step(t, fps)); return v < 0.06 ? 0 : v < 0.22 ? 1 : 2; };   // 0 闭 1 半 2 张
 
 // ---------- the narrator: a person each creator dresses as themselves ----------

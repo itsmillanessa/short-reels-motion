@@ -6,7 +6,9 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
-import { qa } from '../cli/lib/qa.js';
+import { qa, heldApart, holdsOf } from '../cli/lib/qa.js';
+import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { findChrome } from '../cli/lib/browser.js';
 
 globalThis.window = {};
 globalThis.document = { querySelector: () => null };
@@ -41,6 +43,32 @@ test('OM.random is deterministic per seed', () => {
   assert.ok(xa.every((x) => x >= 0 && x < 1));
 });
 
+test('OM.env: the loudness srm voice measured, at film time (after data-start); null without a narration. OM.hold records holds', () => {
+  document.getElementById = () => null;
+  assert.equal(OM.env(1), null, 'no om-cues: no envelope');
+  const cues = { offset: 1, duration: 0.3, env: { fps: 10, a: '0z8' }, words: [] };
+  document.getElementById = (id) => (id === 'om-cues' ? { textContent: JSON.stringify(cues) } : null);
+  assert.equal(OM.env(1.0), 0);
+  assert.equal(OM.env(1.1), 1);
+  assert.equal(OM.env(1.2), 8 / 35);
+  assert.equal(OM.env(0.5), 0, 'before the narration starts');
+  assert.equal(OM.env(9), 0, 'after it ends');
+  assert.equal(OM.hold(2, 3.5), 2);
+  OM.hold(2, 3.5); OM.hold(0.5, 1);
+  assert.deepEqual(window.__om.holds(), [{ from: 0.5, to: 1 }, { from: 2, to: 3.5 }], 'sorted, one entry per hold however often it is called');
+  assert.throws(() => OM.hold(3, 2), /from < to/);
+});
+
+test('heldApart: a hold covers the still stretch it marks (with 0.25 s of settle), what it leaves of ≥ 1 s stays dead', () => {
+  const still = [{ from: 2, to: 4.5, seconds: 2.5 }, { from: 6, to: 7.2, seconds: 1.2 }];
+  assert.deepEqual(heldApart(still, []), { dead: still, held: [] });
+  const r = heldApart(still, [{ from: 2.2, to: 4.4 }]);
+  assert.deepEqual(r.held, [still[0]]);
+  assert.deepEqual(r.dead, [still[1]]);
+  // a hold that covers only the start of a long stretch leaves the rest dead
+  assert.deepEqual(heldApart([{ from: 1, to: 5, seconds: 4 }], [{ from: 1, to: 2 }]).dead, [{ from: 2.25, to: 5, seconds: 2.75 }]);
+});
+
 const ff = (args) => assert.equal(spawnSync('ffmpeg', ['-v', 'error', '-y', ...args]).status, 0);
 const has = spawnSync('ffmpeg', ['-version']).status === 0;
 
@@ -54,6 +82,23 @@ test('om qa finds a single-frame pop, a hard cut and dead time', { skip: !has &&
   assert.ok(r.pops.some((p) => Math.abs(p.at - 1) < 0.05), JSON.stringify(r.pops));
   assert.ok(r.cuts.some((c) => Math.abs(c - 2) < 0.05), JSON.stringify(r.cuts));
   assert.ok(r.dead.some((d) => d.from >= 1.9 && d.seconds >= 2), JSON.stringify(r.dead));
+  // the same still stretch marked as a hold: reported as held, not as dead time
+  const held = qa(join(dir, 'a.mp4'), { holds: [{ from: 2, to: 4.5 }] });
+  assert.deepEqual(held.dead, []);
+  assert.ok(held.held.some((d) => d.from >= 1.9), JSON.stringify(held.held));
+});
+
+test('holdsOf reads the film\'s OM.hold calls from its page (times of the narration included)', { skip: !findChrome() && 'no Chrome' }, async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'om-holds-'));
+  mkdirSync(join(dir, 'vendor'));
+  copyFileSync(new URL('../runtime/om.js', import.meta.url), join(dir, 'vendor', 'om.js'));
+  writeFileSync(join(dir, 'index.html'), `<!doctype html><html><head><meta charset="utf-8"><script type="application/json" id="om-cues">{"words":[{"word":"lee","start":1.5,"end":1.8}]}</script><script src="vendor/om.js"></script></head>
+<body style="margin:0"><div id="f" data-composition-id="f" data-width="320" data-height="180"></div>
+<script>window.__timelines = { f: { seek() {}, pause() {}, duration() { return 4; } } }; OM.hold(OM.cue('lee'), OM.cue('lee') + 2);</script></body></html>`);
+  const project = { root: dir, index: join(dir, 'index.html'), om: join(dir, '.om') };
+  assert.deepEqual((await holdsOf(project, join(dir, 'out', 'f-v1.mp4'))).holds, [{ from: 1.5, to: 3.5 }]);
+  writeFileSync(join(dir, 'index.html'), '<!doctype html><html><body><div data-composition-id="f" data-width="320" data-height="180"></div></body></html>');
+  assert.deepEqual(await holdsOf(project, join(dir, 'x.mp4')), { holds: [] }, 'no OM.hold: the page is not opened');
 });
 
 test('om qa loop check: a cycle matches, a one-way move does not', { skip: !has && 'no ffmpeg' }, () => {

@@ -3,7 +3,13 @@ import assert from 'node:assert/strict';
 import {
   splitSentences, tokenize, weight, placeWords, placeSentence, wordsOf, parseSilences, speechIntervals,
   sentenceSpans, alignChars, charTimes, asrChars, captionLines, toSrt, cueTerms, cueMatches, missingCues, repeatedCues, applyVoice, pickVoice, isSpanish, recordingLang,
+  engineTimes, placeExact, levels, voice,
 } from '../cli/lib/voice.js';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { openProject } from '../cli/lib/project.js';
 
 const SCRIPT = 'huashu-motion，一句话出片。你只要说出想法，Agent就把画面做出来。\n哪里不满意，指着画面改，它当场重做！改完一键导出，配音和字幕都对齐。';
 
@@ -250,4 +256,90 @@ test('voice: anchors to a word said more than once that name no occurrence are f
   assert.deepEqual(terms.map((t) => [t.term, t.explicit]), [['chat', false], ['chat', true], ['hola', false], ['chat', true]]);
   assert.deepEqual(repeatedCues(words, terms), [{ term: 'chat', at: [0.4, 1.1] }]);
   assert.deepEqual(repeatedCues(words, cueTerms("OM.cue('chat', 1); OM.cue('hola')")), [], 'naming the first on purpose is not a finding');
+});
+
+// ---------- a voice engine's own times (ElevenLabs) ----------
+
+// "Hola, mundo" as ElevenLabs times it: one start and end per character, the comma and the space included
+const HOLA = [...'Hola, mundo'];
+const at = (i) => +(i * 0.1).toFixed(2);
+
+test('engineTimes reads what ElevenLabs returns: the REST alignment, the SDK camelCase, word lists, forced alignment', () => {
+  const rest = engineTimes({ audio_base64: '', alignment: { characters: HOLA, character_start_times_seconds: HOLA.map((_, i) => at(i)), character_end_times_seconds: HOLA.map((_, i) => at(i + 1)) } });
+  assert.equal(rest.text, 'Hola, mundo');
+  assert.equal(rest.chars.map((c) => c.ch).join(''), 'Holamundo', 'speech characters only');
+  assert.deepEqual([rest.chars[4].start, rest.chars[4].end], [0.6, 0.7], '"m" keeps its own time');
+  assert.equal(rest.span, 1.1);
+  const sdk = engineTimes({ audioBase64: '', alignment: { characters: HOLA, characterStartTimesSeconds: HOLA.map((_, i) => at(i)), characterEndTimesSeconds: HOLA.map((_, i) => at(i + 1)) } });
+  assert.deepEqual(sdk.chars, rest.chars);
+  // a pipeline's export (words split at spaces, punctuation attached) and its duration
+  const words = engineTimes({ duration: 2, words: [{ word: 'Hola,', start: 0, end: 0.4 }, { word: 'mundo', start: 0.6, end: 1 }] });
+  assert.equal(words.text, 'Hola, mundo');
+  assert.equal(words.span, 1, 'the span ends with the last character, whatever the file says about its length');
+  assert.deepEqual([words.chars[0].start, words.chars[3].end, words.chars[4].start, words.chars.at(-1).end], [0, 0.4, 0.6, 1]);
+  // speech-to-text: spacing and audio events are not words
+  const stt = engineTimes({ words: [{ text: 'Hola', start: 0, end: 0.4, type: 'word' }, { text: ' ', start: 0.4, end: 0.6, type: 'spacing' }, { text: '(risas)', start: 0.6, end: 0.9, type: 'audio_event' }, { text: 'mundo', start: 0.9, end: 1.3, type: 'word' }] });
+  assert.equal(stt.text, 'Hola mundo');
+  assert.equal(stt.chars.length, 9);
+  const forced = engineTimes({ characters: [{ text: 'H', start: 0, end: 0.1 }, { text: 'i', start: 0.1, end: 0.2 }], words: [{ text: 'Hi', start: 0, end: 0.2 }] });
+  assert.equal(forced.chars.map((c) => c.ch).join(''), 'Hi');
+  assert.throws(() => engineTimes({}), /no times/);
+  assert.throws(() => engineTimes({ alignment: { characters: ['a', 'b'], character_start_times_seconds: [0], character_end_times_seconds: [0.1, 0.2] } }), /alignment/);
+  assert.throws(() => engineTimes({ words: [{ word: 'a', start: 'x', end: 1 }] }), /not a time/);
+});
+
+test('placeExact: each word from its first character to its last, so the silences between words stay', () => {
+  const { chars } = engineTimes({ words: [{ word: 'Hola,', start: 0, end: 0.4 }, { word: 'mundo.', start: 0.62, end: 1 }] });
+  const sentences = splitSentences('Hola, mundo.').map((s) => ({ text: s, tokens: tokenize(s) }));
+  const script = sentences.flatMap((s) => s.tokens.filter((t) => t.word).flatMap((t) => [...t.text]));
+  const words = wordsOf(placeExact(sentences, charTimes(script, chars).times));
+  assert.deepEqual(words, [{ word: 'Hola', start: 0, end: 0.4 }, { word: 'mundo', start: 0.62, end: 1 }]);
+});
+
+test('levels: the narration loudness 30 times a second, 0 in silence, z on the loud syllables', () => {
+  const rate = 12000, samples = new Float32Array(rate);
+  for (let i = rate / 2; i < rate; i++) samples[i] = 0.5 * Math.sin((2 * Math.PI * 220 * i) / rate);
+  const a = levels(samples, rate);
+  assert.equal(a.length, 30);
+  assert.equal(a.slice(0, 14), '0'.repeat(14));
+  assert.ok([...a.slice(16)].every((c) => parseInt(c, 36) >= 33), a);
+  assert.equal(levels(new Float32Array(rate), rate), '0'.repeat(30), 'a silent take is all closed');
+});
+
+const HAS_FF = spawnSync('ffmpeg', ['-version']).status === 0;
+
+test('srm voice --words: a take with its ElevenLabs times — sped up here with --speed, or found already sped up', { skip: !HAS_FF && 'no ffmpeg' }, async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'srm-words-'));
+  writeFileSync(join(dir, 'index.html'), '<!doctype html><html><head><meta charset="utf-8"></head><body><div data-composition-id="f" data-width="320" data-height="568" data-duration="3"></div></body></html>');
+  // "Hola" 0–0.8 s, a pause, "mundo" 1.2–2.0 s, as ElevenLabs would time it at 1×
+  const take = join(dir, 'take.wav'), fast = join(dir, 'take-1.2x.wav');
+  assert.equal(spawnSync('ffmpeg', ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'sine=frequency=220:duration=2.4', '-af', "volume=0.4,volume=enable='between(t,0.8,1.2)+gte(t,2)':volume=0", '-ar', '48000', take]).status, 0);
+  assert.equal(spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', take, '-af', 'atempo=1.2', fast]).status, 0);
+  const chars = [...'Hola mundo'], starts = [0, 0.2, 0.4, 0.6, 0.8, 1.2, 1.36, 1.52, 1.68, 1.84], ends = [0.2, 0.4, 0.6, 0.8, 1.2, 1.36, 1.52, 1.68, 1.84, 2.0];
+  writeFileSync(join(dir, 'times.json'), JSON.stringify({ alignment: { characters: chars, character_start_times_seconds: starts, character_end_times_seconds: ends } }));
+  const cues = () => JSON.parse(/<script type="application\/json" id="om-cues">([\s\S]*?)<\/script>/.exec(readFileSync(join(dir, 'index.html'), 'utf8'))[1]);
+  const close = (a, b) => assert.ok(Math.abs(a - b) < 0.02, `${a} ≈ ${b}`);
+
+  // the 1× take, sped up by srm voice: the audio and every time 1/1.2 as long
+  const out = await voice(openProject(dir), { audio: take, words: join(dir, 'times.json'), text: 'Hola, mundo.', speed: 1.2 });
+  assert.match(out, /alignment/);
+  let c = cues();
+  assert.equal(c.precision, 'alignment');
+  assert.match(c.source, /×1\.2/);
+  close(c.duration, 2.0);
+  assert.deepEqual(c.words.map((w) => w.word), ['Hola', 'mundo']);
+  close(c.words[0].end, 0.667); close(c.words[1].start, 1.0); close(c.words[1].end, 1.667);
+  // the loudness for the mouths: open on the words, closed in the pause between them
+  assert.equal(c.env.fps, 30);
+  assert.ok(Math.abs(c.env.a.length - 60) <= 1, String(c.env.a.length));
+  assert.ok(parseInt(c.env.a[10], 36) > 30, 'inside "Hola"');
+  assert.equal(c.env.a[25], '0', 'in the pause');
+
+  // the take already sped up after it was timed: the times are scaled, the audio is not sped up again
+  const again = await voice(openProject(dir), { audio: fast, words: join(dir, 'times.json'), speed: 1.2 });
+  assert.match(again, /sped up ×1\.2 after it was timed/);
+  c = cues();
+  assert.doesNotMatch(c.source, /×/);
+  close(c.duration, 2.0);
+  close(c.words[1].start, 1.0);
 });

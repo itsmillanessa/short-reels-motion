@@ -342,6 +342,88 @@ export function asrChars(json) {
   return chars;
 }
 
+// The times a voice engine hands back with its audio, as timed speech characters. Takes the JSON as it comes:
+//   ElevenLabs text-to-speech with timestamps — { alignment: { characters, character_start_times_seconds,
+//     character_end_times_seconds } } from the REST API, the JS SDK's camelCase, or normalized_alignment;
+//   ElevenLabs forced alignment — { characters: [{ text, start, end }] };
+//   word lists — { words: [{ word | text, start, end }] } or the bare array (forced alignment and speech-to-text, whose
+//     spacing and audio events are skipped; a voice.words.json; a pipeline's own export).
+// Returns { chars: [{ ch, start, end }], text (what was said, for a take without a script), span (when the last character ends) }.
+export function engineTimes(json) {
+  const chars = [];
+  let text = '';
+  const num = (x, what) => { const n = Number(x); if (!Number.isFinite(n)) throw new OmError(`the timing file has a ${what} that is not a time in seconds: ${JSON.stringify(x)}`); return n; };
+  const push = (said, start, end) => {
+    const cs = [...String(said)].filter((c) => SPEECH_CHAR.test(c));
+    cs.forEach((ch, i) => chars.push({ ch, start: start + ((end - start) * i) / cs.length, end: start + ((end - start) * (i + 1)) / cs.length }));
+  };
+  const al = json && !Array.isArray(json) && (json.alignment || json.normalized_alignment || json.normalizedAlignment);
+  if (al) {
+    const cs = al.characters, s = al.character_start_times_seconds || al.characterStartTimesSeconds, e = al.character_end_times_seconds || al.characterEndTimesSeconds;
+    if (!Array.isArray(cs) || !Array.isArray(s) || !Array.isArray(e) || s.length !== cs.length || e.length !== cs.length) throw new OmError('the timing file has an alignment without characters and their start and end times');
+    cs.forEach((ch, i) => { text += ch; push(ch, num(s[i], 'start'), num(e[i], 'end')); });
+  } else if (Array.isArray(json?.characters) && json.characters.length && json.characters.every((c) => c && typeof c === 'object')) {
+    for (const c of json.characters) { text += String(c.text ?? ''); push(c.text ?? '', num(c.start, 'start'), num(c.end, 'end')); }
+  } else {
+    const words = Array.isArray(json) ? json : json?.words;
+    if (!Array.isArray(words) || !words.length) throw new OmError('no times in the timing file — pass what ElevenLabs returns (an alignment with character times, or words with start and end)');
+    for (const w of words) {
+      if (!w || (w.type && w.type !== 'word')) continue;
+      const said = String(w.word ?? w.text ?? '');
+      text += (text ? ' ' : '') + said;
+      push(said, num(w.start, 'start'), num(w.end, 'end'));
+    }
+  }
+  return { chars, text: text.trim(), span: chars.length ? chars.at(-1).end : 0 };
+}
+
+// Words from exact per-character times (a voice engine's own): each word starts at its first character and ends at its
+// last, so the silences between words stay in the timing — where a drawn mouth closes.
+export function placeExact(sentences, times) {
+  let ci = 0, last = 0;
+  return sentences.map((s) => ({
+    text: s.text,
+    tokens: s.tokens.map((t) => {
+      if (!t.word) return { ...t };
+      const n = speechLen(t.text);
+      const a = times[ci], b = times[ci + Math.max(n, 1) - 1];
+      ci += n;
+      if (!a || !b) return { ...t, start: r3(last), end: r3(last) };
+      const start = Math.max(last, a.start), end = Math.max(start, b.end);
+      last = start;
+      return { ...t, start: r3(start), end: r3(end) };
+    }),
+  }));
+}
+
+// ---------- loudness ----------
+
+// The narration's loudness 30 times a second, 0–1 (1 = its loud syllables, 0 = silence): what a drawn mouth follows, so it
+// opens on the syllables and closes in every pause, between words too. One base-36 digit a frame keeps index.html
+// readable (a minute of narration is 1,800 characters).
+export const ENV_FPS = 30;
+export function levels(samples, rate, fps = ENV_FPS) {
+  const hop = rate / fps, rms = [];
+  for (let f = 0; f * hop < samples.length; f++) {
+    const a = Math.max(0, Math.round((f - 0.5) * hop)), b = Math.min(samples.length, Math.round((f + 0.5) * hop));
+    let s = 0;
+    for (let i = a; i < b; i++) s += samples[i] * samples[i];
+    rms.push(b > a ? Math.sqrt(s / (b - a)) : 0);
+  }
+  // the loud end of the voiced frames is 1, so a quiet take and a loud one draw the same mouth
+  const voiced = rms.filter((x) => x > 0.003).sort((x, y) => x - y);
+  const ref = voiced.length ? voiced[Math.min(voiced.length - 1, Math.floor(voiced.length * 0.95))] : 1;
+  return rms.map((x) => Math.round(Math.min(1, x / ref) * 35).toString(36)).join('');
+}
+
+function envelope(wav) {
+  const r = run('ffmpeg', ['-v', 'error', '-i', wav, '-ac', '1', '-ar', '12000', '-f', 'f32le', '-'], { encoding: 'buffer' });
+  if (r.status !== 0) throw new OmError(`could not measure the narration: ${String(r.stderr || '').trim().split('\n').pop()}`);
+  const pcm = new Float32Array(r.stdout.length >> 2);
+  for (let i = 0; i < pcm.length; i++) pcm[i] = r.stdout.readFloatLE(i * 4);
+  return { fps: ENV_FPS, a: levels(pcm, 12000) };
+}
+
 // ---------- captions ----------
 
 const visible = (s) => sum([...s].map((c) => (/[\p{L}\p{N}]/u.test(c) ? (/[\x00-\x7f]/.test(c) ? 0.5 : 1) : 0)));
@@ -447,7 +529,7 @@ const splice = (html, m, text) => html.slice(0, m.index) + text + html.slice(m.i
 
 // Put the narration into the composition. Idempotent: an existing om-voice / om-cues is replaced in
 // place, and the user's own tweaks on the audio element (data-start, volume, track…) are kept.
-export function applyVoice(html, { src, duration, sentences, meta = {}, fit = false }) {
+export function applyVoice(html, { src, duration, sentences, meta = {}, env = null, fit = false }) {
   const root = find(html, ROOT);
   if (!root) throw new OmError('index.html has no root element with data-composition-id');
   const old = find(html, AUDIO);
@@ -458,7 +540,7 @@ export function applyVoice(html, { src, duration, sentences, meta = {}, fit = fa
   const audioTag = `<audio ${Object.entries(a).map(([k, v]) => `${k}="${escAttr(v)}"`).join(' ')}></audio>`;
 
   const words = wordsOf(sentences).map((w) => ({ ...w, start: r3(w.start + offset), end: r3(w.end + offset) }));
-  const head = JSON.stringify({ ...meta, offset, duration: r3(duration) }).slice(0, -1);
+  const head = JSON.stringify({ ...meta, offset, duration: r3(duration), ...(env ? { env } : {}) }).slice(0, -1);
   const body = words.map((w) => JSON.stringify(w)).join(',\n');
   const json = `${head},"words":[\n${body}\n]}`.replace(/</g, '\\u003c');
   const cuesTag = `<script type="application/json" id="om-cues">${json}</script>`;
@@ -589,11 +671,19 @@ function readText(arg) {
 
 export async function voice(project, opts = {}, log = () => {}) {
   const text = readText(opts.text);
-  if (!text && !opts.audio) throw new OmError('usage: srm voice <dir> --text <script.txt|"文本"> [--voice say:Tingting|zf_xiaobei] [--speed 1]\n       srm voice <dir> --audio <recording> [--text <script>] [--asr on|off]');
+  if (!text && !opts.audio && !opts.words) throw new OmError('usage: srm voice <dir> --text <script.txt|"文本"> [--voice say:Tingting|zf_xiaobei] [--speed 1]\n       srm voice <dir> --audio <recording> [--text <script>] [--asr on|off] [--speed 1.2]\n       srm voice <dir> --audio <take.mp3> --words <timestamps.json> [--text <script>] [--speed 1.2]   (the times ElevenLabs returns: exact words, no whisper)');
   const { html } = readSource(project);
   const keep = cueTerms(html).map((c) => c.term);
   const tmp = mkdtempSync(join(tmpdir(), 'om-voice-'));
   const t0 = Date.now();
+  // the JSON ElevenLabs returns with timestamps carries the audio too (audio_base64): it is the take when no --audio is given
+  if (opts.words && !opts.audio) {
+    const b64 = readTiming(opts.words).json;
+    const data = b64 && !Array.isArray(b64) && (b64.audio_base64 || b64.audioBase64);
+    if (!data) throw new OmError(`--words ${opts.words} has no audio in it — pass the take it times with --audio <file>`);
+    opts = { ...opts, audio: join(tmp, 'take.audio'), audioLabel: `${String(opts.words).split(/[\\/]/).pop()} (its audio)` };
+    writeFileSync(opts.audio, Buffer.from(data, 'base64'));
+  }
 
   const res = opts.audio
     ? fromRecording(resolve(String(opts.audio)), text, keep, tmp, opts, log)
@@ -601,7 +691,8 @@ export async function voice(project, opts = {}, log = () => {}) {
 
   const fresh = readSource(project);
   const meta = { source: res.source, precision: res.precision };
-  const applied = applyVoice(fresh.html, { src: 'assets/voice.wav', duration: res.duration, sentences: res.sentences, meta, fit: !!opts.fit });
+  const env = envelope(res.wav);
+  const applied = applyVoice(fresh.html, { src: 'assets/voice.wav', duration: res.duration, sentences: res.sentences, meta, env, fit: !!opts.fit });
 
   // assets/voice.wav — the previous take moves to .om/voice-history, never overwritten.
   const assets = join(project.root, 'assets');
@@ -623,6 +714,7 @@ export async function voice(project, opts = {}, log = () => {}) {
     `voice    ${target}  ${res.duration.toFixed(2)}s  (${res.source})`,
     `words    ${applied.words.length} → <script id="om-cues"> + ${join(assets, 'voice.words.json')}`,
     `timing   ${res.precision} — ${PRECISION[res.precision]}`,
+    `mouth    loudness ${env.fps}×/s in om-cues → OM.env(t) 0–1, TOON.mouth(t): a drawn mouth opens on the syllables and closes in the pauses`,
     `captions ${srt}`,
   ];
   if (res.note) lines.push(`note     ${res.note}`);
@@ -639,6 +731,7 @@ export async function voice(project, opts = {}, log = () => {}) {
 }
 
 export const PRECISION = {
+  alignment: 'every word from the voice engine\'s own character times — exact, and the silences between words are kept',
   tts: 'sentence edges measured from the synthesized audio; words interpolated inside the detected speech (typically within ~0.1s)',
   asr: 'whisper places each clause, pauses give the exact edges, words interpolated inside (words are what whisper heard)',
   'asr+script': 'script aligned to whisper, which places each clause; pauses give the exact edges, words interpolated inside',
@@ -699,11 +792,48 @@ function whisperCli() {
 // The language whisper listens for: --lang, else the script's, else whisper's own detection.
 export const recordingLang = (text, opts = {}) => opts.lang || (text ? (HAN.test(text) ? 'zh' : isSpanish(text) ? 'es' : 'en') : 'auto');
 
+// --words: the timing file as JSON.
+function readTiming(arg) {
+  const file = resolve(String(arg));
+  if (!existsSync(file)) throw new OmError(`--words: no such file ${file}`);
+  try { return { file, json: JSON.parse(readFileSync(file, 'utf8')) }; } catch (e) { throw new OmError(`--words ${arg} is not JSON: ${e.message}`); }
+}
+
 function fromRecording(file, text, keep, tmp, opts, log) {
   if (!existsSync(file)) throw new OmError(`no such recording: ${file}`);
+  // --speed: the take is sped up here (atempo keeps the pitch), and every time with it. --words: the times the voice
+  // engine returned with this take. A take that was sped up after it was timed is shorter than its timing by that factor:
+  // its times are scaled and it is not sped up again (a generated take timed at 1× and sped up to 1.2× afterwards).
+  const timing = opts.words ? engineTimes(readTiming(opts.words).json) : null;
+  const asked = opts.speed == null || opts.speed === true ? null : Number(opts.speed);
+  let speed = asked ?? 1, scale = 1, note = '';
+  if (!(speed >= 0.5 && speed <= 3)) throw new OmError('--speed must be between 0.5 and 3');
+  if (timing) {
+    if (!timing.chars.length) throw new OmError(`--words ${opts.words}: no speech characters with times in it`);
+    // where the voice ends in the take (trailing silence is not part of it) against where its timing ends
+    const taken = probe(file), said = speechOf(file, taken, '-35dB', 0.18).at(-1)?.[1] ?? taken, ratio = timing.span / said;
+    if (ratio > 1.04) {
+      // the end of the voice is measured to a few hundredths of a second, so the factor is taken as the usual one it is
+      // nearest (×1.1, ×1.15, ×1.2…): a factor 1 % off drifts 0.3 s over a 30 s take
+      const grid = Math.round(ratio * 20) / 20, snapped = Math.abs(ratio - grid) <= 0.02 * grid, k = snapped ? grid : r3(ratio);
+      scale = 1 / k;
+      note = `the timing runs ${ratio.toFixed(3)}× longer than the voice in the take: read as a take sped up ×${k} after it was timed — times scaled, not sped up again${snapped ? '' : ' (a measured factor, not exact: pass the 1× take and --speed for exact times)'}${asked != null && asked !== 1 ? ` (${opts.speedFrom === 'kit' ? `the kit's speed ${asked}` : `--speed ${asked}`} not applied)` : ''}`;
+      speed = 1;
+    } else if (ratio < 0.96 && said - timing.span > 1) note = `the timing ends at ${timing.span.toFixed(2)}s but the voice runs to ${said.toFixed(2)}s — is it this take's timing?`;
+  }
   const wav = join(tmp, 'voice.wav');
-  ffmpeg(['-i', file, '-vn', '-ac', '1', '-ar', '48000', '-c:a', 'pcm_s16le', wav], `reading ${extname(file) || 'the recording'}`);
+  ffmpeg(['-i', file, '-vn', ...(speed !== 1 ? ['-af', `atempo=${speed}`] : []), '-ac', '1', '-ar', '48000', '-c:a', 'pcm_s16le', wav], `reading ${extname(file) || 'the recording'}`);
   const duration = probe(wav);
+  const source = `recording:${opts.audioLabel || file.split(/[\\/]/).pop()}${speed !== 1 ? ` ×${speed}` : ''}`;
+  if (timing) {
+    const f = scale / speed;
+    const chars = timing.chars.map((c) => ({ ch: c.ch, start: c.start * f, end: c.end * f }));
+    const sentences = splitSentences(text || timing.text).map((s) => ({ text: s, tokens: tokenize(s, keep) }));
+    const scriptChars = sentences.flatMap((s) => s.tokens.filter((t) => t.word).flatMap((t) => [...t.text].filter((c) => SPEECH_CHAR.test(c))));
+    const { times, matched } = charTimes(scriptChars, chars);
+    if (text) note = [`${Math.round(matched * 100)}% of the script's characters matched the timing file${matched < 0.9 ? ' — low: is it the timing of this script?' : ''}`, note].filter(Boolean).join('; ');
+    return { wav, duration, sentences: placeExact(sentences, times), source, precision: 'alignment', note };
+  }
   // The recording's language: --lang wins; otherwise the script's (Chinese, Spanish, English); with no script, whisper
   // detects it. (It used to assume Chinese without a script and English otherwise: a Spanish recording came back
   // translated, with words that are not in it.) The English-only model is only for English.
@@ -711,7 +841,6 @@ function fromRecording(file, text, keep, tmp, opts, log) {
   const model = opts.model || (lang === 'en' ? 'small.en' : 'small');
   const modelPath = firstFile(join(CACHE, 'whisper', 'models', `ggml-${model}.bin`), join(LEGACY, 'whisper', 'models', `ggml-${model}.bin`)) || join(CACHE, 'whisper', 'models', `ggml-${model}.bin`);
   const asr = opts.asr === true ? 'on' : opts.asr === false ? 'off' : String(opts.asr || 'auto');
-  let note = '';
 
   const wantAsr = asr === 'on' || (asr === 'auto' && (!text || (existsSync(modelPath) && whisperCli())));
   if (wantAsr) {
@@ -733,14 +862,14 @@ function fromRecording(file, text, keep, tmp, opts, log) {
     if (text) note = `${Math.round(matched * 100)}% of the script's characters matched what whisper heard`;
     if (text && matched < 0.5) note += ' — low: is this the right script for this recording?';
     const out = placeByAnchors(sentences, speechOf(wav, duration, '-35dB', 0.18), times);
-    return { wav, duration, sentences: out, source: `recording:${file.split(/[\\/]/).pop()}`, precision: text ? 'asr+script' : 'asr', note };
+    return { wav, duration, sentences: out, source, precision: text ? 'asr+script' : 'asr', note };
   }
 
   if (!text) throw new OmError('a recording without --text needs whisper (--asr on)');
-  if (asr === 'auto') note = `whisper ${model} not found — used silence alignment. For tighter timing: srm voice … --asr on (downloads ~490 MB once)`;
+  if (asr === 'auto') note = `whisper ${model} not found — used silence alignment. For tighter timing: srm voice … --asr on (downloads ~490 MB once), or the times your voice engine returns (--words)`;
   const sentences = splitSentences(text).map((s) => ({ text: s, tokens: tokenize(s, keep) }));
   const intervals = speechOf(wav, duration, '-35dB', 0.18);
   const spans = sentenceSpans(sentences.map((s) => sum(s.tokens.filter((t) => t.word).map(weight))), intervals);
   const out = sentences.map((s, i) => ({ text: s.text, tokens: placeSentence(s.tokens, spans[i].length ? spans[i] : [[spans[i - 1]?.at(-1)?.[1] ?? 0, spans[i - 1]?.at(-1)?.[1] ?? 0]]) }));
-  return { wav, duration, sentences: out, source: `recording:${file.split(/[\\/]/).pop()}`, precision: 'silence', note };
+  return { wav, duration, sentences: out, source, precision: 'silence', note };
 }

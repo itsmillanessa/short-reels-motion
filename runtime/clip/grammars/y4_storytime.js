@@ -56,7 +56,7 @@ return {
     CAM.with(c, { x: (inReact ? L.cx : W / 2) + dx, y: (inReact ? cy : H / 2) + dy, z }, g => {
       if (!ctx.alpha) room(g, t, ctx);
       const st = TOON.poseAt(keys, ts), say = says.find(s => t >= s.q.at - 1e-6 && t < s.end);
-      const mouth = window.VO_ENV ? TOON.mouth(t) : say ? [1, 2, 1, 0, 2, 1][Math.floor(MO.step(t - say.q.at + 1e-6, 12) * 12) % 6] : 0;
+      const mouth = TOON.hasEnv() ? TOON.mouth(t) : say ? [1, 2, 1, 0, 2, 1][Math.floor(MO.step(t - say.q.at + 1e-6, 12) * 12) % 6] : 0;
       const blink = TOON.blinkAt(ts, [0.9, 3.4, 6.1, 8.8, 11.5]), br = 1 + 0.012 * Math.sin(2 * Math.PI * t / 1.6);
       const info = TOON.person(g, { character: ctx.data && ctx.data.character, x: L.cx, y: L.fy, s: L.R, pose: st.pose, expr: inReact ? 'blank' : st.expr, mouth: inReact ? 0 : mouth, blink, squash: st.squash * br, bob: mouth * L.R * 0.015, tilt: st.expr === 'worry' ? -0.06 : 0.02 * Math.sin(t), lw: inReact ? 12 * u : undefined });
       CLIP.mark(g, 'character', L.cx - L.R * 1.2, info.head[1] - L.R * 1.05, L.R * 2.4, L.fy - info.head[1] + L.R * 1.05);

@@ -6,7 +6,7 @@ metadata:
   homepage: "https://github.com/itsmillanessa"
   repository: "https://github.com/itsmillanessa/short-reels-motion"
   based-on: "huashu-motion by Huashu (https://github.com/alchaincyf/huashu-motion), MIT"
-  version: "0.5.2"
+  version: "0.6.0"
 ---
 
 # Short Reels Motion · director de shorts
@@ -35,7 +35,8 @@ srm learn shorts <tema>                   # antes de empezar: las preferencias d
 srm templates                             # plantillas; las verticales dicen 9:16
 srm new <dir> --template short-pantalla   # proyecto nuevo desde una plantilla
 srm fork <dir> <dir>-9x16 --size 1080x1920   # pasar una plantilla 16:9 a vertical (deja la re-maquetación en la bandeja)
-srm voice <dir> --audio voz.m4a --text guion.txt   # narración + palabras con tiempo (OM.cue) + .srt; o solo --text (voz generada)
+srm voice <dir> --audio voz.m4a --text guion.txt   # narración + palabras con tiempo (OM.cue) + volumen para bocas (OM.env) + .srt; o solo --text (voz generada)
+srm voice <dir> --audio toma.mp3 --words tiempos.json   # ElevenLabs: la toma con los tiempos que devuelve (palabras exactas, sin whisper)
 srm sound <dir>                           # música sin derechos de autor + efectos en los golpes (baja sola bajo la voz)
 srm check <dir>                           # antes de renderizar: errores, texto cortado o tapado, texto bajo la interfaz de las apps
 srm still <dir> --at 0,2.5 --out x.png    # cuadros fijos para mirar (y la portada: --at 0)
@@ -75,8 +76,9 @@ saltes la revisión visual.
    y revisa su privacidad con una hoja de contacto ([shorts.md §3](references/shorts.md)). Material real > reconstrucción
    trazada sobre la app real > nunca un diagrama con iconos genéricos.
 
-5. **Voz y anclas.** `srm voice` con su grabación o con la voz generada (1.2× si va pausada). Cada animación se ancla a su
-   palabra: `OM.cue('palabra', n, 'end')` o `{ "word": "palabra" }` en los pasos de la plantilla.
+5. **Voz y anclas.** `srm voice` con su grabación, con la voz generada, o con la toma de ElevenLabs y sus tiempos
+   (`--words`), a 1.2× si va pausada (`--speed`). Cada animación se ancla a su palabra: `OM.cue('palabra', n, 'end')` o
+   `{ "word": "palabra" }` en los pasos de la plantilla. La boca de un personaje sigue el volumen: `TOON.mouth(t)` / `OM.env(t)`.
 
 6. **Construye desde la plantilla del formato** ([shorts.md §5](references/shorts.md)): `short-pantalla` para tips de
    apps; `talking-head`, `storytime`, `kinetic-type`, `finance-chart` o `blank` pasadas a 1080×1920 con `srm fork` para lo
@@ -87,7 +89,7 @@ saltes la revisión visual.
    línea donde aterriza el movimiento). Con narración el volumen final sale en −14 LUFS solo.
 
 8. **Revisa antes de enseñar** ([shorts.md §8](references/shorts.md), no es opcional): `srm check` sin errores, sin
-   `unsafe-zone` ni `cue-repeated`, `srm render`, `srm qa` sin ✗, hoja de contacto de un cuadro por segundo mirada completa, y las tres notas
+   `unsafe-zone` ni `cue-repeated`, `srm render`, `srm qa` sin ✗ (una pausa a propósito se marca con `OM.hold`), hoja de contacto de un cuadro por segundo mirada completa, y las tres notas
    que daría un creador exigente, ya corregidas.
 
 9. **Entrega y studio.** Da la ruta del MP4, la portada (`srm still <dir> --at 0 --out out/portada.png`) y

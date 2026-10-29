@@ -19,7 +19,7 @@ las zonas seguras de cada app y un editor en el navegador donde comentas sobre e
 </div>
 
 > **Estado:** en desarrollo. Faltan la ingesta de grabaciones del celular, la exportación por plataforma,
-> ElevenLabs integrado y los videos demo propios. Ver [Hoja de ruta](#hoja-de-ruta).
+> generar la voz de ElevenLabs desde `srm` y los videos demo propios. Ver [Hoja de ruta](#hoja-de-ruta).
 
 ---
 
@@ -111,7 +111,7 @@ vez y lo guarde él.
 | Tu propia grabación | `srm voice <dir> --audio voz.m4a` (whisper saca los tiempos de cada palabra: `brew install whisper-cpp`) | Gratis |
 | Voz local Kokoro | `srm voice <dir> --text guion.txt` (voz `ef_dora` para guiones en español; se instala una vez, ~325 MB) | Gratis |
 | Voz del sistema (Mac) | `--voice say:Paulina` | Gratis |
-| ElevenLabs | en camino: voz clonada con tiempos exactos por palabra, con tu propia key | De pago |
+| ElevenLabs | genera la toma con sus tiempos (`with-timestamps`) y pásala: `srm voice <dir> --audio toma.mp3 --words tiempos.json` (cada palabra exacta, sin whisper; `--speed 1.2` la acelera) | De pago |
 
 ## Zonas seguras
 
@@ -135,7 +135,10 @@ completo, sin guías encima. `data-platforms="tiktok,reels"` en la raíz del vid
 - [x] La narración reconoce palabras con acento («Sígueme», «más») como anclas
 - [x] Kit del creador (`srm kit`): @usuario, colores, cierre, idioma, plataformas, voz, velocidad y personaje
 - [ ] Ingesta de grabaciones del celular; portada y exportación por plataforma
-- [ ] ElevenLabs como opción de voz; Kokoro en un paso
+- [x] Tiempos de ElevenLabs (`srm voice --words`): palabras exactas sin whisper, con la toma acelerada o sin acelerar
+- [x] Bocas que siguen la voz: `srm voice` mide su volumen (`OM.env`, `TOON.mouth`) y la boca cierra en cada pausa
+- [x] `srm qa` distingue las pausas a propósito (`OM.hold`); `data-om-illustrative` para recreaciones sin producto
+- [ ] Generar la voz de ElevenLabs desde `srm` con tu key; Kokoro en un paso
 - [x] Skill «director de shorts» en español (`skills/short-reels-motion/SKILL.md` + `references/shorts.md`)
 - [x] Instalador de una línea para Mac/Linux (`install.sh`) y Windows (`install.ps1`, sin probar todavía en Windows)
 

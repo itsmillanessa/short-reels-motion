@@ -391,10 +391,13 @@ export function applySound(html, { src, duration, off = false }) {
   return html.slice(0, at) + `\n  ${tag}` + html.slice(at);
 }
 
-// Projects made with an older runtime (before OM.sfx, or before OM.vars typed its values) get vendor/om.js (and the clip engine)
-// refreshed from this package when they lack the marker. The old copies go to .om/vendor-backup.
+// Projects made with an older runtime get vendor/om.js, vendor/srm.js and the clip engine refreshed from this package when
+// a copy lacks the marker of its newest change (OM.hold and OM.env; typeOn's poster; anchors that keep the occurrence they
+// are given; the mouth that follows the narration). The old copies go to .om/vendor-backup.
 export function refreshRuntime(project, log) {
-  const pairs = [['runtime/om.js', 'vendor/om.js', 'arrive typed as declared'], ['runtime/clip/clip.js', 'vendor/clip/clip.js', 'C.SFX']];
+  const pairs = [['runtime/om.js', 'vendor/om.js', 'OM.hold = function'], ['runtime/srm-motion.js', 'vendor/srm.js', '__srmType'],
+    ['runtime/clip/clip.js', 'vendor/clip/clip.js', 'C.SFX'], ['runtime/clip/cues.js', 'vendor/clip/cues.js', 'resolve(q.word, q.nth, q.edge)'],
+    ['runtime/clip/lib/toon.js', 'vendor/clip/lib/toon.js', 'TOON.hasEnv'], ['runtime/clip/grammars/y4_storytime.js', 'vendor/clip/grammars/y4_storytime.js', 'TOON.hasEnv()']];
   for (const [from, to, marker] of pairs) {
     const target = join(project.root, to);
     if (!existsSync(target) || readFileSync(target, 'utf8').includes(marker)) continue;

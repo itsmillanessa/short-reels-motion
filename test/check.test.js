@@ -60,7 +60,7 @@ test('check (source): Array.from with an arrow that returns layout, and a file n
 
 test('om check --source: a film that draws the product instead of showing it is warned about', async () => {
   const { checkSource } = await import('../cli/lib/check.js');
-  const { mkdtempSync, writeFileSync } = await import('node:fs');
+  const { mkdtempSync, readFileSync, writeFileSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');
   const film = (body) => { const root = mkdtempSync(join(tmpdir(), 'om-real-')); writeFileSync(join(root, 'index.html'), `<!doctype html><html><head><meta charset="utf-8"></head><body><div data-composition-id="f" data-width="320" data-height="180">${body}</div><script>window.__timelines={f:{seek(){},pause(){},duration(){return 2}}}</script></body></html>`); return { root, index: join(root, 'index.html'), om: join(root, '.om') }; };
@@ -71,6 +71,11 @@ test('om check --source: a film that draws the product instead of showing it is 
   const real = codes('<img src="materials/web-site/screen-01.png">');
   assert.ok(!real.includes('no-real-material') && !real.includes('only-logo'));
   assert.ok(real.includes('no-materials-list'));
+  // a recreation on purpose (a chat thread, a story in drawings): marked on the root, the material warnings stay quiet
+  const marked = (body, attr) => { const f = film(body); writeFileSync(f.index, readFileSync(f.index, 'utf8').replace('data-composition-id="f"', `data-composition-id="f" ${attr}`)); return checkSource(f).map((x) => x.code); };
+  assert.ok(!marked('<div class="ui"></div>', 'data-om-illustrative').includes('no-real-material'));
+  assert.ok(!marked('<img src="assets/icon128.png">', 'data-om-illustrative="chat recreado"').includes('only-logo'));
+  assert.ok(marked('<img src="https://placehold.co/600x400"><img src="assets/shot.png">', 'data-om-illustrative').includes('placeholder'), 'a placeholder is still a placeholder');
 });
 
 test('check (page): whitespace between tags does not judge a parent by its hidden children', { skip: !findChrome() && 'no Chrome' }, async () => {

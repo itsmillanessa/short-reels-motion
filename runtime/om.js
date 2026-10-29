@@ -56,13 +56,15 @@
   // Word cues from narration. `om voice` writes <script type="application/json" id="om-cues">
   // {"words":[{"word":"缓存","start":1.92,"end":2.31}, …]} into the composition.
   //   tl.fromTo('#hit', {...}, {...}, OM.cue('缓存') - 0.3)   // land the motion as the word is spoken
-  let words = null;
-  const load = () => {
-    if (words) return words;
+  let cues = null;
+  const data = () => {
+    if (cues) return cues;
     const node = document.getElementById('om-cues');
-    words = node ? (JSON.parse(node.textContent).words || []) : [];
-    return words;
+    if (!node) return {};
+    cues = JSON.parse(node.textContent) || {};
+    return cues;
   };
+  const load = () => data().words || [];
   // Whole words first: in Spanish or English a substring hit is always wrong ("dos" inside "segundos").
   // Only CJK, written without spaces, falls back to a substring when no word matches exactly.
   // Same rule as cueMatches() in cli/lib/voice.js.
@@ -83,6 +85,29 @@
   };
   OM.words = () => load().slice();
   window.__om.cues = () => [...asked.values()];
+
+  // How loud the narration is at film time t, 0–1 (srm voice measures it 30 times a second): what a drawn mouth follows,
+  // so it opens on the syllables and closes in every pause, between words too. 0 before and after the narration; null
+  // when the film has none (or it was timed before srm voice measured loudness: run srm voice again).
+  //   const open = OM.env(t) || 0;  mouth.setAttribute('ry', 2 + 14 * open)
+  OM.env = function (t) {
+    const e = data().env;
+    if (!e || !e.a) return null;
+    const i = Math.round((Number(t) - (Number(data().offset) || 0)) * e.fps);
+    return i < 0 || i >= e.a.length ? 0 : parseInt(e.a[i], 36) / 35;
+  };
+
+  // A stretch that stands still on purpose: a card to read, a punchline left to land, the end card. srm qa reports it as
+  // held, not as dead time. Returns from.
+  //   OM.hold(OM.cue('lee'), OM.cue('lee') + 2.5)
+  const holds = new Map();
+  OM.hold = function (from, to) {
+    const a = Number(from), b = Number(to);
+    if (!(a >= 0) || !(b > a)) throw new Error(`short-reels-motion: OM.hold(${from}, ${to}) needs 0 ≤ from < to`);
+    holds.set(a + '|' + b, { from: a, to: b });
+    return a;
+  };
+  window.__om.holds = () => [...holds.values()].sort((x, y) => x.from - y.from);
 
   // Sound. `om sound` reads what the composition declares here and renders the soundtrack
   // (assets/sound.wav, <audio id="om-sound">): music sectioned by the scene labels, effects on the hits.
