@@ -23,7 +23,8 @@
     "NOTICE.md"
   ],
   "scripts": {
-    "test": "node --import ./test/setup.mjs --test test/*.test.js"
+    "test": "node --import ./test/setup.mjs --test test/*.test.js",
+    "test:perf": "node --import ./test/setup.mjs --test --test-name-pattern=performance test/fx.test.js"
   },
   "keywords": [
     "shorts",
