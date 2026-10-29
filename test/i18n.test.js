@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { LANGS, pickLang, setLang, t } from '../studio/i18n.js';
+import { LANGS, isMac, keys, pickLang, setLang, setMac, t } from '../studio/i18n.js';
 
 const PKG = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CJK = /[一-鿿]/;
@@ -40,4 +40,17 @@ test('i18n: t() fills placeholders and falls back to the reference language', ()
   setLang('en');
   assert.equal(t('status.waiting', { n: 2 }), '2 comment(s) waiting for an agent');
   assert.equal(t('no.such.key'), 'no.such.key');
+});
+
+test('i18n: shortcut labels say ⌘ on a Mac and Ctrl on Windows and Linux', () => {
+  assert.equal(isMac({ platform: 'MacIntel' }), true);
+  assert.equal(isMac({ userAgentData: { platform: 'Windows' }, platform: 'Win32' }), false);
+  assert.equal(keys('⌘↩ enviar · Esc cancelar', false), 'Ctrl+Enter enviar · Esc cancelar');
+  assert.equal(keys('Volver a la versión anterior (⌘Z)', false), 'Volver a la versión anterior (Ctrl+Z)');
+  assert.equal(keys('⌘Z', true), '⌘Z');
+  setLang('es');
+  setMac(false);
+  assert.match(t('shortcuts'), /Ctrl\+Z deshacer/);
+  setMac(true);
+  assert.match(t('shortcuts'), /⌘Z deshacer/);
 });
