@@ -1,0 +1,7 @@
+# Line endings: LF everywhere, also on Windows (Git for Windows checks out CRLF by default; the engine, its
+# tests and the parsers of music.md, scores and templates expect LF, and projects copied from templates stay LF).
+* text=auto eol=lf
+
+# Windows-only launchers keep CRLF so cmd.exe reads them line by line.
+*.cmd text eol=crlf
+*.bat text eol=crlf
