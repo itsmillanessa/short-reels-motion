@@ -730,9 +730,14 @@ const SAPI_PS = [
 ].join('\n');
 const CULTURE = { es: 'es-MX', en: 'en-US', zh: 'zh-CN' };
 
+// Windows PowerShell started by a program that runs under PowerShell 7 (srm from a pwsh window; every step on GitHub's
+// runners) inherits pwsh's module path, finds pwsh's modules first and cannot load them ("Get-ExecutionPolicy … the
+// module could not be loaded"). Without PSModulePath it builds its own.
+export const powershellEnv = (env = process.env) => Object.fromEntries(Object.entries(env).filter(([k]) => k.toUpperCase() !== 'PSMODULEPATH'));
+
 function powershell(script, env) {
   return spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')],
-    { encoding: 'utf8', env: { ...process.env, ...env }, timeout: 300_000, windowsHide: true });
+    { encoding: 'utf8', env: { ...powershellEnv(), ...env }, timeout: 300_000, windowsHide: true });
 }
 
 // The voices Windows has for speech: [{ name, culture }] (empty elsewhere). srm doctor lists them.
@@ -804,59 +809,63 @@ export async function voice(project, opts = {}, log = () => {}) {
   const { html } = readSource(project);
   const keep = cueTerms(html).map((c) => c.term);
   const tmp = mkdtempSync(join(tmpdir(), 'om-voice-'));
-  const t0 = Date.now();
-  // the JSON ElevenLabs returns with timestamps carries the audio too (audio_base64): it is the take when no --audio is given
-  if (opts.words && !opts.audio) {
-    const b64 = readTiming(opts.words).json;
-    const data = b64 && !Array.isArray(b64) && (b64.audio_base64 || b64.audioBase64);
-    if (!data) throw new OmError(`--words ${opts.words} has no audio in it — pass the take it times with --audio <file>`);
-    opts = { ...opts, audio: join(tmp, 'take.audio'), audioLabel: `${String(opts.words).split(/[\\/]/).pop()} (its audio)` };
-    writeFileSync(opts.audio, Buffer.from(data, 'base64'));
+  try {
+    const t0 = Date.now();
+    // the JSON ElevenLabs returns with timestamps carries the audio too (audio_base64): it is the take when no --audio is given
+    if (opts.words && !opts.audio) {
+      const b64 = readTiming(opts.words).json;
+      const data = b64 && !Array.isArray(b64) && (b64.audio_base64 || b64.audioBase64);
+      if (!data) throw new OmError(`--words ${opts.words} has no audio in it — pass the take it times with --audio <file>`);
+      opts = { ...opts, audio: join(tmp, 'take.audio'), audioLabel: `${String(opts.words).split(/[\\/]/).pop()} (its audio)` };
+      writeFileSync(opts.audio, Buffer.from(data, 'base64'));
+    }
+
+    const res = opts.audio
+      ? fromRecording(resolve(String(opts.audio)), text, keep, tmp, opts, log)
+      : fromScript(text, keep, tmp, opts, log);
+
+    const fresh = readSource(project);
+    const meta = { source: res.source, precision: res.precision };
+    const env = envelope(res.wav);
+    const applied = applyVoice(fresh.html, { src: 'assets/voice.wav', duration: res.duration, sentences: res.sentences, meta, env, fit: !!opts.fit });
+
+    // assets/voice.wav — the previous take moves to .om/voice-history, never overwritten.
+    const assets = join(project.root, 'assets');
+    mkdirSync(assets, { recursive: true });
+    const target = join(assets, 'voice.wav');
+    if (existsSync(target) && sha(readFileSync(target)) !== sha(readFileSync(res.wav))) {
+      const hist = join(project.om, 'voice-history');
+      mkdirSync(hist, { recursive: true });
+      renameSync(target, join(hist, `${new Date().toISOString().replace(/[:.]/g, '-')}.wav`));
+    }
+    copyFileSync(res.wav, target);
+    const sidecar = { ...meta, offset: applied.offset, duration: r3(res.duration), sentences: res.sentences.map((s) => ({ text: s.text, start: s.tokens.find((t) => t.word)?.start, end: s.tokens.filter((t) => t.word).at(-1)?.end })), words: wordsOf(res.sentences) };
+    writeFileSync(join(assets, 'voice.words.json'), JSON.stringify(sidecar, null, 1) + '\n');
+    const srt = nextOutput(project, 'srt');
+    writeFileSync(srt, toSrt(res.sentences, { offset: applied.offset }));
+    writeSource(project, applied.html, fresh.token, `srm voice (${res.source})`);
+
+    const lines = [
+      `voice    ${target}  ${res.duration.toFixed(2)}s  (${res.source})`,
+      `words    ${applied.words.length} → <script id="om-cues"> + ${join(assets, 'voice.words.json')}`,
+      `timing   ${res.precision} — ${PRECISION[res.precision]}`,
+      `mouth    loudness ${env.fps}×/s in om-cues → OM.env(t) 0–1, TOON.mouth(t): a drawn mouth opens on the syllables and closes in the pauses`,
+      `captions ${srt}`,
+    ];
+    if (res.note) lines.push(`note     ${res.note}`);
+    const end = applied.offset + res.duration;
+    if (applied.newDuration !== applied.rootDuration) lines.push(`fit      composition data-duration ${applied.rootDuration ?? 'unset'} → ${applied.newDuration}s`);
+    else if (applied.rootDuration != null && end > applied.rootDuration) lines.push(`warning  narration ends at ${end.toFixed(2)}s but the composition is ${applied.rootDuration}s — the tail is cut. Re-run with --fit, or lengthen data-duration yourself.`);
+    else if (applied.rootDuration == null) lines.push(`length   the root has no data-duration, so the film is as long as its timeline — make it reach ${end.toFixed(2)}s, e.g. tl.to({}, { duration: 0.6 }, OM.words().at(-1).end)`);
+    const missing = missingCues(applied.words, cueTerms(applied.html));
+    if (missing.length) lines.push(`warning  OM.cue anchors not in the narration (they will throw): ${[...new Set(missing.map((m) => m.term + (m.nth > 1 ? ` #${m.nth}` : '')))].join(', ')}`);
+    const repeated = repeatedCues(applied.words, cueTerms(applied.html));
+    if (repeated.length) lines.push(`warning  OM.cue anchors said more than once take the first: ${repeated.map((r) => `"${r.term}" ×${r.at.length} (${r.at.map((t) => t.toFixed(2) + 's').join(', ')})`).join('; ')} — name the one you mean: OM.cue('${repeated[0].term}', 2)`);
+    lines.push(`took     ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+    return lines.join('\n');
+  } finally {
+    try { rmSync(tmp, { recursive: true, force: true, maxRetries: 5 }); } catch { /* a temp folder left behind is not worth failing the take */ }
   }
-
-  const res = opts.audio
-    ? fromRecording(resolve(String(opts.audio)), text, keep, tmp, opts, log)
-    : fromScript(text, keep, tmp, opts, log);
-
-  const fresh = readSource(project);
-  const meta = { source: res.source, precision: res.precision };
-  const env = envelope(res.wav);
-  const applied = applyVoice(fresh.html, { src: 'assets/voice.wav', duration: res.duration, sentences: res.sentences, meta, env, fit: !!opts.fit });
-
-  // assets/voice.wav — the previous take moves to .om/voice-history, never overwritten.
-  const assets = join(project.root, 'assets');
-  mkdirSync(assets, { recursive: true });
-  const target = join(assets, 'voice.wav');
-  if (existsSync(target) && sha(readFileSync(target)) !== sha(readFileSync(res.wav))) {
-    const hist = join(project.om, 'voice-history');
-    mkdirSync(hist, { recursive: true });
-    renameSync(target, join(hist, `${new Date().toISOString().replace(/[:.]/g, '-')}.wav`));
-  }
-  copyFileSync(res.wav, target);
-  const sidecar = { ...meta, offset: applied.offset, duration: r3(res.duration), sentences: res.sentences.map((s) => ({ text: s.text, start: s.tokens.find((t) => t.word)?.start, end: s.tokens.filter((t) => t.word).at(-1)?.end })), words: wordsOf(res.sentences) };
-  writeFileSync(join(assets, 'voice.words.json'), JSON.stringify(sidecar, null, 1) + '\n');
-  const srt = nextOutput(project, 'srt');
-  writeFileSync(srt, toSrt(res.sentences, { offset: applied.offset }));
-  writeSource(project, applied.html, fresh.token, `srm voice (${res.source})`);
-
-  const lines = [
-    `voice    ${target}  ${res.duration.toFixed(2)}s  (${res.source})`,
-    `words    ${applied.words.length} → <script id="om-cues"> + ${join(assets, 'voice.words.json')}`,
-    `timing   ${res.precision} — ${PRECISION[res.precision]}`,
-    `mouth    loudness ${env.fps}×/s in om-cues → OM.env(t) 0–1, TOON.mouth(t): a drawn mouth opens on the syllables and closes in the pauses`,
-    `captions ${srt}`,
-  ];
-  if (res.note) lines.push(`note     ${res.note}`);
-  const end = applied.offset + res.duration;
-  if (applied.newDuration !== applied.rootDuration) lines.push(`fit      composition data-duration ${applied.rootDuration ?? 'unset'} → ${applied.newDuration}s`);
-  else if (applied.rootDuration != null && end > applied.rootDuration) lines.push(`warning  narration ends at ${end.toFixed(2)}s but the composition is ${applied.rootDuration}s — the tail is cut. Re-run with --fit, or lengthen data-duration yourself.`);
-  else if (applied.rootDuration == null) lines.push(`length   the root has no data-duration, so the film is as long as its timeline — make it reach ${end.toFixed(2)}s, e.g. tl.to({}, { duration: 0.6 }, OM.words().at(-1).end)`);
-  const missing = missingCues(applied.words, cueTerms(applied.html));
-  if (missing.length) lines.push(`warning  OM.cue anchors not in the narration (they will throw): ${[...new Set(missing.map((m) => m.term + (m.nth > 1 ? ` #${m.nth}` : '')))].join(', ')}`);
-  const repeated = repeatedCues(applied.words, cueTerms(applied.html));
-  if (repeated.length) lines.push(`warning  OM.cue anchors said more than once take the first: ${repeated.map((r) => `"${r.term}" ×${r.at.length} (${r.at.map((t) => t.toFixed(2) + 's').join(', ')})`).join('; ')} — name the one you mean: OM.cue('${repeated[0].term}', 2)`);
-  lines.push(`took     ${((Date.now() - t0) / 1000).toFixed(1)}s`);
-  return lines.join('\n');
 }
 
 export const PRECISION = {

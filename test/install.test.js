@@ -5,6 +5,7 @@ import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { powershellEnv } from '../cli/lib/voice.js';
 
 const PKG = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const win = process.platform === 'win32';
@@ -23,11 +24,12 @@ test('install.ps1: ASCII only, no BOM', () => {
 // and a throwaway npm prefix for the global command. Through iex nothing may stay behind in the session, and a failure
 // must not close the window: a message and $LASTEXITCODE instead of `exit`.
 // (the home has an AppData\Local: without one PowerShell writes its module cache under the current folder; and every
-// PowerShell runs from the sandbox, never from this checkout)
+// PowerShell runs from the sandbox, never from this checkout; and it is a creator's PowerShell, with its own module
+// path, not one that inherits PowerShell 7's, as every step on GitHub's runners would hand it)
 const sandbox = () => {
   const root = mkdtempSync(join(tmpdir(), 'srm-install-'));
   for (const d of [['.codex'], ['AppData', 'Local'], ['AppData', 'Roaming']]) mkdirSync(join(root, 'home', ...d), { recursive: true });
-  return { root, env: { ...process.env, USERPROFILE: join(root, 'home'), npm_config_prefix: join(root, 'npm') } };
+  return { root, env: { ...powershellEnv(), USERPROFILE: join(root, 'home'), npm_config_prefix: join(root, 'npm') } };
 };
 const iex = ({ root, env }) => spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
   `Get-Content -Raw -Encoding UTF8 '${join(PKG, 'install.ps1')}' | iex; Write-Host ('AFTER eap=' + $ErrorActionPreference + ' vars=' + [bool](Get-Variable Yes, Dir -ErrorAction SilentlyContinue) + ' fns=' + [bool](Get-Command Say -ErrorAction SilentlyContinue) + ' code=' + $LASTEXITCODE)`],

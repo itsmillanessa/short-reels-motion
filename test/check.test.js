@@ -37,6 +37,13 @@ test('check (source): the mistakes that break a render are errors, clock and ran
   assert.ok(found.find((f) => f.code === 'layout-motion').line > 1, 'points at the line');
 });
 
+// On Windows a file on another drive has no path relative to the project: relative() hands it back absolute, and the
+// file was taken for one inside the project
+test('check (source): a file on another drive is outside the project', { skip: process.platform !== 'win32' && 'Windows only' }, () => {
+  const { project } = makeFilm({ sound: false, body: '<img src="Z:/fotos/logo.png">' });
+  assert.ok(codes(checkSource(project), 'error').includes('outside-project'));
+});
+
 test('check (source): a script that does not parse is an error with its line', () => {
   const { project } = makeFilm({ sound: false, script: 'const a = ;' });
   const f = checkSource(project).find((x) => x.code === 'script-syntax');

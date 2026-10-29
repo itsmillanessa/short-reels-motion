@@ -479,7 +479,7 @@ async function studio(dir, flags) {
 }
 
 async function doctor() {
-  const { kokoroPython, sapiVoices, whisperCli, WHISPER_HINT } = await import('./lib/voice.js');
+  const { kokoroPython, powershellEnv, sapiVoices, whisperCli, WHISPER_HINT } = await import('./lib/voice.js');
   const win = process.platform === 'win32', report = [];
   const major = Number(process.versions.node.split('.')[0]);
   report.push([major >= 22, `Node ${process.versions.node}`, major >= 22 ? '' : tr({ es: 'se necesita Node 22 o más nuevo — https://nodejs.org', en: 'need Node 22 or newer — https://nodejs.org' })]);
@@ -516,7 +516,7 @@ async function doctor() {
   if (!ours) report.push([false, tr({ es: `otro programa responde a «srm» (${which})`, en: `another program answers to "srm" (${which})` }), tr({ es: 'usa `short-reels-motion`, o pon primero en el PATH la carpeta global de npm', en: 'use `short-reels-motion` instead, or put the npm global bin first on PATH' })]);
   // Windows PowerShell runs npm's srm.ps1 only when scripts are allowed (a new Windows has them Restricted)
   if (win) {
-    const policy = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', 'Get-ExecutionPolicy'], { encoding: 'utf8', windowsHide: true }).stdout?.trim();
+    const policy = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', 'Get-ExecutionPolicy'], { encoding: 'utf8', env: powershellEnv(), windowsHide: true }).stdout?.trim();
     if (/^(Restricted|AllSigned)$/i.test(policy || '')) optional.push([false, tr({ es: `PowerShell no deja correr srm.ps1 (ExecutionPolicy ${policy})`, en: `PowerShell will not run srm.ps1 (ExecutionPolicy ${policy})` }), tr({ es: 'Set-ExecutionPolicy -Scope CurrentUser RemoteSigned   (o usa srm desde cmd o Git Bash)', en: 'Set-ExecutionPolicy -Scope CurrentUser RemoteSigned   (or run srm from cmd or Git Bash)' })]);
   }
   const optionalWord = tr({ es: 'opcional', en: 'optional' });
