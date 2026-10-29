@@ -20,6 +20,14 @@
   {"id":"bottomColor","type":"color","label":"Personaje · color del pantalón","default":"#252A36","group":"Personaje"},
   {"id":"accessory","type":"enum","label":"Personaje · accesorio","default":"none","options":[{"value":"none","label":"ninguno"},{"value":"glasses","label":"lentes"},{"value":"headphones","label":"audífonos"},{"value":"cap","label":"gorra"}],"group":"Personaje"},
   {"id":"accessoryColor","type":"color","label":"Personaje · color del accesorio","default":"#1B1B1F","group":"Personaje"},
+  {"id":"eyeColor","type":"string","label":"Personaje · color de ojos (vacío = ojos negros)","default":"","group":"Personaje"},
+  {"id":"beard","type":"enum","label":"Personaje · barba","default":"none","options":[{"value":"none","label":"sin barba"},{"value":"stubble","label":"de días"},{"value":"full","label":"completa"}],"group":"Personaje"},
+  {"id":"beardColor","type":"string","label":"Personaje · color de la barba (vacío = como el pelo)","default":"","group":"Personaje"},
+  {"id":"sleeves","type":"enum","label":"Personaje · mangas","default":"auto","options":[{"value":"auto","label":"según la prenda"},{"value":"long","label":"largas"},{"value":"rolled","label":"arremangadas"},{"value":"short","label":"cortas"}],"group":"Personaje"},
+  {"id":"tattoos","type":"enum","label":"Personaje · tatuajes","default":"none","options":[{"value":"none","label":"ninguno"},{"value":"forearms","label":"antebrazos"}],"group":"Personaje"},
+  {"id":"earring","type":"string","label":"Personaje · arete (un color, o vacío)","default":"","group":"Personaje"},
+  {"id":"footwear","type":"enum","label":"Personaje · calzado","default":"sneakers","options":[{"value":"sneakers","label":"tenis"},{"value":"boots","label":"botas"}],"group":"Personaje"},
+  {"id":"shoes","type":"color","label":"Personaje · color del calzado","default":"#F4F4F0","group":"Personaje"},
   {"id":"duration","type":"number","label":"Duración (s; con narración al menos hasta que termine; tras el remate deja al menos 0.9 s)","default":8.5,"min":2,"max":120,"step":0.5,"group":"Ritmo"},
   {"id":"pace","type":"number","label":"Factor de ritmo (1 = normal)","default":1,"min":0.5,"max":4,"step":0.1,"group":"Ritmo"}
 ]'>
@@ -57,7 +65,7 @@
   "duration": "{{duration}}",
   "pace": "{{pace}}",
   "fps": 30,
-  "data": { "character": { "skin": "{{skin}}", "hair": "{{hair}}", "hairColor": "{{hairColor}}", "top": "{{top}}", "topColor": "{{topColor}}", "bottomColor": "{{bottomColor}}", "accessory": "{{accessory}}", "accessoryColor": "{{accessoryColor}}" } },
+  "data": { "character": { "skin": "{{skin}}", "hair": "{{hair}}", "hairColor": "{{hairColor}}", "top": "{{top}}", "topColor": "{{topColor}}", "bottomColor": "{{bottomColor}}", "accessory": "{{accessory}}", "accessoryColor": "{{accessoryColor}}", "eyeColor": "{{eyeColor}}", "beard": "{{beard}}", "beardColor": "{{beardColor}}", "sleeves": "{{sleeves}}", "tattoos": "{{tattoos}}", "earring": "{{earring}}", "footwear": "{{footwear}}", "shoes": "{{shoes}}" } },
   "cues": [
     { "at": 0.1, "kind": "point", "word": "primera vez", "text": "{{line1}}", "sub": "{{bubble1}}", "data": { "pose": "{{line1Pose}}" } },
     { "at": 2.0, "kind": "insert", "word": "sitio web", "text": "{{bigText}}", "sub": "{{typed}}", "data": { "hit": "{{hit}}", "hitWord": "3000", "count": "{{count}}", "unit": "{{unit}}", "app": "{{app}}" } },

@@ -33,11 +33,14 @@ TOON.mouth = (t, fps = 12) => { const v = TOON.env(MO.step(t, fps)); return v < 
 // o: { x, y (feet), s (head size px), pose:{l,r} (hand targets relative to the shoulder, in head units), expr, mouth (0/1/2),
 //      blink, look:[dx,dy] (eyes), squash (vertical scale about the feet, volume kept), tilt, bob, browUp, lw, character }
 // expr: 'talk' | 'happy' | 'blank' | 'worry' | 'shock'. Returns { hl, hr (hands), head:[x,y] }.
-// character: { skin, hair: short|long|curly|bun|buzz|none, hairColor, top: hoodie|tee|shirt, topColor, bottomColor,
-//              shoes, accessory: none|glasses|headphones|cap, accessoryColor }
+// character: { skin, hair: short|long|curly|bun|buzz|none, hairColor, eyeColor, beard: none|stubble|full, beardColor,
+//              top: hoodie|tee|shirt, topColor, sleeves: long|rolled|short (default: short for a tee, long otherwise),
+//              tattoos: none|forearms, tattooColor, bottomColor, shoes (colour), footwear: sneakers|boots,
+//              accessory: none|glasses|headphones|cap, accessoryColor, earring (a colour, or none) }
 const LINE = '#1B1B1F';
-TOON.LOOK = { skin: '#E8B48E', hair: 'short', hairColor: '#2B2119', top: 'hoodie', topColor: '#2F6FED', bottomColor: '#252A36', shoes: '#F4F4F0', accessory: 'none', accessoryColor: '#1B1B1F' };
-TOON.look = (ch) => ({ ...TOON.LOOK, ...(ch && typeof ch === 'object' ? ch : {}) });
+TOON.LOOK = { skin: '#E8B48E', hair: 'short', hairColor: '#2B2119', eyeColor: null, beard: 'none', beardColor: null, top: 'hoodie', topColor: '#2F6FED', sleeves: null, tattoos: 'none', tattooColor: '#2E3A3F', bottomColor: '#252A36', shoes: '#F4F4F0', footwear: 'sneakers', accessory: 'none', accessoryColor: '#1B1B1F', earring: 'none' };
+// a field left empty (or "auto", as the studio's variables send it) keeps the default
+TOON.look = (ch) => ({ ...TOON.LOOK, ...Object.fromEntries(Object.entries(ch && typeof ch === 'object' ? ch : {}).filter(([, v]) => v !== '' && v != null && v !== 'auto')) });
 const shade = (hex, k) => { const c = PAINT.hex(hex); return PAINT.rgb([c[0] * k, c[1] * k, c[2] * k].map(v => Math.max(0, Math.min(255, v))), 1); };
 TOON.POSES = {
   rest:  { l: [-0.95, 1.05], r: [0.95, 1.05] },
@@ -60,9 +63,9 @@ function hairFront(c, L, R, lw) {
   c.fillStyle = L.hairColor; c.strokeStyle = LINE; c.lineWidth = lw;
   const p = new Path2D();
   if (L.hair === 'curly') {                                           // a ring of curls around the crown, a short fringe
-    for (let i = 0; i <= 10; i++) { const t = Math.PI * (1.02 + i * 0.096), cx = Math.cos(t) * R * 0.86, cy = -R * 0.08 + Math.sin(t) * R * 0.95;
-      c.beginPath(); c.arc(cx, cy, R * 0.2, 0, Math.PI * 2); c.fill(); c.stroke(); }
-    p.moveTo(-R * 0.8, -R * 0.2); p.bezierCurveTo(-R * 0.86, -R * 0.98, R * 0.86, -R * 0.98, R * 0.8, -R * 0.2);
+    for (let i = 0; i <= 9; i++) { const t = Math.PI * (1.1 + i * 0.0889), cx = Math.cos(t) * R * 0.82, cy = -R * 0.16 + Math.sin(t) * R * 0.92;
+      c.beginPath(); c.arc(cx, cy, R * (0.17 + 0.03 * (i % 2)), 0, Math.PI * 2); c.fill(); c.stroke(); }
+    p.moveTo(-R * 0.8, -R * 0.2); p.bezierCurveTo(-R * 0.9, -R * 1.38, R * 0.9, -R * 1.38, R * 0.8, -R * 0.2);
     for (let i = 0; i < 5; i++) { const x1 = R * (0.8 - (i + 1) * 0.32); p.quadraticCurveTo(x1 + R * 0.16, -R * 0.36, x1, -R * 0.5 + (i % 2) * R * 0.06); }
     c.fill(p); return;
   } else if (L.hair === 'buzz') {
@@ -101,8 +104,16 @@ TOON.person = (c, o) => {
   const shL = [-R * 0.5, shoulderY], shR = [R * 0.5, shoulderY];
   for (const sx of [-1, 1]) {                                          // legs: trousers to the ankle, a sneaker each
     c.fillStyle = Lk.bottomColor; c.beginPath(); c.roundRect(sx * R * 0.2 - R * 0.15, hipY - R * 0.05, R * 0.3, R * 0.78, R * 0.08); c.fill(); c.stroke();
-    c.fillStyle = Lk.shoes; c.beginPath(); c.roundRect(sx * R * 0.22 - R * 0.2 + sx * R * 0.04, -R * 0.13, R * 0.4, R * 0.15, R * 0.07); c.fill(); c.stroke();
-    c.fillStyle = LINE; c.fillRect(sx * R * 0.22 - R * 0.19 + sx * R * 0.04, -R * 0.03, R * 0.38, R * 0.03);
+    if (Lk.footwear === 'boots') {                                     // boots: taller shaft, a heavy sole and a lace line
+      c.fillStyle = Lk.shoes; c.beginPath(); c.roundRect(sx * R * 0.2 - R * 0.17, -R * 0.24, R * 0.34, R * 0.2, R * 0.05); c.fill(); c.stroke();
+      c.beginPath(); c.roundRect(sx * R * 0.22 - R * 0.2 + sx * R * 0.05, -R * 0.12, R * 0.42, R * 0.13, R * 0.06); c.fill(); c.stroke();
+      c.fillStyle = shade(Lk.shoes, 0.55); c.fillRect(sx * R * 0.22 - R * 0.19 + sx * R * 0.05, -R * 0.035, R * 0.4, R * 0.04);
+      c.strokeStyle = shade(Lk.shoes, 1.9); c.lineWidth = lw * 0.5; c.beginPath(); c.moveTo(sx * R * 0.2 - R * 0.06, -R * 0.2); c.lineTo(sx * R * 0.2 + R * 0.06, -R * 0.2); c.moveTo(sx * R * 0.2 - R * 0.06, -R * 0.15); c.lineTo(sx * R * 0.2 + R * 0.06, -R * 0.15); c.stroke();
+      c.strokeStyle = LINE; c.lineWidth = lw;
+    } else {
+      c.fillStyle = Lk.shoes; c.beginPath(); c.roundRect(sx * R * 0.22 - R * 0.2 + sx * R * 0.04, -R * 0.13, R * 0.4, R * 0.15, R * 0.07); c.fill(); c.stroke();
+      c.fillStyle = LINE; c.fillRect(sx * R * 0.22 - R * 0.19 + sx * R * 0.04, -R * 0.03, R * 0.38, R * 0.03);
+    }
   }
   const torso = new Path2D();                                          // torso: shoulders wider than the hips
   torso.moveTo(-R * 0.4, hipY + R * 0.06); torso.lineTo(-R * 0.58, chestY + R * 0.3);
@@ -124,9 +135,25 @@ TOON.person = (c, o) => {
     const mx = (sh[0] + hx) / 2 + side * R * 0.1, my = Math.max(sh[1], hy) + R * 0.1;
     c.beginPath(); c.moveTo(sh[0], sh[1]); c.quadraticCurveTo(mx, my, hx, hy);
     c.strokeStyle = LINE; c.lineWidth = R * 0.18 + lw; c.stroke(); c.strokeStyle = Lk.skin; c.lineWidth = R * 0.18; c.stroke();
-    const sleeve = Lk.top === 'tee' ? 0.32 : 0.78;                      // a tee leaves the forearm bare
-    c.beginPath(); c.moveTo(sh[0], sh[1]); c.quadraticCurveTo(lerp(sh[0], mx, sleeve), lerp(sh[1], my, sleeve), lerp(lerp(sh[0], mx, sleeve), lerp(mx, hx, sleeve), sleeve), lerp(lerp(sh[1], my, sleeve), lerp(my, hy, sleeve), sleeve));
+    const sleeves = Lk.sleeves || (Lk.top === 'tee' ? 'short' : 'long');
+    const sleeve = { short: 0.32, rolled: 0.47, long: 0.78 }[sleeves] || 0.78;   // where the sleeve ends along the arm
+    const at = (k) => [lerp(lerp(sh[0], mx, k), lerp(mx, hx, k), k), lerp(lerp(sh[1], my, k), lerp(my, hy, k), k)];
+    if (Lk.tattoos === 'forearms' && sleeve < 0.7) {                   // ink on the bare forearm: a band of small marks along it
+      c.save(); c.strokeStyle = Lk.tattooColor; c.globalAlpha = 0.85; c.lineWidth = Math.max(2, R * 0.022);
+      for (let k = sleeve + 0.06; k < 0.86; k += 0.055) {
+        const [px, py] = at(k), [qx, qy] = at(k + 0.02), ang = Math.atan2(qy - py, qx - px) + Math.PI / 2, w = R * 0.065;
+        c.beginPath(); c.moveTo(px - Math.cos(ang) * w, py - Math.sin(ang) * w); c.lineTo(qx + Math.cos(ang) * w, qy + Math.sin(ang) * w);
+        c.moveTo(px + Math.cos(ang) * w, py + Math.sin(ang) * w); c.lineTo(qx - Math.cos(ang) * w, qy - Math.sin(ang) * w); c.stroke();
+      }
+      c.restore();
+    }
+    const [ex, ey] = at(sleeve);
+    c.beginPath(); c.moveTo(sh[0], sh[1]); c.quadraticCurveTo(lerp(sh[0], mx, sleeve), lerp(sh[1], my, sleeve), ex, ey);
     c.strokeStyle = LINE; c.lineWidth = R * 0.27 + lw; c.stroke(); c.strokeStyle = Lk.topColor; c.lineWidth = R * 0.27; c.stroke();
+    if (sleeves === 'rolled') {                                        // the rolled cuff: a short thicker band at the sleeve's end
+      const [bx, by] = at(sleeve - 0.05);
+      c.save(); c.lineCap = 'butt'; c.beginPath(); c.moveTo(bx, by); c.lineTo(ex, ey); c.strokeStyle = LINE; c.lineWidth = R * 0.3 + lw; c.stroke(); c.strokeStyle = shade(Lk.topColor, 0.9); c.lineWidth = R * 0.3; c.stroke(); c.restore();
+    }
     c.fillStyle = Lk.skin; c.strokeStyle = LINE; c.lineWidth = lw; c.beginPath(); c.ellipse(hx, hy, R * 0.13, R * 0.15, 0, 0, Math.PI * 2); c.fill(); c.stroke();
     return [hx, hy];
   };
@@ -142,7 +169,20 @@ TOON.person = (c, o) => {
   hairBack(c, Lk, R, lw);
   c.fillStyle = Lk.skin; c.strokeStyle = LINE; c.lineWidth = lw;
   for (const sx of [-1, 1]) { c.beginPath(); c.ellipse(sx * R * 0.82, R * 0.1, R * 0.13, R * 0.18, 0, 0, Math.PI * 2); c.fill(); c.stroke(); }   // ears
+  if (Lk.earring && Lk.earring !== 'none') { c.fillStyle = Lk.earring; c.beginPath(); c.arc(-R * 0.84, R * 0.26, R * 0.045, 0, Math.PI * 2); c.fill(); c.lineWidth = lw * 0.5; c.stroke(); c.lineWidth = lw; }
+  c.fillStyle = Lk.skin; c.strokeStyle = LINE; c.lineWidth = lw;
   c.beginPath(); c.ellipse(0, 0, R * 0.8, R * 0.92, 0, 0, Math.PI * 2); c.fill(); c.stroke();                                              // face: taller than wide
+  if (Lk.beard === 'stubble' || Lk.beard === 'full') {                 // beard along the jaw and chin, a moustache above the mouth
+    const bc = Lk.beardColor || Lk.hairColor;
+    c.save(); c.beginPath(); c.ellipse(0, 0, R * 0.8, R * 0.92, 0, 0, Math.PI * 2); c.clip();
+    c.globalAlpha = Lk.beard === 'stubble' ? 0.38 : 1; c.fillStyle = bc;
+    const b = new Path2D(); b.moveTo(-R * 0.84, R * 0.22); b.quadraticCurveTo(-R * 0.66, R * 0.5, -R * 0.3, R * 0.5);
+    b.quadraticCurveTo(0, R * 0.46, R * 0.3, R * 0.5); b.quadraticCurveTo(R * 0.66, R * 0.5, R * 0.84, R * 0.22); b.lineTo(R * 0.9, R * 1.0); b.lineTo(-R * 0.9, R * 1.0); b.closePath();
+    c.fill(b); c.restore();
+    c.save(); c.globalAlpha = Lk.beard === 'stubble' ? 0.5 : 1; c.fillStyle = bc;
+    c.beginPath(); c.ellipse(0, R * 0.475, R * 0.2, R * 0.05, 0, 0, Math.PI * 2); c.fill(); c.restore();
+    c.strokeStyle = LINE; c.lineWidth = lw; c.beginPath(); c.ellipse(0, 0, R * 0.8, R * 0.92, 0, 0, Math.PI * 2); c.stroke();
+  }
   hairFront(c, Lk, R, lw);
   // brows carry the expression: [up/down, inner end relative to the outer] (negative = inner end raised = worried)
   const ex = o.expr || 'talk', lk = o.look || [0, 0], eyeY = R * 0.12;
@@ -155,7 +195,10 @@ TOON.person = (c, o) => {
     const gx = sx * R * 0.34, pr = ex === 'blank' ? R * 0.04 : ex === 'shock' ? R * 0.055 : R * 0.075;
     c.fillStyle = LINE;
     if (o.blink) { c.beginPath(); c.moveTo(gx - R * 0.09 + lk[0] * R * 0.08, eyeY + lk[1] * R * 0.06); c.quadraticCurveTo(gx + lk[0] * R * 0.08, eyeY + R * 0.04, gx + R * 0.09 + lk[0] * R * 0.08, eyeY + lk[1] * R * 0.06); c.stroke(); }
-    else { c.beginPath(); c.ellipse(gx + lk[0] * R * 0.09, eyeY + lk[1] * R * 0.07, pr, pr * (ex === 'blank' ? 1 : 1.3), 0, 0, Math.PI * 2); c.fill();
+    else {
+      if (Lk.eyeColor && ex !== 'blank') { c.fillStyle = '#fff'; c.beginPath(); c.ellipse(gx + lk[0] * R * 0.05, eyeY, pr * 1.9, pr * 1.75, 0, 0, Math.PI * 2); c.fill(); c.lineWidth = lw * 0.5; c.stroke(); c.lineWidth = lw;
+        c.fillStyle = Lk.eyeColor; c.beginPath(); c.arc(gx + lk[0] * R * 0.09, eyeY + lk[1] * R * 0.07, pr * 1.25, 0, Math.PI * 2); c.fill(); c.fillStyle = LINE; }
+      c.beginPath(); c.ellipse(gx + lk[0] * R * 0.09, eyeY + lk[1] * R * 0.07, pr * (Lk.eyeColor ? 0.7 : 1), pr * (ex === 'blank' ? 1 : 1.3) * (Lk.eyeColor ? 0.7 : 1), 0, 0, Math.PI * 2); c.fill();
       if (ex !== 'blank') { c.fillStyle = '#fff'; c.beginPath(); c.arc(gx + lk[0] * R * 0.09 - pr * 0.35, eyeY + lk[1] * R * 0.07 - pr * 0.45, pr * 0.32, 0, Math.PI * 2); c.fill(); } }
   }
   c.strokeStyle = shade(Lk.skin, 0.7); c.lineWidth = lw * 0.9;                                                                            // nose
