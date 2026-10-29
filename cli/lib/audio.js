@@ -45,6 +45,30 @@ function placeTracks(tracks, duration, first) {
   return { mode: 'mix', inputs, map: ['-filter_complex', graph, '-map', '[aout]'], length: r3(duration) };
 }
 
+// Where the feeds normalise: TikTok, Reels and Shorts all play at about -14 LUFS. A narrated film is the voice plus the
+// soundtrack summed here, so nothing upstream sets its level; left alone it lands wherever the recording was (often -17).
+export const FEED_LUFS = -14;
+const TRUE_PEAK = 0.84; // -1.5 dBFS, headroom for the AAC encoder
+
+const run = (args) => new Promise((ok, fail) => {
+  const child = spawn('ffmpeg', args, { stdio: ['ignore', 'ignore', 'pipe'] });
+  let err = '';
+  child.stderr.on('data', (b) => { err += b; });
+  child.on('error', (e) => fail(new OmError(`could not start ffmpeg: ${e.message}`)));
+  child.on('close', (code) => (code === 0 ? ok(err) : fail(new OmError(`could not encode the sound: ${err.trim().split('\n').pop()}`))));
+});
+
+// The mix with one linear gain so it reads `lufs` integrated, then a true limiter (no auto level) for the peaks.
+// Measured on the summed graph first, so the gain is exact and the dynamics stay as they were.
+async function levelled(t, lufs) {
+  const graph = t.map[1].replace(/,alimiter=limit=0\.98\[aout\]$/, '');
+  const probe = await run(['-nostats', '-hide_banner', ...t.inputs, '-filter_complex', `${graph},ebur128[aout]`, '-map', '[aout]', '-t', String(t.length), '-f', 'null', '-']);
+  const I = /\bI:\s+(-?[\d.]+)\s+LUFS/.exec(probe.split('Summary:').pop())?.[1];
+  if (I == null) return { ...t, gain: 0 };
+  const gain = r3(lufs - Number(I));
+  return { ...t, gain, map: ['-filter_complex', `${graph},volume=${gain}dB,alimiter=limit=${TRUE_PEAK}:level=false[aout]`, '-map', '[aout]'] };
+}
+
 // Writes `out` (video stream copied from `video`) and returns { mode: 'direct' | 'mix' | 'none', tracks }.
 export function muxAudio(video, tracks, out, { duration, bitrate = '256k' } = {}) {
   tracks = tracks.filter((t) => t.file);
@@ -61,17 +85,14 @@ export function muxAudio(video, tracks, out, { duration, bitrate = '256k' } = {}
 
 // The sound track on its own, encoded while the picture is still rendering (the renderer then only copies streams).
 // codec: ffmpeg audio codec arguments for the target container. Resolves to { mode, tracks } ('none' writes nothing).
-export function encodeAudio(tracks, out, { duration, codec = ['-c:a', 'aac', '-b:a', '256k', '-ar', '48000'] } = {}) {
+// lufs: level a mix to this integrated loudness (narrated films pass FEED_LUFS); null keeps the plain sum.
+export async function encodeAudio(tracks, out, { duration, codec = ['-c:a', 'aac', '-b:a', '256k', '-ar', '48000'], lufs = null } = {}) {
   tracks = tracks.filter((t) => t.file);
-  if (!tracks.length) return Promise.resolve({ mode: 'none', tracks: 0 });
-  const t = placeTracks(tracks, duration, 0);
-  return new Promise((ok, fail) => {
-    const child = spawn('ffmpeg', ['-v', 'error', '-y', ...t.inputs, ...t.map, '-vn', ...codec, '-t', String(t.length), out], { stdio: ['ignore', 'ignore', 'pipe'] });
-    let err = '';
-    child.stderr.on('data', (b) => { err += b; });
-    child.on('error', (e) => fail(new OmError(`could not start ffmpeg: ${e.message}`)));
-    child.on('close', (code) => (code === 0 ? ok({ mode: t.mode, tracks: tracks.length }) : fail(new OmError(`could not encode the sound: ${err.trim().split('\n').pop()}`))));
-  });
+  if (!tracks.length) return { mode: 'none', tracks: 0 };
+  let t = placeTracks(tracks, duration, 0);
+  if (lufs != null && t.mode === 'mix') t = await levelled(t, lufs);
+  await run(['-v', 'error', '-y', ...t.inputs, ...t.map, '-vn', ...codec, '-t', String(t.length), out]);
+  return { mode: t.mode, tracks: tracks.length, ...(t.gain != null && { gain: t.gain }) };
 }
 
 // After the mux: a single wrapped file must come out as loud as it went in (AAC moves it by hundredths of a dB).

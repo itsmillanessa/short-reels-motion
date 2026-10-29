@@ -4,7 +4,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { checkLoudness, hasAudio, loudness, muxAudio } from '../cli/lib/audio.js';
+import { FEED_LUFS, checkLoudness, encodeAudio, hasAudio, loudness, muxAudio } from '../cli/lib/audio.js';
 import { HAS_FFMPEG } from './fixture-film.js';
 
 const skip = !HAS_FFMPEG && 'no ffmpeg';
@@ -61,4 +61,19 @@ test('audio: no tracks gives a silent film; a loudness mismatch is an error, not
   const quiet = tone('q.wav', 330, 0.05), loud = tone('l.wav', 330, 0.5);
   muxAudio(video, [{ file: quiet, start: 0, duration: 4, mediaStart: 0, rate: 1, volume: 1 }], join(dir, 'q.mp4'), { duration: 4 });
   assert.throws(() => checkLoudness(join(dir, 'q.mp4'), [loud]), /LUFS but its source/);
+});
+
+test('audio: a narrated mix is levelled to feed loudness (-14 LUFS), and without lufs stays the plain sum', { skip }, async () => {
+  const { dir, tone } = setup();
+  const voice = tone('voice.wav', 220, 0.05), bed = tone('bed.wav', 880, 0.01); // a quiet recording under a quieter bed
+  const tracks = [{ file: voice, start: 0, duration: 4, mediaStart: 0, rate: 1, volume: 1 }, { file: bed, start: 0, duration: 4, mediaStart: 0, rate: 1, volume: 1 }];
+  const plain = join(dir, 'plain.m4a'), feed = join(dir, 'feed.m4a');
+  await encodeAudio(tracks, plain, { duration: 4 });
+  const r = await encodeAudio(tracks, feed, { duration: 4, lufs: FEED_LUFS });
+  assert.equal(r.mode, 'mix');
+  assert.ok(r.gain > 0, `a quiet mix is raised (gain ${r.gain} dB)`);
+  const got = loudness(feed);
+  assert.ok(Math.abs(got.lufs - FEED_LUFS) < 1, `levelled mix at ${got.lufs} LUFS`);
+  assert.ok(got.peak <= -1, `peaks held under the limit: ${got.peak} dBFS`);
+  assert.ok(loudness(plain).lufs < FEED_LUFS - 6, 'without lufs the mix is left where it was');
 });

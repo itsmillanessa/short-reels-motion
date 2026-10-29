@@ -10,7 +10,7 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:f
 import { cpus, tmpdir } from 'node:os';
 import { isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkLoudness, encodeAudio, hasAudio } from './audio.js';
+import { FEED_LUFS, checkLoudness, encodeAudio, hasAudio } from './audio.js';
 import { openFilm } from './capture.js';
 import { cleanupOnInterrupt } from './cdp.js';
 import { extractClip } from './frames.js';
@@ -57,7 +57,7 @@ const CONTAINERS = {
 };
 export const FORMATS = Object.keys(CONTAINERS);
 
-export async function renderOm(project, { fps, out, format = 'mp4', transparent = false, blur = 1, video = 'extract', frameFormat = 'png', workers = defaultWorkers(), shotFormat = null, paintWaits = 0, chunk = 8, preset = 'veryfast', crf = 16, software = false, onFrame = null, variables = null, allowPageErrors = false, prepare = null, verify = null, onLog = () => {}, onNote = onLog, onWarn = () => {} }) {
+export async function renderOm(project, { fps, out, format = 'mp4', transparent = false, blur = 1, video = 'extract', frameFormat = 'png', workers = defaultWorkers(), shotFormat = null, paintWaits = 0, chunk = 8, preset = 'veryfast', crf = 16, software = false, onFrame = null, variables = null, allowPageErrors = false, prepare = null, verify = null, onLog = () => {}, onNote = onLog, onWarn = () => {}, lufs = FEED_LUFS }) {
   if (!['extract', 'seek'].includes(video)) throw new OmError('--video must be extract or seek');
   if (!['jpg', 'png'].includes(frameFormat)) throw new OmError('--frames must be jpg or png');
   const box = CONTAINERS[format];
@@ -134,7 +134,7 @@ export async function renderOm(project, { fps, out, format = 'mp4', transparent 
     // An overlay goes on top of an edit that already has the sound; a GIF has none.
     const withSound = box.sound && !transparent ? tracks : [];
     const soundFile = box.sound && join(tmp, box.sound.file);
-    const sound = withSound.length ? encodeAudio(withSound, soundFile, { duration, codec: box.sound.codec }).then(async (r) => {
+    const sound = withSound.length ? encodeAudio(withSound, soundFile, { duration, codec: box.sound.codec, lufs }).then(async (r) => {
       // a single wrapped file must come out as loud as it went in (checked on the encoded track, while the picture renders)
       r.loudness = checkLoudness(soundFile, withSound.length === 1 ? withSound.map((t) => t.file) : []);
       return r;

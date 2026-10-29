@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   splitSentences, tokenize, weight, placeWords, placeSentence, wordsOf, parseSilences, speechIntervals,
-  sentenceSpans, alignChars, charTimes, asrChars, captionLines, toSrt, cueTerms, missingCues, applyVoice, pickVoice,
+  sentenceSpans, alignChars, charTimes, asrChars, captionLines, toSrt, cueTerms, cueMatches, missingCues, applyVoice, pickVoice, isSpanish,
 } from '../cli/lib/voice.js';
 
 const SCRIPT = 'huashu-motion，一句话出片。你只要说出想法，Agent就把画面做出来。\n哪里不满意，指着画面改，它当场重做！改完一键导出，配音和字幕都对齐。';
@@ -121,6 +121,17 @@ test('cueTerms and missingCues mirror OM.cue', () => {
   assert.deepEqual(missingCues(words, cueTerms(html)).map((m) => m.term), ['画面', '缺席']);
 });
 
+test('cue matching: whole words in Spanish, substring fallback only for CJK', () => {
+  const es = [{ word: 'Treinta' }, { word: 'segundos,' }, { word: 'Dos' }, { word: 'cosas.' }, { word: 'cosa' }, { word: 'número' }, { word: 'uno' }];
+  assert.deepEqual(cueMatches(es, 'dos').map((w) => w.word), ['Dos']);           // not "segundos"
+  assert.deepEqual(cueMatches(es, 'cosa').map((w) => w.word), ['cosa']);         // not "cosas."
+  assert.deepEqual(cueMatches(es, 'segundos').map((w) => w.word), ['segundos,']); // punctuation ignored
+  assert.deepEqual(cueMatches(es, 'gund'), []);                                   // no substring in Latin text
+  const zh = [{ word: '这个缓存' }, { word: '画面' }];
+  assert.deepEqual(cueMatches(zh, '缓存').map((w) => w.word), ['这个缓存']);       // CJK keeps the fallback
+  assert.deepEqual(cueMatches(zh, '画面').map((w) => w.word), ['画面']);
+});
+
 const HTML = `<!doctype html>
 <html lang="zh" data-composition-variables='[{"id":"t","type":"string","label":"t","default":"x"}]'>
 <head><meta charset="utf-8"><script src="vendor/gsap.min.js"></script></head>
@@ -179,6 +190,15 @@ test('default voice: Chinese on macOS uses say:Tingting, elsewhere Kokoro', () =
   assert.deepEqual(pickVoice(undefined, 'hello', 'darwin'), { engine: 'kokoro', id: 'af_heart' });
   assert.deepEqual(pickVoice('say:Meijia', '你好'), { engine: 'say', id: 'Meijia' });
   assert.deepEqual(pickVoice('zf_xiaobei', '你好'), { engine: 'kokoro', id: 'zf_xiaobei' });
+});
+
+test('default voice: a Spanish script gets a Spanish voice, never an English one', () => {
+  assert.deepEqual(pickVoice(undefined, '¿Sabías que la IA no es magia?', 'darwin'), { engine: 'kokoro', id: 'ef_dora' });
+  assert.deepEqual(pickVoice(undefined, 'Treinta segundos es lo que ocupas para usar la IA', 'linux'), { engine: 'kokoro', id: 'ef_dora' });
+  assert.deepEqual(pickVoice('say', 'Hola, esto es una prueba de voz'), { engine: 'say', id: 'Paulina' });
+  assert.deepEqual(pickVoice('say', 'hello there, this is a test'), { engine: 'say', id: 'Samantha' });
+  assert.equal(isSpanish('Make a launch video for the site'), false);
+  assert.equal(isSpanish('你好'), false);
 });
 
 test('wordsOf flattens timed words across sentences, in order', () => {

@@ -395,9 +395,16 @@ export function cueTerms(html) {
 }
 
 // Same matching rule as runtime/om.js OM.cue; returns the anchors that would throw.
+export function cueMatches(words, term) {
+  const norm = (s) => String(s).replace(/[\s\p{P}]+/gu, '').toLowerCase();
+  const target = norm(term);
+  const exact = words.filter((w) => norm(w.word) === target);
+  if (exact.length || !/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(target)) return exact;
+  return words.filter((w) => norm(w.word).includes(target));
+}
+
 export function missingCues(words, terms) {
-  const norm = (s) => String(s).replace(/\s+/g, '').toLowerCase();
-  return terms.filter(({ term, nth }) => words.filter((w) => norm(w.word).includes(norm(term))).length < nth);
+  return terms.filter(({ term, nth }) => cueMatches(words, term).length < nth);
 }
 
 const ROOT = /<([a-z][\w-]*)\b[^>]*\sdata-composition-id\s*=\s*["'][^"']+["'][^>]*>/i;
@@ -538,11 +545,18 @@ function say(textFile, outFile, voice, speed) {
 }
 
 // voice id → engine. Default: Chinese on macOS → say:Tingting (Kokoro's Chinese goes through espeak
-// without tones and is hard to understand); everything else → Kokoro.
+// without tones and is hard to understand); Spanish → Kokoro ef_dora (macOS fallback say:Paulina, es-MX);
+// everything else → Kokoro af_heart. An English voice reading a Spanish script sounds foreign, so the
+// script's language picks the voice, not the platform.
+const ES = /[áéíóúñ¿¡]/i;
+const ES_WORDS = /(^|[^\p{L}])(que|de|la|el|los|las|por|para|con|una|es|lo|tu|qué|cómo|esto)(?=[^\p{L}]|$)/giu;
+export const isSpanish = (text) => !HAN.test(text) && (ES.test(text) || (String(text).match(ES_WORDS) || []).length >= 3);
+const sayFor = (text) => (HAN.test(text) ? 'Tingting' : isSpanish(text) ? 'Paulina' : 'Samantha');
+
 export function pickVoice(voice, text, platform = process.platform) {
   const zh = HAN.test(text);
-  if (!voice) return platform === 'darwin' && zh ? { engine: 'say', id: 'Tingting' } : { engine: 'kokoro', id: zh ? 'zf_xiaobei' : 'af_heart' };
-  if (voice === 'say') return { engine: 'say', id: zh ? 'Tingting' : 'Samantha' };
+  if (!voice) return platform === 'darwin' && zh ? { engine: 'say', id: 'Tingting' } : { engine: 'kokoro', id: zh ? 'zf_xiaobei' : isSpanish(text) ? 'ef_dora' : 'af_heart' };
+  if (voice === 'say') return { engine: 'say', id: sayFor(text) };
   if (voice.startsWith('say:')) return { engine: 'say', id: voice.slice(4) };
   return { engine: 'kokoro', id: voice.replace(/^kokoro:/, '') };
 }
@@ -632,7 +646,7 @@ function fromScript(text, keep, tmp, opts, log) {
       if (v.engine === 'say') say(txt, raw, v.id, speed); else kokoro(txt, raw, v.id, speed, log);
     } catch (e) {
       if (!(e instanceof KokoroMissing) || opts.voice || process.platform !== 'darwin') throw e;
-      v = { engine: 'say', id: HAN.test(text) ? 'Tingting' : 'Samantha' };
+      v = { engine: 'say', id: sayFor(text) };
       log(`Kokoro is not set up — using macOS say:${v.id}. (${KOKORO_SETUP})`);
       raw = join(tmp, `s${i}.aiff`);
       say(txt, raw, v.id, speed);

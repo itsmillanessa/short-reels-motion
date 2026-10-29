@@ -63,16 +63,18 @@
     words = node ? (JSON.parse(node.textContent).words || []) : [];
     return words;
   };
-  const norm = (s) => String(s).replace(/\s+/g, '').toLowerCase();
+  // Whole words first: in Spanish or English a substring hit is always wrong ("dos" inside "segundos").
+  // Only CJK, written without spaces, falls back to a substring when no word matches exactly.
+  // Same rule as cueMatches() in cli/lib/voice.js.
+  const norm = (s) => String(s).replace(/[\s\p{P}]+/gu, '').toLowerCase();
+  const CJK = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
   OM.cue = function (word, nth, edge) {
     const target = norm(word), list = load();
-    let seen = 0;
-    for (const w of list) {
-      if (norm(w.word) === target || norm(w.word).includes(target)) {
-        if (++seen === (nth || 1)) return edge === 'end' ? w.end : w.start;
-      }
-    }
-    throw new Error(`huashu-motion: no cue "${word}"${nth > 1 ? ` #${nth}` : ''} in om-cues (${list.length} words)`);
+    let hits = list.filter((w) => norm(w.word) === target);
+    if (!hits.length && CJK.test(target)) hits = list.filter((w) => norm(w.word).includes(target));
+    const w = hits[(nth || 1) - 1];
+    if (w) return edge === 'end' ? w.end : w.start;
+    throw new Error(`short-reels-motion: no cue "${word}"${nth > 1 ? ` #${nth}` : ''} in om-cues (${list.length} words)`);
   };
   OM.words = () => load().slice();
 
