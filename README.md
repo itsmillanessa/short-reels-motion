@@ -18,7 +18,7 @@ las zonas seguras de cada app y un editor en el navegador donde comentas sobre e
 
 </div>
 
-> **Estado:** en desarrollo, todavía privado. Faltan la ingesta de grabaciones del celular, la exportación por plataforma,
+> **Estado:** en desarrollo. Faltan la ingesta de grabaciones del celular, la exportación por plataforma,
 > ElevenLabs integrado y los videos demo propios. Ver [Hoja de ruta](#hoja-de-ruta).
 
 ---
