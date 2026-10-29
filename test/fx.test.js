@@ -194,20 +194,16 @@ test('applyChain: bass chain stays dry and centred; keys chain widens a mono sou
   assert.ok(rms(kl.map((v, i) => v - kr[i]), 24000) > 0.01, 'keys get stereo');
 });
 
-test('performance: 30 s stereo plate < 1.5 s, one channel chain < 1 s', { skip: process.env.CI && 'timing depends on the machine: a shared CI runner is not the one the limits were set on' }, (t) => {
+// A timing test measures the machine as much as the code, so it runs alone: `npm run test:perf`. Inside `npm test` every
+// file runs in parallel (Chrome renders included) and on a 20-thread Windows machine drums took 1.3–2.4 s there, even
+// counted in CPU time, and 0.6 s alone. A shared CI runner is not the machine the limits were set on either.
+const timingSkip = (process.env.npm_lifecycle_event === 'test' && 'timing: run it alone with npm run test:perf') || (process.env.CI && 'timing depends on the machine');
+test('performance: 30 s stereo plate < 1.5 s, one channel chain < 1 s', { skip: timingSkip }, (t) => {
   const mk = () => { const L = noiseBuf(30, 0.3), R = noiseBuf(30, 0.3); return [L, R]; };
-  // The suite runs its files in parallel, and a run that waits for the CPU is not a slow run: each run counts the CPU
-  // time this process got (when it is less than the clock's), and the best of up to three is kept. On a 20-core Windows
-  // machine the clock said 1.9–2.4 s for drums inside the suite, 0.6 s alone.
+  // the best of up to three runs: a background task can still take the CPU for one of them
   const best = (limit, fn) => {
     let ms = Infinity;
-    for (let i = 0; i < 3 && ms >= limit; i++) {
-      const [L, R] = mk();
-      const t0 = performance.now(), c0 = process.cpuUsage();
-      fn(L, R);
-      const cpu = process.cpuUsage(c0);
-      ms = Math.min(ms, performance.now() - t0, (cpu.user + cpu.system) / 1000);
-    }
+    for (let i = 0; i < 3 && ms >= limit; i++) { const [L, R] = mk(); const t0 = performance.now(); fn(L, R); ms = Math.min(ms, performance.now() - t0); }
     return ms;
   };
   const tp = best(1500, (L, R) => plate(L, R, { preset: 'hall' }));

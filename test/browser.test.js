@@ -9,10 +9,11 @@ const fake = (name) => { const f = join(mkdtempSync(join(tmpdir(), 'om-br-')), n
 
 test('browser: OM_CHROME first, then installed apps in order; a missing OM_CHROME falls through', () => {
   const a = fake('a'), b = fake('b'), home = mkdtempSync(join(tmpdir(), 'om-home-'));
+  const nope = join(home, 'nope');   // not '/nope': on Windows that is C:\nope, which a machine can have
   assert.equal(findChrome({ env: { OM_CHROME: a }, apps: [b], home }), a);
-  assert.equal(findChrome({ env: {}, apps: ['/nope', b, a], home }), b);
-  assert.equal(findChrome({ env: { OM_CHROME: '/nope' }, apps: [b], home }), b);
-  assert.equal(findChrome({ env: {}, apps: ['/nope'], home }), null);
+  assert.equal(findChrome({ env: {}, apps: [nope, b, a], home }), b);
+  assert.equal(findChrome({ env: { OM_CHROME: nope }, apps: [b], home }), b);
+  assert.equal(findChrome({ env: {}, apps: [nope], home }), null);
   assert.deepEqual(chromeCandidates({ env: { OM_CHROME: a }, apps: [b], home }).map((c) => c.source), ['OM_CHROME', 'installed']);
 });
 
