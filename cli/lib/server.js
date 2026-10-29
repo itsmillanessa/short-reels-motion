@@ -16,6 +16,7 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; ch
 const STATIC = {
   '/_om/player.js': join(PKG, 'runtime/om-player.js'),
   '/_om/engine.js': join(PKG, 'runtime/om-engine.js'),
+  '/_om/safezones.js': join(PKG, 'cli/lib/safezones.js'),
 };
 
 export function startStudio(project, { port = 4848, host = '127.0.0.1', lang = process.env.OM_LANG } = {}) {

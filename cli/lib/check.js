@@ -4,7 +4,8 @@
 //   page     opens the film in Chrome and samples frames: page errors, length bookkeeping, text that is cut off,
 //            covered or unreadable, blank first/last frames, and whether a frame depends on what was played before it
 // Errors stop a render from being right; warnings are things to look at. Layout findings can be waived per element
-// with data-layout-allow-occlusion, data-layout-allow-overflow and data-layout-allow-overlap.
+// with data-layout-allow-occlusion, data-layout-allow-overflow, data-layout-allow-overlap and data-layout-allow-safe-zone.
+// Vertical films (9:16) are also judged against the safe zones of TikTok, Reels and Shorts (safezones.js).
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,6 +14,7 @@ import zlib from 'node:zlib';
 import { openFilm } from './capture.js';
 import { isHdr, probeVideo } from './frames.js';
 import { OmError, readSource, readVariables } from './project.js';
+import { isVertical, platformsOf, unsafeText } from './safezones.js';
 
 const GENERIC = new Set(['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 'ui-sans-serif', 'ui-serif', 'ui-monospace', 'ui-rounded', '-apple-system', 'blinkmacsystemfont', 'emoji', 'math', 'fangsong', 'inherit', 'initial', 'unset', 'revert', 'none']);
 
@@ -209,7 +211,7 @@ const LAYOUT = (t) => `(() => {
     const w = Math.min(a.r.right, b.r.right) - Math.max(a.r.left, b.r.left), h = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
     if (w > 0 && h > 0 && w * h > 0.2 * Math.min(a.r.width * a.r.height, b.r.width * b.r.height)) out.push({ code: 'text-overlap', message: a.name + ' "' + a.text + '" overlaps ' + b.name + ' "' + b.text + '"' });
   }
-  return { issues: out, boxes: texts.map((t) => ({ name: t.name, text: t.text, x: t.r.left, y: t.r.top, w: t.r.width, h: t.r.height, large: t.size >= 24 || (t.bold && t.size >= 18.66) })) };
+  return { W, H, issues: out, boxes: texts.map((t) => ({ name: t.name, text: t.text, x: t.r.left, y: t.r.top, w: t.r.width, h: t.r.height, large: t.size >= 24 || (t.bold && t.size >= 18.66), safe: !t.zoomed && !allow(t.el, 'safe-zone') })) };
 })()`;
 
 export async function checkPage(project, { samples = 24, fps = 30, onLog = () => {} } = {}) {
@@ -242,9 +244,13 @@ export async function checkPage(project, { samples = 24, fps = 30, onLog = () =>
     const list = [...times].filter((t) => t >= 0 && t <= last).sort((a, b) => a - b).slice(0, Math.max(samples, 2));
     const seenIssue = new Map();
     let firstShot = null, lastShot = null;
+    // vertical films are judged against the feeds' interface (data-platforms on the root narrows which feeds)
+    let platforms = [];
+    try { platforms = platformsOf(await film.evaluate(`document.querySelector('[data-composition-id]')?.getAttribute('data-platforms') ?? null`)); } catch (e) { add('error', 'platforms', e.message); }
     for (const t of list) {
       await film.seek(t);
-      const { issues, boxes } = await film.evaluate(LAYOUT(t));
+      const { W, H, issues, boxes } = await film.evaluate(LAYOUT(t));
+      if (platforms.length && isVertical(W, H)) issues.push(...unsafeText(boxes, platforms, W, H));
       for (const x of issues) { const k = x.code + x.message; if (!seenIssue.has(k)) { seenIssue.set(k, t); add('warning', x.code, x.message, t); } }
       const img = decodePng(await film.shot({ format: 'png' }));
       if (t === 0) firstShot = img;

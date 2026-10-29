@@ -51,6 +51,11 @@ select.lang { appearance: none; -webkit-appearance: none; background: transparen
 .frame om-player { display: block; width: 100%; height: 100%; aspect-ratio: auto; background: transparent; }
 .frame om-player.staged { position: absolute; inset: 0; visibility: hidden; pointer-events: none; }
 .overlay { position: absolute; inset: 0; cursor: default; }
+.safe { position: absolute; inset: 0; pointer-events: none; }
+.safe .band { position: absolute; background: repeating-linear-gradient(135deg, #e5484d2e 0 6px, #e5484d14 6px 12px); outline: 1px dashed #e5484db3; outline-offset: -1px; }
+.safe .band span { position: absolute; left: 6px; top: 4px; font: 600 10px/1.2 system-ui, sans-serif; color: #fff; background: #e5484dcc; padding: 2px 5px; border-radius: 3px; white-space: nowrap; }
+.safe .band.right span { left: auto; right: 4px; writing-mode: vertical-rl; }
+.safe .band.bottom span { top: auto; bottom: 4px; }
 .stage.commenting .overlay { cursor: crosshair; }
 .hover-box, .select-box { position: absolute; pointer-events: none; border: 1.5px solid var(--blue); border-radius: 2px; }
 .hover-box { border-style: dashed; opacity: .8; }
