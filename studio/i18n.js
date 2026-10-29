@@ -217,8 +217,15 @@ let current = 'zh';
 export function setLang(code) { current = LANGS[code] ? code : 'en'; return current; }
 export function lang() { return current; }
 
+// The dictionaries write shortcuts the macOS way (⌘Z, ⌘↩). On Windows and Linux the same shortcuts are Ctrl (studio.js
+// accepts either key), so the labels say Ctrl there.
+export const isMac = (nav = globalThis.navigator) => /Mac|iPhone|iPad/i.test(nav?.userAgentData?.platform || nav?.platform || '');
+let mac = isMac();
+export function setMac(on) { mac = !!on; }
+export const keys = (s, onMac = mac) => (onMac ? s : s.replace(/⌘↩/g, 'Ctrl+Enter').replace(/⌘/g, 'Ctrl+'));
+
 export function t(key, vars = {}) {
-  const s = LANGS[current]?.[key] ?? LANGS.zh[key] ?? key;
+  const s = keys(LANGS[current]?.[key] ?? LANGS.zh[key] ?? key);
   return s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined ? String(vars[k]) : `{${k}}`));
 }
 
