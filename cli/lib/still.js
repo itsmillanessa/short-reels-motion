@@ -1,6 +1,6 @@
-// om still — a frame of any HTML page as a PNG: the direction key frames and treatment stills that come
+// srm still — a frame of any HTML page as a PNG: the direction key frames and treatment stills that come
 // before (or beside) the project's index.html. With --at, the page's first timeline is sought to that time.
-// Same capture path as om render, so a still is what the render will show.
+// Same capture path as srm render, so a still is what the render will show.
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { capture } from './capture.js';
@@ -19,8 +19,16 @@ export async function still(input, { at = null, out = null } = {}) {
   let shots;
   try { ({ shots } = await capture(file, { times, size: [w, h], lenient: true })); }
   catch (e) { throw e instanceof OmError ? e : new OmError(`screenshot failed: ${e.message}`); }
+  // --out: one time → that file (or into that folder); several → a .png names them all, one per time beside it
+  // (s.png → s-1.00s.png, s-2.00s.png); anything else is a folder
+  const where = (t) => {
+    const tag = t == null ? '' : `-${t.toFixed(2)}s`;
+    if (out && times.length === 1 && !(existsSync(out) && statSync(out).isDirectory())) return resolve(out);
+    if (out && /\.png$/i.test(out)) return resolve(out.replace(/\.png$/i, `${tag}.png`));
+    return resolve(join(out || dirname(file), `${name}${tag}.png`));
+  };
   const outs = shots.map(({ t, png }) => {
-    const target = resolve(out && times.length === 1 ? out : join(out || dirname(file), `${name}${t == null ? '' : `-${t.toFixed(2)}s`}.png`));
+    const target = where(t);
     mkdirSync(dirname(target), { recursive: true });
     writeFileSync(target, png);
     return target;

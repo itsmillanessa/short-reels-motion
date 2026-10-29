@@ -127,7 +127,7 @@ iframe { display: block; border: 0; background: transparent; }
           return;
         }
         if (win.__omBootFailed) return this._fail(`the film did not start: ${win.__omBootFailed}`);
-        if (!win.__omEngine && performance.now() - t0 > 3000) return this._fail('this page has no Short Reels Motion engine (runtime/om-engine.js) — open it through om studio or om export');
+        if (!win.__omEngine && performance.now() - t0 > 3000) return this._fail('this page has no Short Reels Motion engine (runtime/om-engine.js) — open it through srm studio or srm export');
         if (performance.now() - t0 > 60000) return this._fail('the film did not become ready within a minute');
         setTimeout(poll, 30);
       };

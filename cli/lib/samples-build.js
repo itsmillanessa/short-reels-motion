@@ -1,4 +1,4 @@
-// om samples build — assembles the real-instrument pack from public-domain (CC0) libraries, plus two CC-BY
+// srm samples build — assembles the real-instrument pack from public-domain (CC0) libraries, plus two CC-BY
 // pianos (the grand and an electric). Each file is fetched from its upstream repository at a pinned commit,
 // trimmed (leading silence off, a few seconds kept, faded), resampled to 48 kHz FLAC or Opus (stereo kept as
 // recorded, mono stays mono), and its true pitch is measured (names in sample libraries are sometimes an octave off). Multi-mic
@@ -187,7 +187,7 @@ function graph(spec, nIn, tail) {
 const channelsOf = (f) => Number(spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'a:0', '-show_entries', 'stream=channels', '-of', 'csv=p=0', f]).stdout.toString().trim()) || 1;
 
 export async function buildSamples({ out = packDir(), only = null, log = () => {} } = {}) {
-  if (spawnSync('ffmpeg', ['-version']).status !== 0) throw new OmError('om samples build needs ffmpeg');
+  if (spawnSync('ffmpeg', ['-version']).status !== 0) throw new OmError('srm samples build needs ffmpeg');
   const cache = join(out, '.src');
   mkdirSync(cache, { recursive: true });
   const jobs = [];

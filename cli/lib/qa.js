@@ -1,4 +1,4 @@
-// om qa — what a frame-by-frame look at a render can catch automatically. Reads the decoded video
+// srm qa — what a frame-by-frame look at a render can catch automatically. Reads the decoded video
 // at low resolution and reports: single-frame pops (a frame that jumps and jumps back), dead time
 // (stretches where nothing moves), hard cuts, whether the last frame matches the first (loops), and
 // the motion curve per second so a flat film is visible as a flat line.
@@ -96,7 +96,7 @@ export function qa(file, { loop = false } = {}) {
 
 export function report(r) {
   const lines = [`${r.file}  ${r.width}×${r.height}  ${r.fps.toFixed(2)} fps  ${r.duration.toFixed(2)} s`];
-  lines.push(r.pops.length ? `✗ ${r.pops.length} single-frame pop(s): ${r.pops.slice(0, 12).map((p) => p.at + 's').join(', ')} — look at these frames (om look <dir> --at …); usually an element shown one frame early or a fromTo rendering its start state` : '✓ no single-frame pops');
+  lines.push(r.pops.length ? `✗ ${r.pops.length} single-frame pop(s): ${r.pops.slice(0, 12).map((p) => p.at + 's').join(', ')} — look at these frames (srm look <dir> --at …); usually an element shown one frame early or a fromTo rendering its start state` : '✓ no single-frame pops');
   lines.push(r.dead.length ? `${r.dead.some((x) => x.seconds > 2) ? '✗' : '·'} still for ≥1 s: ${r.dead.map((x) => `${x.from}–${x.to}s`).join(', ')} — fine for a reading hold or an end card, dead time anywhere else` : '✓ no stretch of ≥1 s without motion');
   lines.push(`· ${r.cuts.length} hard cut(s)${r.cuts.length ? ': ' + r.cuts.slice(0, 20).join(', ') + 's' : ''}  (average shot ${(r.duration / (r.cuts.length + 1)).toFixed(1)} s)`);
   lines.push(`· motion per second: ${r.motion.perSecond.join(' ')}  (contrast ${r.motion.contrast}${r.motion.contrast < 0.35 ? ' — very even: the film may feel flat; give it fast and slow moments' : ''})`);

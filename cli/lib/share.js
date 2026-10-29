@@ -23,7 +23,7 @@ function probe(file) {
 export function newestRender(project) {
   const dir = join(project.root, 'out');
   const vids = existsSync(dir) ? readdirSync(dir).filter((n) => /\.(mp4|mov|webm)$/i.test(n) && statSync(join(dir, n)).size > 0).map((n) => join(dir, n)) : [];
-  if (!vids.length) throw new OmError('nothing rendered yet — run `om render` first');
+  if (!vids.length) throw new OmError('nothing rendered yet — run `srm render` first');
   return vids.sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0];
 }
 
@@ -96,6 +96,6 @@ Made with Short Reels Motion · ${REPO_URL} #shortreelsmotion
   const mdFile = join(dir, 'share.md');
   writeFileSync(mdFile, md);
   const lines = [`share    ${dir}`, `  ${rel(gif).padEnd(34)} ${span}, ${g.px}px ${g.fps} fps, ${mb(g.size)}${g.fits ? '' : `  — still over ${mb(LIMIT)}: pass a shorter --from/--to`}`, `  ${rel(mdFile).padEnd(34)} write the post into it (the user's language), then show the user`];
-  if (stale) lines.push(`  ! ${rel(src)} is older than index.html — run om render first if the film changed since`);
+  if (stale) lines.push(`  ! ${rel(src)} is older than index.html — run srm render first if the film changed since`);
   return lines.join('\n');
 }

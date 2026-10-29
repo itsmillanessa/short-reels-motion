@@ -1,4 +1,4 @@
-// Real-instrument samples. `om samples build` assembles a pack of public-domain recordings (piano, string
+// Real-instrument samples. `srm samples build` assembles a pack of public-domain recordings (piano, string
 // section, harp, mallets, guitar, flute, horn, a drum kit…); when it is installed, the score plays those
 // instruments from the recordings — nearest sample, resampled to pitch, velocity picks the layer, round
 // robins alternate — and everything else (and every instrument when there is no pack) stays synthesized.

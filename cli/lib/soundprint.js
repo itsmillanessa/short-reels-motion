@@ -1,4 +1,4 @@
-// What a score sounds like at a glance — its tempo, key and band — so `om sound` can say when a film's music is
+// What a score sounds like at a glance — its tempo, key and band — so `srm sound` can say when a film's music is
 // the same music as the bundled example scores or as the films made recently on this machine.
 // 2026-10-22: ten test films in a row (two products, four skill versions) all played Signal's band — synpluck,
 // supersaw, violins, piano, synbass, an 808 and a pop kit, same gains — at 120 BPM in E/A/D minor: the agent
@@ -59,7 +59,7 @@ export function remember(root, print) {
 
 const fmt = (p) => `${p.bpm} BPM ${p.key} · ${p.band.join(' ')}`;
 
-// Lines for the om sound report: this film's soundprint, and what it repeats.
+// Lines for the srm sound report: this film's soundprint, and what it repeats.
 export function soundprintReport(root, text) {
   const print = soundprint(text), lines = [`print    ${fmt(print)}`];
   for (const c of cases()) {

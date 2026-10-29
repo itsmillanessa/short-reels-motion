@@ -13,7 +13,7 @@ export const sha = (data) => createHash('sha256').update(data).digest('hex');
 export function openProject(dir = '.') {
   const root = resolve(dir);
   const index = join(root, 'index.html');
-  if (!existsSync(index)) throw new OmError(`no index.html in ${root} — run \`om new <name>\` first`, 404);
+  if (!existsSync(index)) throw new OmError(`no index.html in ${root} — run \`srm new <name>\` first`, 404);
   return { root, index, om: join(root, '.om') };
 }
 
@@ -37,7 +37,7 @@ export function writeSource(project, html, baseToken, label) {
 
 // ---------- history ----------
 // Every write keeps the previous source as .om/history/NNNNNN.html plus one log line, so undo is
-// always "go back one save" no matter who saved (studio, `om set`, or the agent via `om save`).
+// always "go back one save" no matter who saved (studio, `srm set`, or the agent via `om save`).
 function historyDir(project) {
   const dir = join(project.om, 'history');
   mkdirSync(dir, { recursive: true });
@@ -209,6 +209,14 @@ export function setVariables(html, values) {
     if (typeof v !== 'string') continue;
     const re = new RegExp(`(<([a-z][\\w-]*)\\b[^>]*\\sdata-var-text\\s*=\\s*["']${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["'][^>]*>)([^<]*)(</\\2>)`, 'gi');
     out = out.replace(re, (_, open, tag, _old, close) => open + v.replace(/&/g, '&amp;').replace(/</g, '&lt;') + close);
+  }
+  // …and the stylesheet's own default of a colour the script copies into a custom property (:root { --accent: #FFD23F }),
+  // so the first paint before the script runs, and anyone reading the CSS, see the colour the film uses (the kit's pink
+  // read as the template's yellow, 2026-10-28).
+  for (const [id, v] of Object.entries(coerced)) {
+    if (found.list.find((d) => d.id === id).type !== 'color') continue;
+    const prop = new RegExp(`(--${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*:\\s*)#[0-9a-fA-F]{3,8}(?![0-9a-fA-F])`, 'g');
+    out = out.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi, (_, open, css, close) => open + css.replace(/(:root\s*{)([^}]*)(})/g, (__, a, body, c) => a + body.replace(prop, `$1${v}`) + c) + close);
   }
   return out;
 }

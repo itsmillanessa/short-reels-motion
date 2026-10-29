@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// srm (also om) — the Short Reels Motion command line, built on huashu-motion (MIT). Agents and people use the same commands.
+// srm (also short-reels-motion) — the Short Reels Motion command line, built on huashu-motion (MIT). Agents and people use the same commands.
 import { spawn, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -17,39 +17,39 @@ const VERSION = JSON.parse(readFileSync(join(PKG, 'package.json'), 'utf8')).vers
 const HELP = `Short Reels Motion ${VERSION} — shorts, reels and TikToks made by your coding agent, edited by pointing at the frame.
 (also short-reels-motion; the engine's docs say om, which is the same command; built on huashu-motion by Huashu, MIT)
 
-  om grab <url|folder> [dir]   the product's real material into <dir>/materials/: page screenshots, logo, images, its colours and type (a URL), or the project's own screenshots, icons, media and stylesheet colours (a folder)
-  om new <dir> [--template t]   start a project (om templates lists them)
-  om templates                  starter projects and what each is good for
-  om demo [dir]                 copy the showcase film and open it in the studio
-  om studio [dir] [--lang zh|en|es]   live preview, direct edits, comments for the agent (UI language; also OM_LANG)
-  om inbox [dir] [--wait]       list comments; --wait blocks, claims the next one and prints it
-  om look <id|--at sec> [dir]   save the frame (and a close-up of the clicked spot) as PNGs to look at
-  om done <id> [dir] --note …   mark a comment handled (the studio shows the note)
-  om fonts [add <family> [dir]] list the bundled typefaces, or install one into a project
-  om vars [dir]                 list editable variables
-  om set key=value… [dir]       change variable defaults in index.html
-  om scan [dir]                 JSON map of variables, objects and scenes (for agents)
-  om undo [dir]                 restore the previous saved version
-  om render [dir] [--format mp4|mov|webm|gif] [--fps 30]   export to <dir>/out/
-  om render [dir] --blur [n]     motion blur: n subframes averaged per frame (default up to 8; fast moves stop strobing)
-  om render [dir] --silent       export without the "no soundtrack" warning
-  om render [dir] [--workers n] [--video extract|seek] [--frames jpg|png]   browsers at once (default: up to 8), how footage is read, the footage cache
-  om check [dir] [--samples n] [--source] [--json]   before rendering: structure, scripts, files, motion rules, then sampled frames (cut-off, covered or low-contrast text, blank ends, history-dependent frames)
-  om qa [dir|video] [--loop]     check a render: single-frame pops, dead time, hard cuts, motion curve, loop seam
-  om render [dir] --transparent  overlay for 剪映/Premiere: ProRes 4444 with alpha (or --format webm), no sound
-  om fork <dir> <newdir> --size 1080x1920   copy into a new frame size; the re-layout lands in the inbox
-  om voice <dir> --text <file|"文本"> | --audio <file> [--voice say:Tingting|zf_xiaobei] [--fit]   narration, word cues, .srt
-  om sound [dir] [--list] [--off]   music + sound effects from the scenes, OM.sfx hits and an om-score (om render refreshes it)
-  om still <page.html|dir> [--at 0,2.5] [--out file]   a PNG of any page (direction key frames, treatment stills)
-  om swatch [directions.md] [--out file]   the Palette: lines of the direction cards as one PNG, with contrast and house-look checks
-  om learn [topics…]            before a film: this user's preferences + past experience on those topics
-  om learn harvest [dir]        after a film: its studio comments and edits, and what is worth keeping
-  om learn add "…" --kind preference|observed|verified --topics a,b --evidence "…" [--do "…"]   keep one finding
-  om samples [build [ids…]]      the real-instrument pack (piano, strings, drums…; CC0/CC-BY, ~55 MB): status, or build it once
-  om share [dir] [--from s] [--to s]   after a render: a ≤10 MB GIF (opening + end frame) and share.md (post, README header)
-  om export html [dir] [--out folder] [--title …] [--desc …]   share page (player, Remix prompt, source.zip) for any static host
-  om doctor                     check Node, FFmpeg and the renderer (and what is optional: whisper, Kokoro, the skill)
-  om kit [set key=value… | import <file>]   the creator's kit: handle, cta, colours, lang, platforms, voice, speed, character.* — every new project starts with it
+  srm grab <url|folder> [dir]   the product's real material into <dir>/materials/: page screenshots, logo, images, its colours and type (a URL), or the project's own screenshots, icons, media and stylesheet colours (a folder)
+  srm new <dir> [--template t]   start a project (srm templates lists them)
+  srm templates                  starter projects and what each is good for
+  srm demo [dir]                 copy the showcase film and open it in the studio
+  srm studio [dir] [--lang zh|en|es]   live preview, direct edits, comments for the agent (UI language; also OM_LANG)
+  srm inbox [dir] [--wait]       list comments; --wait blocks, claims the next one and prints it
+  srm look <id|--at sec> [dir]   save the frame (and a close-up of the clicked spot) as PNGs to look at
+  srm done <id> [dir] --note …   mark a comment handled (the studio shows the note)
+  srm fonts [add <family> [dir]] list the bundled typefaces, or install one into a project
+  srm vars [dir]                 list editable variables
+  srm set key=value… [dir]       change variable defaults in index.html
+  srm scan [dir]                 JSON map of variables, objects and scenes (for agents)
+  srm undo [dir]                 restore the previous saved version
+  srm render [dir] [--format mp4|mov|webm|gif] [--fps 30]   export to <dir>/out/
+  srm render [dir] --blur [n]     motion blur: n subframes averaged per frame (default up to 8; fast moves stop strobing)
+  srm render [dir] --silent       export without the "no soundtrack" warning
+  srm render [dir] [--workers n] [--video extract|seek] [--frames jpg|png]   browsers at once (default: up to 8), how footage is read, the footage cache
+  srm check [dir] [--samples n] [--source] [--json]   before rendering: structure, scripts, files, motion rules, then sampled frames (cut-off, covered or low-contrast text, blank ends, history-dependent frames)
+  srm qa [dir|video] [--loop]     check a render: single-frame pops, dead time, hard cuts, motion curve, loop seam
+  srm render [dir] --transparent  overlay for 剪映/Premiere: ProRes 4444 with alpha (or --format webm), no sound
+  srm fork <dir> <newdir> --size 1080x1920   copy into a new frame size; the re-layout lands in the inbox
+  srm voice <dir> --text <file|"文本"> | --audio <file> [--voice say:Tingting|zf_xiaobei] [--fit]   narration, word cues, .srt
+  srm sound [dir] [--list] [--off]   music + sound effects from the scenes, OM.sfx hits and an om-score (srm render refreshes it)
+  srm still <page.html|dir> [--at 0,2.5] [--out file.png|folder]   a PNG of any page (key frames, treatment stills); several times → file-0.00s.png, file-2.50s.png
+  srm swatch [directions.md] [--out file]   the Palette: lines of the direction cards as one PNG, with contrast and house-look checks
+  srm learn [topics…]            before a film: this user's preferences + past experience on those topics
+  srm learn harvest [dir]        after a film: its studio comments and edits, and what is worth keeping
+  srm learn add "…" --kind preference|observed|verified --topics a,b --evidence "…" [--do "…"]   keep one finding
+  srm samples [build [ids…]]      the real-instrument pack (piano, strings, drums…; CC0/CC-BY, ~55 MB): status, or build it once
+  srm share [dir] [--from s] [--to s]   after a render: a ≤10 MB GIF (opening + end frame) and share.md (post, README header)
+  srm export html [dir] [--out folder] [--title …] [--desc …]   share page (player, Remix prompt, source.zip) for any static host
+  srm doctor                     check Node, FFmpeg and the renderer (and what is optional: whisper, Kokoro, the skill)
+  srm kit [set key=value… | import <file>]   the creator's kit: handle, cta, colours, lang, platforms, voice, speed, character.* — every new project starts with it
 
 Docs: skills/short-reels-motion/SKILL.md`;
 
@@ -99,9 +99,9 @@ function describe(project, c) {
     c.element ? `\nELEMENT\n  ${c.element.replace(/\s+/g, ' ').slice(0, 400)}` : '',
     s.variables.length ? `\nVARIABLES\n` + s.variables.map((v) => `  ${v.id} = ${JSON.stringify(v.value)}`).join('\n') : '',
     s.scenes.length ? `\nSCENES  ${s.scenes.map((x) => x.id).join(' → ')}` : '',
-    `\nLOOK  om look ${c.id} ${project.root}   (saves the frame and a close-up of the clicked spot)`,
+    `\nLOOK  srm look ${c.id} ${project.root}   (saves the frame and a close-up of the clicked spot)`,
     `\nNEXT  Edit index.html to do exactly this (keep everything else). The studio reloads on save.`,
-    `      Then: om done ${c.id} --note "<one line on what changed>"   (from ${project.root})`,
+    `      Then: srm done ${c.id} --note "<one line on what changed>"   (from ${project.root})`,
   ].filter(Boolean).join('\n');
 }
 
@@ -114,9 +114,9 @@ async function main() {
     case 'version': case '--version': case '-v': return out(VERSION);
 
     case 'new': {
-      if (!pos[0]) throw new OmError('usage: om new <dir>');
+      if (!pos[0]) throw new OmError('usage: srm new <dir>');
       const tpl = join(PKG, 'templates', flags.template || 'blank');
-      if (!existsSync(join(tpl, 'index.html'))) throw new OmError(`no template "${flags.template}" — run \`om templates\``);
+      if (!existsSync(join(tpl, 'index.html'))) throw new OmError(`no template "${flags.template}" — run \`srm templates\``);
       const dir = copyTemplate(tpl, pos[0]);
       // template.json "copy": {"<package path>": "<project path>"} pulls shared runtimes/fonts in, so
       // templates don't each carry their own copy in the repository.
@@ -151,7 +151,7 @@ async function main() {
 
     case 'demo': {
       const src = join(PKG, 'examples', 'showcase');
-      if (!existsSync(src)) throw new OmError('this build has no showcase yet — try `om new my-film`');
+      if (!existsSync(src)) throw new OmError('this build has no showcase yet — try `srm new my-film`');
       const dir = copyTemplate(src, pos[0] || 'short-reels-motion-demo');
       process.stdout.write(`copied the showcase to ${dir}\n`);
       return studio(dir, flags);
@@ -188,7 +188,7 @@ async function main() {
       let t = Number(flags.at), x = null, y = null;
       if (byComment) {
         const c = comments(project).find((k) => k.id === pos[0]);
-        if (!c) throw new OmError(`no comment ${pos[0]} — usage: om look <comment-id> [dir]  or  om look [dir] --at 2.5`);
+        if (!c) throw new OmError(`no comment ${pos[0]} — usage: srm look <comment-id> [dir]  or  srm look [dir] --at 2.5`);
         if (c.t == null) throw new OmError(`comment ${c.id} has no time`);
         ({ t, x, y } = c);
       }
@@ -214,7 +214,7 @@ async function main() {
     }
 
     case 'done': {
-      if (!pos[0]) throw new OmError('usage: om done <comment-id> [dir] --note "…"');
+      if (!pos[0]) throw new OmError('usage: srm done <comment-id> [dir] --note "…"');
       const project = openProject(pos[1] || '.');
       snapshot(project, readSource(project).html, `after ${pos[0]}`);
       resolveComment(project, pos[0], flags.note === true ? '' : flags.note || '');
@@ -230,7 +230,7 @@ async function main() {
     case 'fonts': {
       const { families, addFamily } = await import('./lib/fonts.js');
       if (pos[0] === 'add') {
-        if (!pos[1]) throw new OmError('usage: om fonts add "<family>" [dir]');
+        if (!pos[1]) throw new OmError('usage: srm fonts add "<family>" [dir]');
         const r = addFamily(openProject(pos[2] || '.'), pos[1]);
         return out(`added ${r.family} (${r.faces.join(', ')}) — use font-family: "${r.family}"`);
       }
@@ -247,11 +247,11 @@ async function main() {
     case 'set': {
       const pairs = pos.filter((p) => p.includes('='));
       const dir = pos.find((p) => !p.includes('=')) || '.';
-      if (!pairs.length) throw new OmError('usage: om set key=value [key=value…] [dir]');
+      if (!pairs.length) throw new OmError('usage: srm set key=value [key=value…] [dir]');
       const project = openProject(dir);
       const { html, token } = readSource(project);
       const values = Object.fromEntries(pairs.map((p) => [p.slice(0, p.indexOf('=')), p.slice(p.indexOf('=') + 1)]));
-      writeSource(project, setVariables(html, values), token, 'om set ' + Object.keys(values).join(', '));
+      writeSource(project, setVariables(html, values), token, 'srm set ' + Object.keys(values).join(', '));
       return out(`set ${Object.keys(values).join(', ')}`);
     }
 
@@ -273,7 +273,7 @@ async function main() {
       const src = readSource(project).html;
       if (!flags.transparent && !flags.silent && (hasSound(src) || declaresSound(src))) {
         prepare = async (page) => { let rewrote = false; log((await sound(project, { page, onWrite: () => { rewrote = true; } }, log)).split('\n')[0]); return rewrote; };
-      } else if (!flags.transparent && !flags.silent) log('warning  no soundtrack — run `om sound` first (or pass --silent if the film is meant to be silent)');
+      } else if (!flags.transparent && !flags.silent) log('warning  no soundtrack — run `srm sound` first (or pass --silent if the film is meant to be silent)');
       process.stderr.write('rendering in your Chrome…\n');
       const file = await render(project, { engine: flags.engine, prepare, video: flags.video === true ? undefined : flags.video, workers: flags.workers && Number(flags.workers), frameFormat: flags.frames === true ? undefined : flags.frames, tune: tuning(flags), allowPageErrors: !!flags['allow-page-errors'], format: flags.format, transparent: !!flags.transparent, blur: flags.blur === true ? true : flags.blur && Number(flags.blur), fps: flags.fps && Number(flags.fps), out: flags.out && resolve(flags.out), onLog: flags.verbose ? (l) => process.stderr.write(l + '\n') : () => {}, onNote: log, onWarn: (m) => process.stderr.write(`warning  ${m}\n`) });
       return out(file);
@@ -288,13 +288,13 @@ async function main() {
     }
 
     case 'qa': {
-      // om qa [dir|video] [--loop]: checks the newest render of a project, or a given video file.
+      // srm qa [dir|video] [--loop]: checks the newest render of a project, or a given video file.
       const { qa, report } = await import('./lib/qa.js');
       let file = pos[0] || '.';
       if (!/\.(mp4|mov|webm)$/i.test(file)) {
         const project = openProject(file), dir = join(project.root, 'out');
         const vids = existsSync(dir) ? readdirSync(dir).filter((n) => /\.(mp4|webm|mov)$/i.test(n)).map((n) => join(dir, n)) : [];
-        if (!vids.length) throw new OmError('nothing rendered yet — run `om render` first, or pass a video file');
+        if (!vids.length) throw new OmError('nothing rendered yet — run `srm render` first, or pass a video file');
         file = vids.sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0];
       }
       const r = qa(resolve(file), { loop: !!flags.loop });
@@ -302,10 +302,10 @@ async function main() {
     }
 
     case 'fork': {
-      if (!pos[0] || !pos[1] || !flags.size || flags.size === true) throw new OmError('usage: om fork <dir> <newdir> --size 1080x1920');
+      if (!pos[0] || !pos[1] || !flags.size || flags.size === true) throw new OmError('usage: srm fork <dir> <newdir> --size 1080x1920');
       const { fork, parseSize } = await import('./lib/fork.js');
       const r = fork(pos[0], pos[1], parseSize(flags.size));
-      return out(`forked ${r.from.width ?? '?'}×${r.from.height ?? '?'} → ${r.to.width}×${r.to.height}: ${r.project.root}\ninbox  ${r.comment.id} — re-lay it out for the new frame (om inbox ${pos[1]} --wait picks it up)`);
+      return out(`forked ${r.from.width ?? '?'}×${r.from.height ?? '?'} → ${r.to.width}×${r.to.height}: ${r.project.root}\ninbox  ${r.comment.id} — re-lay it out for the new frame (srm inbox ${pos[1]} --wait picks it up)`);
     }
 
     case 'sound': {
@@ -335,9 +335,9 @@ async function main() {
         resetPack();
         return out(r);
       }
-      if (pos[0]) throw new OmError('usage: om samples            show the installed pack\n       om samples build [ids…]  download and build it (or rebuild some instruments)');
+      if (pos[0]) throw new OmError('usage: srm samples            show the installed pack\n       srm samples build [ids…]  download and build it (or rebuild some instruments)');
       const pack = loadPack();
-      if (!pack) return out(`samples  none at ${packDir()} — music plays on synthesized instruments.\n         om samples build   fetches the real-instrument pack once (piano, string sections, drum kits…)`);
+      if (!pack) return out(`samples  none at ${packDir()} — music plays on synthesized instruments.\n         srm samples build   fetches the real-instrument pack once (piano, string sections, drum kits…)`);
       const ids = Object.keys(pack.instruments);
       return out(`samples  ${pack.dir}\n         ${ids.length} instruments: ${ids.join(' ')}\n         credits: ${pack.dir}/NOTICE.txt`);
     }
@@ -352,7 +352,7 @@ async function main() {
     }
 
     case 'grab': {
-      if (!pos[0]) throw new OmError('usage: om grab <url|folder> [dir]   (dir: the film project, default .)');
+      if (!pos[0]) throw new OmError('usage: srm grab <url|folder> [dir]   (dir: the film project, default .)');
       const { grab } = await import('./lib/grab.js');
       const root = resolve(pos[1] || '.');
       mkdirSync(root, { recursive: true });
@@ -363,10 +363,10 @@ async function main() {
       return out(share(openProject(pos[0] || '.'), { from: flags.from ?? 0, to: flags.to ?? null, video: flags.video ? resolve(flags.video) : null }));
     }
     case 'export': {
-      if (pos[0] !== 'html') throw new OmError('usage: om export html [dir] [--out folder]   (video: om render)');
+      if (pos[0] !== 'html') throw new OmError('usage: srm export html [dir] [--out folder]   (video: srm render)');
       const { exportHtml } = await import('./lib/export.js');
       const r = exportHtml(openProject(pos[1] || '.'), { out: flags.out, title: flags.title, description: flags.desc });
-      return out(`${r.dir}\n  index.html   open it, or put the folder on any static host (GitHub Pages, Vercel, npx serve)\n  source.zip   ${r.files.length} files — unzip and run om studio ${r.name}`);
+      return out(`${r.dir}\n  index.html   open it, or put the folder on any static host (GitHub Pages, Vercel, npx serve)\n  source.zip   ${r.files.length} files — unzip and run srm studio ${r.name}`);
     }
 
     case 'doctor': return doctor();
@@ -408,7 +408,7 @@ async function studio(dir, flags) {
     catch (e) { if (e.code !== 'EADDRINUSE') throw e; }
   }
   if (!started) throw new OmError(`no free port from ${port}`);
-  out(`studio  ${started.url}\nproject ${project.root}\n\nAgent loop: om inbox ${dir === '.' ? '' : dir + ' '}--wait   (Ctrl-C to stop the studio)`);
+  out(`studio  ${started.url}\nproject ${project.root}\n\nAgent loop: srm inbox ${dir === '.' ? '' : dir + ' '}--wait   (Ctrl-C to stop the studio)`);
   if (!flags['no-open']) openBrowser(started.url);
   await new Promise(() => {});
 }
@@ -447,6 +447,6 @@ function doctor() {
 }
 
 main().catch((e) => {
-  if (e instanceof OmError) { console.error(`om: ${e.message}`); process.exitCode = 1; }
+  if (e instanceof OmError) { console.error(`srm: ${e.message}`); process.exitCode = 1; }
   else { console.error(e); process.exitCode = 1; }
 });

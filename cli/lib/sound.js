@@ -1,4 +1,4 @@
-// om sound — the soundtrack, synthesized from the composition itself. A headless browser loads
+// srm sound — the soundtrack, synthesized from the composition itself. A headless browser loads
 // index.html and reads what it declares: the scene labels (music sections), OM.sfx hits (effects),
 // OM.music options and the narration words (ducking). Everything is synthesized here in plain JS —
 // no samples, no network, no dependencies — and the same source always gives the same file.
@@ -343,7 +343,7 @@ export { findChrome };
 // Load the page in Chrome (the same engine as the render: variables at their defaults, fonts and ready promises
 // awaited) and read the timeline back: labels, OM.sfx hits, OM.music options. `html` is the text about to be
 // written, which may be newer than the file on disk. `page`: a page that already has index.html loaded and not yet
-// seeked (om render lends one of its browsers) — read it instead of opening another.
+// seeked (srm render lends one of its browsers) — read it instead of opening another.
 export async function probe(project, html, page = null) {
   let film = page;
   if (!film) {
@@ -503,7 +503,7 @@ export async function sound(project, opts = {}, log = () => {}) {
   let { html, token } = readSource(project);
   if (opts.off) {
     const out = applySound(html, { off: true });
-    if (out !== html) writeSource(project, out, token, 'om sound --off');
+    if (out !== html) writeSource(project, out, token, 'srm sound --off');
     return 'sound    removed <audio id="om-sound"> — the film is silent (assets/sound.wav is kept)';
   }
   refreshRuntime(project, log);
@@ -535,7 +535,7 @@ export async function sound(project, opts = {}, log = () => {}) {
     if (m && m.key === key && stamp(wav) === m.wav) {
       const fresh = readSource(project);
       const out = applySound(fresh.html, { src: 'assets/sound.wav', duration: m.duration });
-      if (out !== fresh.html) { writeSource(project, out, fresh.token, 'om sound'); opts.onWrite?.(); }
+      if (out !== fresh.html) { writeSource(project, out, fresh.token, 'srm sound'); opts.onWrite?.(); }
       return m.report.replace(/^took .*$/m, `took     ${((Date.now() - t0) / 1000).toFixed(1)}s — nothing changed since the last run, assets/sound.wav reused (--fresh rebuilds it)`);
     }
   }
@@ -544,7 +544,7 @@ export async function sound(project, opts = {}, log = () => {}) {
   writeFileSync(wav, toWav(out2));
   const fresh = readSource(project);
   const out = applySound(fresh.html, { src: 'assets/sound.wav', duration: p.duration });
-  if (out !== fresh.html) { writeSource(project, out, fresh.token, 'om sound'); opts.onWrite?.(); }
+  if (out !== fresh.html) { writeSource(project, out, fresh.token, 'srm sound'); opts.onWrite?.(); }
 
   const counts = {};
   for (const h of hits) counts[h.name] = (counts[h.name] || 0) + 1;
@@ -573,7 +573,7 @@ export async function sound(project, opts = {}, log = () => {}) {
     const flat = body.length >= 3 && Math.max(...body.map((x) => x.db)) - Math.min(...body.map((x) => x.db)) < 3;
     lines.push(`energy   ${lv.map((x) => `${x.name} ${x.db.toFixed(1)}`).join(' · ')} dB RMS${flat ? ' — flat: every stretch within 3 dB, the film has no contour; give it a stop and a peak (rhythm.md)' : ' — should rise in steps, dip at the stop and peak at the drop (rhythm.md)'}`);
   }
-  lines.push(hits.length ? `effects  ${hits.length} hits: ${Object.entries(counts).map(([k, v]) => `${k}×${v}`).join(', ')}` : 'effects  none — mark the moments that land with OM.sfx(name, at) (om sound --list); a film without hits sounds like a slideshow');
+  lines.push(hits.length ? `effects  ${hits.length} hits: ${Object.entries(counts).map(([k, v]) => `${k}×${v}`).join(', ')}` : 'effects  none — mark the moments that land with OM.sfx(name, at) (srm sound --list); a film without hits sounds like a slideshow');
   if (voiceTag) lines.push(`voice    music ducked −10 dB and carved around 2 kHz under ${words.length} words; bed ${musicTarget.toFixed(1)} LUFS${voiceLufs != null ? ` (voice ${voiceLufs.toFixed(1)})` : ''}`);
   lines.push(`took     ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   mkdirSync(project.om, { recursive: true });

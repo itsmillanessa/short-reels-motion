@@ -1,4 +1,4 @@
-// om swatch — the palettes of the direction cards as one PNG, so the user can choose colour apart from
+// srm swatch — the palettes of the direction cards as one PNG, so the user can choose colour apart from
 // composition and rhythm. Reads every `Palette:` line of directions.md (or any card file):
 //   A · Ratchet   language: mechanism   look: …
 //   Palette:  ground #EEF0EC 70 · surface #DCE2DA 15 · ink #15201B · accent #2F6BFF 5 · flip #2F6BFF — from: site CSS

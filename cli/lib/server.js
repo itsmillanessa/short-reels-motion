@@ -1,4 +1,4 @@
-// `om studio`: a loopback server that shows the project in the om player, writes direct edits
+// `srm studio`: a loopback server that shows the project in the om player, writes direct edits
 // back into index.html, and turns "point at the frame" into inbox comments for the agent.
 import { createServer } from 'node:http';
 import { randomBytes } from 'node:crypto';

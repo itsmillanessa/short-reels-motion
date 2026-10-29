@@ -16,7 +16,7 @@ const ENGINE = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'runtim
 //   variables: overrides for the composition's variables; transparent: clear page background
 //   size: [w, h] viewport (default: the root element's data-width/height, else 1920x1080)
 //   lenient: any page, not only a composition — no timeline is fine (stills of direction pages, palette sheets)
-//   html: use this source instead of the file's (relative paths still resolve next to the file) — om sound probes the text it is about to write
+//   html: use this source instead of the file's (relative paths still resolve next to the file) — srm sound probes the text it is about to write
 export async function openFilm(file, { chrome = findChrome(), transport = 'pipe', video = 'extract', variables = null, transparent = false, size = null, lenient = false, html: override = null, chromeArgs = [], paintWaits = 2, shotFormat = null, bootTimeout = 120_000, onLog = () => {} } = {}) {
   if (!chrome) throw new OmError(NO_CHROME);
   const html = override ?? readFileSync(file, 'utf8');
@@ -75,7 +75,7 @@ export async function openFilm(file, { chrome = findChrome(), transport = 'pipe'
     // Seek and wait until the frame is painted. A page that never settles fails here, not silently.
     seek: (t) => page.evaluate(`window.__omEngine.seek(${t})`, { ms: 60_000 }),
     advance: (times) => page.evaluate(`window.__omEngine.advance(${JSON.stringify(times)})`),
-    // The current frame as an image Buffer. clip: { x, y, width, height, scale } crops (om look --zoom).
+    // The current frame as an image Buffer. clip: { x, y, width, height, scale } crops (srm look --zoom).
     async shot({ format = shotFormat || (conn.transport === 'pipe' ? 'png' : 'jpeg'), quality = shotFormat === 'jpeg' ? 95 : 100, clip = null } = {}) {
       // PNG is lossless and carries alpha; optimizeForSpeed trades file size for ~3x faster encoding.
       // Over the WebSocket fallback large PNGs were seen to drop the connection, so it defaults to JPEG q100.

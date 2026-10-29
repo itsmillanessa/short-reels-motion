@@ -22,6 +22,13 @@ test('om still: a PNG of a page at the frame size, and at given times of its tim
   const bright = (f, x) => Number(spawnSync('ffmpeg', ['-v', 'error', '-i', f, '-vf', `crop=40:40:${x}:0,scale=1:1,format=gray`, '-f', 'rawvideo', '-'], { encoding: 'buffer' }).stdout[0]);
   assert.ok(bright(join(dir, 'a-0.00s.png'), 0) > 200 && bright(join(dir, 'a-0.00s.png'), 600) < 50, 'at 0 s the square is on the left');
   assert.ok(bright(join(dir, 'a-2.00s.png'), 600) > 200, 'at 2 s it has moved right');
+  // --out s.png with several times: one file per time beside it, not a folder called s.png
+  const named = await still(join(dir, 'a.html'), { at: '0,2', out: join(dir, 'hoja', 's.png') });
+  assert.ok(existsSync(join(dir, 'hoja', 's-0.00s.png')) && existsSync(join(dir, 'hoja', 's-2.00s.png')), named);
+  assert.ok(!existsSync(join(dir, 'hoja', 's.png')), 'no folder called s.png');
+  // and a folder stays a folder
+  await still(join(dir, 'a.html'), { at: '0,2', out: join(dir, 'cuadros') });
+  assert.ok(existsSync(join(dir, 'cuadros', 'a-0.00s.png')) && existsSync(join(dir, 'cuadros', 'a-2.00s.png')));
 });
 
 test('om new: fills a folder that has research in it, refuses one that already holds a film', () => {

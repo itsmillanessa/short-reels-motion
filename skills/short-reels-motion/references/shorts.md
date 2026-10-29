@@ -119,7 +119,7 @@ Cada función recibe el timeline y un tiempo, y devuelve el tiempo:
 | `SRM.kickIn(tl, el, at)` · `SRM.pill(tl, el, at)` | Etiqueta que entra de lado · fondo de color que crece detrás de una palabra |
 | `SRM.whipOut(tl, el, at)` · `SRM.squash(tl, el, at)` | Salidas que **terminan** en `at` y dejan el elemento apagado |
 | `SRM.between(tl, el, at, until)` | Visible de `at` a `until`, con salida limpia |
-| `SRM.typeOn(tl, el, texto, desde, hasta)` | Texto que se escribe letra por letra (un prompt) |
+| `SRM.typeOn(tl, el, texto, desde, hasta)` | Texto que se escribe letra por letra (un prompt). El cuadro 0 muestra lo que diga el HTML (déjalo vacío si la portada no lo lleva); varias llamadas en el mismo elemento se siguen (un chat) |
 | `SRM.counter(tl, el, desde, hasta, n)` | Número que cuenta (enteros) |
 | `SRM.tap(tl, at, x, y)` | Un dedo que toca: punto, onda y clic (necesita `#tapdot` y `#ripple`) |
 | `SRM.zoom(tl, el, at, { fx, fy, scale, hold })` | Acercamiento a una parte de la pantalla y regreso |

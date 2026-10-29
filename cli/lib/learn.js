@@ -1,10 +1,10 @@
-// om learn — how the skill gets better with every film. Two layers of experience:
+// srm learn — how the skill gets better with every film. Two layers of experience:
 //   shipped  skills/short-reels-motion/references/experience.md — general findings, reproduced or measured,
 //            shipped to everyone with the package (edited in the repository, not by this command);
 //   local    ~/.short-reels-motion/experience.md (SRM_HOME to move it; an existing ~/.huashu-motion is kept) — this machine's user: their words,
 //            their taste, and single-film observations that are not proven yet. Never shipped.
-// `om learn [topics…]` reads both before a film, `om learn harvest <dir>` gathers what a finished project
-// can teach, `om learn add` writes one entry and refuses one without a kind, topics and evidence.
+// `srm learn [topics…]` reads both before a film, `srm learn harvest <dir>` gathers what a finished project
+// can teach, `srm learn add` writes one entry and refuses one without a kind, topics and evidence.
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -21,7 +21,7 @@ export const KINDS = {
 };
 const SHIPPED = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'skills', 'short-reels-motion', 'references', 'experience.md');
 export const localFile = () => join(homeDir(), 'experience.md');
-const HEAD = `# Local experience\n\nWhat this machine's films taught. Written by \`om learn add\` (or edited by hand: fix an entry in place\nwhen it turns out wrong, set its kind to superseded and say why). Not shipped with the package.\n`;
+const HEAD = `# Local experience\n\nWhat this machine's films taught. Written by \`srm learn add\` (or edited by hand: fix an entry in place\nwhen it turns out wrong, set its kind to superseded and say why). Not shipped with the package.\n`;
 
 // entries of a markdown file: each "## …" heading and its body
 function entries(file, layer) {
@@ -49,11 +49,11 @@ export function recall(topics = []) {
 
 // one entry, appended to the local file
 export function addEntry({ kind, topics, text, todo, evidence, project = null }) {
-  if (!KINDS[kind]) throw new OmError(`om learn add needs --kind ${Object.keys(KINDS).join('|')}\n${Object.entries(KINDS).map(([k, v]) => `  ${k.padEnd(11)} ${v}`).join('\n')}`);
+  if (!KINDS[kind]) throw new OmError(`srm learn add needs --kind ${Object.keys(KINDS).join('|')}\n${Object.entries(KINDS).map(([k, v]) => `  ${k.padEnd(11)} ${v}`).join('\n')}`);
   const tags = String(topics || '').split(/[,\s]+/).filter(Boolean);
-  if (!tags.length) throw new OmError('om learn add needs --topics (e.g. rhythm,sound,launch) so the entry is found again');
-  if (!String(text || '').trim()) throw new OmError('om learn add needs the finding as text: om learn add "…" --kind … --topics … --evidence …');
-  if (!String(evidence || '').trim()) throw new OmError('om learn add needs --evidence: the quote, the project and file, the measurement — an entry nobody can check is a rumour');
+  if (!tags.length) throw new OmError('srm learn add needs --topics (e.g. rhythm,sound,launch) so the entry is found again');
+  if (!String(text || '').trim()) throw new OmError('srm learn add needs the finding as text: srm learn add "…" --kind … --topics … --evidence …');
+  if (!String(evidence || '').trim()) throw new OmError('srm learn add needs --evidence: the quote, the project and file, the measurement — an entry nobody can check is a rumour');
   if (kind === 'preference' && !/[「“"]/.test(text)) throw new OmError('a preference quotes the user: put their words in 「…」 or "…"');
   const f = localFile();
   mkdirSync(dirname(f), { recursive: true });
@@ -79,14 +79,14 @@ export function harvest(project) {
     lines.push('', 'Studio comments (the user pointing at the frame — the most direct evidence of taste):');
     for (const c of cs) lines.push(`  ${c.t != null ? `${c.t.toFixed(1)}s ` : ''}${c.target ? `[${c.target}] ` : ''}${c.scene ? `(${c.scene}) ` : ''}「${c.text}」 → ${c.status}${c.note ? `: ${c.note}` : ''}${c.thread?.filter((x) => x.who === 'user').map((x) => ` · reopened: 「${x.text}」`).join('') || ''}`);
   }
-  const labels = log.map((h) => h.label).filter((l) => l && !/^(before |om sound$)/.test(l));
+  const labels = log.map((h) => h.label).filter((l) => l && !/^(before |(om|srm) sound$)/.test(l));
   if (labels.length) lines.push('', `Edits: ${[...new Set(labels)].slice(-12).join(' · ')}`);
   lines.push('', 'Also take what the user said in the conversation — quote it.', '',
     'Keep an entry only when all three hold: it is not obvious, it saves time or a wrong turn next film, and this',
     'film produced evidence for it. Then, in this order:',
-    '  1. Does an existing entry say otherwise? Fix that entry first (om learn shows them; edit the file).',
-    '  2. Can a tool catch it (a check in om qa / om sound / om render)? Change the tool and its test instead of writing it down.',
-    '  3. Otherwise: om learn add "…" --kind preference|observed --topics … --evidence "…" [--do "…"].',
+    '  1. Does an existing entry say otherwise? Fix that entry first (srm learn shows them; edit the file).',
+    '  2. Can a tool catch it (a check in srm qa / srm sound / srm render)? Change the tool and its test instead of writing it down.',
+    '  3. Otherwise: srm learn add "…" --kind preference|observed --topics … --evidence "…" [--do "…"].',
     '     The user\'s words are a preference; your own observation from one film is observed.',
     '  4. Seen in two films, or measured, and true for anyone (not this user\'s taste)? On the development machine,',
     '     add it to the shipped references/experience.md, and the stable part of it to the reference it belongs to.',
@@ -97,5 +97,5 @@ export function harvest(project) {
 export function learnStatus() {
   const f = localFile(), local = entries(f, 'local'), shipped = entries(SHIPPED, 'shipped');
   const by = (k) => local.filter((e) => e.kind === k).length;
-  return `learn    local ${f}${existsSync(f) ? ` (${local.length} entries: ${by('preference')} preferences, ${by('observed')} observed, ${by('verified')} verified, ${by('superseded')} superseded; ${statSync(f).size} bytes)` : ' (none yet)'}\n         shipped ${shipped.length} entries in references/experience.md\n         om learn [topics…] · om learn harvest <dir> · om learn add "…" --kind … --topics … --evidence …`;
+  return `learn    local ${f}${existsSync(f) ? ` (${local.length} entries: ${by('preference')} preferences, ${by('observed')} observed, ${by('verified')} verified, ${by('superseded')} superseded; ${statSync(f).size} bytes)` : ' (none yet)'}\n         shipped ${shipped.length} entries in references/experience.md\n         srm learn [topics…] · srm learn harvest <dir> · srm learn add "…" --kind … --topics … --evidence …`;
 }

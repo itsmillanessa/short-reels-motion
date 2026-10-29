@@ -6,7 +6,7 @@ metadata:
   homepage: "https://github.com/itsmillanessa"
   repository: "https://github.com/itsmillanessa/short-reels-motion"
   based-on: "huashu-motion by Huashu (https://github.com/alchaincyf/huashu-motion), MIT"
-  version: "0.5.1"
+  version: "0.5.2"
 ---
 
 # Short Reels Motion · director de shorts

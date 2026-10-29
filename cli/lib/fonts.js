@@ -20,7 +20,7 @@ export function families() {
 // Copy a family into <project>/assets/fonts and declare it in one managed <style id="om-fonts"> block.
 export function addFamily(project, name) {
   const faces = library().filter((f) => f.family.toLowerCase() === name.toLowerCase());
-  if (!faces.length) throw new OmError(`no font "${name}" — run \`om fonts\` to list them`);
+  if (!faces.length) throw new OmError(`no font "${name}" — run \`srm fonts\` to list them`);
   const dir = join(project.root, 'assets', 'fonts');
   mkdirSync(dir, { recursive: true });
   for (const f of faces) copyFileSync(join(LIB, f.file), join(dir, f.file));

@@ -119,10 +119,24 @@
     return at;
   };
   // Text typed letter by letter between two times (a prompt being written).
+  // All the typing on one node is one function of time (a chat box that types one message after another): frame 0
+  // shows what the HTML says (the poster; leave it empty for an empty frame 0), nothing until the first typing, then
+  // the latest typing that has started, letter by letter. One tween drives it, so a frame is the same however it is
+  // reached (a set at 0 and one tween per typing left frame 0 and the gaps depending on what had played before).
   SRM.typeOn = (tl, el, text, from, to) => {
-    const node = typeof el === 'string' ? document.querySelector(el) : el, o = { n: 0 };
-    tl.fromTo(o, { n: 0 }, { n: text.length, duration: Math.max(0.2, to - from), ease: 'none', immediateRender: false, onUpdate: () => { node.textContent = text.slice(0, Math.round(o.n)); } }, from);
-    tl.set(node, { textContent: '' }, 0);
+    const node = typeof el === 'string' ? document.querySelector(el) : el;
+    const k = node.__srmType || (node.__srmType = { poster: node.textContent, list: [], tween: null });
+    k.list.push({ text: String(text), from, span: Math.max(0.2, to - from) });
+    k.list.sort((a, b) => a.from - b.from);
+    const end = Math.max(...k.list.map((x) => x.from + x.span)), w = { t: 0 };
+    if (k.tween) tl.remove(k.tween);
+    k.tween = gsap.fromTo(w, { t: 0 }, { t: end, duration: end, ease: 'none', immediateRender: false, onUpdate: () => {
+      if (w.t <= 0) { node.textContent = k.poster; return; }
+      let cur = null;
+      for (const x of k.list) if (x.from <= w.t) cur = x;
+      node.textContent = cur ? cur.text.slice(0, Math.round(cur.text.length * Math.min(1, (w.t - cur.from) / cur.span))) : '';
+    } });
+    tl.add(k.tween, 0);
     return from;
   };
   // A number counting up to `to` (integers; for decimals pre-write the final text and reveal it instead).

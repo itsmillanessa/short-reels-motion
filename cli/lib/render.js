@@ -1,4 +1,4 @@
-// om render: the film as a video file, through the Short Reels Motion renderer (render-om.js). Output always
+// srm render: the film as a video file, through the Short Reels Motion renderer (render-om.js). Output always
 // lands in <project>/out/ with a new name — a render never overwrites a file the user may already have shared.
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
@@ -25,7 +25,7 @@ export function nextOutput(project, ext) {
 // `transparent` gets it set to true for this render (hide the footage, clear the background); the
 // sound is dropped because the edit underneath already has it; and the result is checked for alpha.
 export async function render(project, { format, fps, out, transparent = false, blur = 1, engine, video = 'extract', workers, frameFormat, tune = {}, allowPageErrors = false, prepare = null, onLog = () => {}, onNote = onLog, onWarn = () => {} } = {}) {
-  if (engine && engine !== 'om') throw new OmError(engine === 'hyperframes' ? 'the HyperFrames renderer was removed — om render uses its own engine now (drop --engine)' : '--engine must be om');
+  if (engine && engine !== 'om') throw new OmError(engine === 'hyperframes' ? 'the HyperFrames renderer was removed — srm render uses its own engine now (drop --engine)' : '--engine must be om');
   const { html } = readSource(project);
   format = format || (transparent ? 'mov' : 'mp4');
   // Default to the frame rate the composition asks for (data-fps on the root), else 30.

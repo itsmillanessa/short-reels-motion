@@ -73,7 +73,7 @@ export async function renderOm(project, { fps, out, format = 'mp4', transparent 
   let films = opened.filter((r) => r.status === 'fulfilled').map((r) => r.value);
   const failedOpen = opened.find((r) => r.status === 'rejected');
   if (failedOpen) { await Promise.all(films.map((f) => f.close({ fast: true }))); throw failedOpen.reason; }
-  // prepare(page): work that needs the loaded film before the first frame (om render refreshes the soundtrack from
+  // prepare(page): work that needs the loaded film before the first frame (srm render refreshes the soundtrack from
   // it). It returns true when it rewrote index.html; the browsers then load the new version.
   if (prepare) {
     let rewrote;

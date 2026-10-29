@@ -1,4 +1,4 @@
-// om voice — narration for a composition. Synthesize a script (or take a recording), time every word,
+// srm voice — narration for a composition. Synthesize a script (or take a recording), time every word,
 // and wire both into index.html: <audio id="om-voice"> for the mixer, <script id="om-cues"> for OM.cue.
 // Timing is honest about where it comes from (`precision` in the cues): TTS sentences are measured
 // exactly and words are interpolated inside the detected speech; recordings use whisper's per-token
@@ -488,7 +488,7 @@ export function applyVoice(html, { src, duration, sentences, meta = {}, fit = fa
 
 function run(cmd, args, opts = {}) {
   const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 256 << 20, ...opts });
-  if (r.error) throw new OmError(`could not run ${cmd}: ${r.error.message}${r.error.code === 'ENOENT' ? ' — run `om doctor`' : ''}`);
+  if (r.error) throw new OmError(`could not run ${cmd}: ${r.error.message}${r.error.code === 'ENOENT' ? ' — run `srm doctor`' : ''}`);
   return r;
 }
 
@@ -589,7 +589,7 @@ function readText(arg) {
 
 export async function voice(project, opts = {}, log = () => {}) {
   const text = readText(opts.text);
-  if (!text && !opts.audio) throw new OmError('usage: om voice <dir> --text <script.txt|"文本"> [--voice say:Tingting|zf_xiaobei] [--speed 1]\n       om voice <dir> --audio <recording> [--text <script>] [--asr on|off]');
+  if (!text && !opts.audio) throw new OmError('usage: srm voice <dir> --text <script.txt|"文本"> [--voice say:Tingting|zf_xiaobei] [--speed 1]\n       srm voice <dir> --audio <recording> [--text <script>] [--asr on|off]');
   const { html } = readSource(project);
   const keep = cueTerms(html).map((c) => c.term);
   const tmp = mkdtempSync(join(tmpdir(), 'om-voice-'));
@@ -617,7 +617,7 @@ export async function voice(project, opts = {}, log = () => {}) {
   writeFileSync(join(assets, 'voice.words.json'), JSON.stringify(sidecar, null, 1) + '\n');
   const srt = nextOutput(project, 'srt');
   writeFileSync(srt, toSrt(res.sentences, { offset: applied.offset }));
-  writeSource(project, applied.html, fresh.token, `om voice (${res.source})`);
+  writeSource(project, applied.html, fresh.token, `srm voice (${res.source})`);
 
   const lines = [
     `voice    ${target}  ${res.duration.toFixed(2)}s  (${res.source})`,
@@ -737,7 +737,7 @@ function fromRecording(file, text, keep, tmp, opts, log) {
   }
 
   if (!text) throw new OmError('a recording without --text needs whisper (--asr on)');
-  if (asr === 'auto') note = `whisper ${model} not found — used silence alignment. For tighter timing: om voice … --asr on (downloads ~490 MB once)`;
+  if (asr === 'auto') note = `whisper ${model} not found — used silence alignment. For tighter timing: srm voice … --asr on (downloads ~490 MB once)`;
   const sentences = splitSentences(text).map((s) => ({ text: s, tokens: tokenize(s, keep) }));
   const intervals = speechOf(wav, duration, '-35dB', 0.18);
   const spans = sentenceSpans(sentences.map((s) => sum(s.tokens.filter((t) => t.word).map(weight))), intervals);

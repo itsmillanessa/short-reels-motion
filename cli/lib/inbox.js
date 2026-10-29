@@ -1,6 +1,6 @@
 // The comment inbox: the bridge between "point at the frame" in the studio and the agent in a terminal.
 // .om/inbox.jsonl is an append-only event log; the current state of each comment is a fold over it.
-// Any agent that can run a shell command can take part: `om inbox --wait` blocks until there is work.
+// Any agent that can run a shell command can take part: `srm inbox --wait` blocks until there is work.
 import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';

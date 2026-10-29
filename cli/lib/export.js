@@ -1,4 +1,4 @@
-// `om export html`: turn a project into a folder any static host can serve — a clean player page, a
+// `srm export html`: turn a project into a folder any static host can serve — a clean player page, a
 // playable copy of the film, the om player, and the source as a zip, so whoever watches it can
 // remix it in their own agent. Viewing it makes no network request; the only outside link is REPO_URL.
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
@@ -286,7 +286,7 @@ footer a:hover { color: var(--ink); }
   <div class="label"><span data-l="en">First time with Short Reels Motion</span><span data-l="zh">第一次用 Short Reels Motion</span></div>
   <div class="code cmd"><pre id="skill">npx skills add ${esc(SKILL)}</pre><button class="copy" data-copy="skill"></button></div>
   <div class="code cmd"><pre id="demo">npx short-reels-motion demo</pre><button class="copy" data-copy="demo"></button></div>
-  <div class="dl"><span><span data-l="en">The whole project, ready for <code>om studio</code></span><span data-l="zh">完整工程，解压即可 <code>om studio</code></span></span><a href="source.zip" download>source.zip ↓</a></div>
+  <div class="dl"><span><span data-l="en">The whole project, ready for <code>srm studio</code></span><span data-l="zh">完整工程，解压即可 <code>srm studio</code></span></span><a href="source.zip" download>source.zip ↓</a></div>
 </div>
 
 <footer>made with <a href="${REPO_URL}">Short Reels Motion</a></footer>

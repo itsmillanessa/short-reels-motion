@@ -1,4 +1,4 @@
-// om check: what can go wrong in a composition before it is rendered. Two layers:
+// srm check: what can go wrong in a composition before it is rendered. Two layers:
 //   source   reads index.html without a browser (milliseconds): structure, scripts that do not parse, variables,
 //            files that are not there, motion that is not a function of time, layout properties being tweened,
 //            sound effects the library does not have, anchors to a word said twice that do not say which time
@@ -22,8 +22,8 @@ import { cueMatches } from './voice.js';
 
 const GENERIC = new Set(['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 'ui-sans-serif', 'ui-serif', 'ui-monospace', 'ui-rounded', '-apple-system', 'blinkmacsystemfont', 'emoji', 'math', 'fangsong', 'inherit', 'initial', 'unset', 'revert', 'none']);
 
-// A sound effect the library does not have fails only later, at om sound / om render.
-const sfxMessage = (name) => `OM.sfx('${name}') — no such sound effect${nearestSfx(name) ? `; did you mean '${nearestSfx(name)}'?` : ''} (om sound --list shows them all)`;
+// A sound effect the library does not have fails only later, at srm sound / srm render.
+const sfxMessage = (name) => `OM.sfx('${name}') — no such sound effect${nearestSfx(name) ? `; did you mean '${nearestSfx(name)}'?` : ''} (srm sound --list shows them all)`;
 // An anchor that names no occurrence takes the first time the word is said, silently.
 const cueMessage = (word, at) => `cue('${word}') — "${word}" is said ${at.length} times (${at.map((t) => t.toFixed(2) + 's').join(', ')}) and an anchor that names no occurrence takes the first; say which: cue('${word}', 2), or nth: 2 in a step`;
 // A word as the anchors match it (runtime/om.js): no spaces or punctuation, any case.
@@ -37,7 +37,7 @@ export function checkSource(project) {
   const lineOf = (i) => html.slice(0, i).split('\n').length;
   const add = (level, code, message, index, extra) => found.push({ level, code, message, ...(index != null ? { line: lineOf(index) } : {}), ...extra });
   const noComments = html.replace(/<!--[\s\S]*?-->/g, (c) => c.replace(/[^\n]/g, ' '));
-  // the narration's words, when om voice has written them
+  // the narration's words, when srm voice has written them
   let words = [];
   const cues = /<script\b[^>]*\sid\s*=\s*["']om-cues["'][^>]*>([\s\S]*?)<\/script>/i.exec(noComments);
   if (cues) try { words = JSON.parse(cues[1]).words || []; } catch { /* a broken om-cues shows up as a page error */ }
@@ -139,16 +139,16 @@ export function checkSource(project) {
     const first = stack.split(',').map((f) => f.trim().replace(/^["']|["']$/g, '').replace(/\s*!important$/, '')).find((f) => f && !/^var\(/.test(f) && !GENERIC.has(f.toLowerCase()));
     if (!first || faces.has(first.toLowerCase()) || warned.has(first.toLowerCase())) continue;
     warned.add(first.toLowerCase());
-    add('warning', 'font-not-shipped', `font-family "${first}" has no @font-face in the film — it renders only where that font is installed (om fonts add)`, i);
+    add('warning', 'font-not-shipped', `font-family "${first}" has no @font-face in the film — it renders only where that font is installed (srm fonts add)`, i);
   }
   // A film about a product is made of the product: its logo as a file, its real interface, its pictures. A composition
   // that loads no image, video or logo file at all drew everything itself (the grey-box UI of one-line films, 2026-10).
   const media = [...html.matchAll(/(?:src|poster|href)\s*=\s*["'`]([^"'`]+\.(?:png|jpe?g|webp|gif|svg|avif|mp4|mov|webm))|url\(\s*["']?([^"')]+\.(?:png|jpe?g|webp|gif|svg|avif))|["'`]((?:\.\/)?(?:assets|materials|media|img|images)\/[^"'`]+\.(?:png|jpe?g|webp|gif|svg|avif|mp4|mov|webm))/gi)]
     .map((m) => m[1] || m[2] || m[3]).filter((u) => u && !/^data:|vendor\/|om-/.test(u));
   for (const m of html.matchAll(/placehold\.co|placeholder\.com|via\.placeholder|dummyimage\.com|picsum\.photos|placekitten|fakeimg\.pl|\blorem ipsum\b/gi)) add('warning', 'placeholder', `"${m[0]}" is a placeholder — use real content: the product's own images and text, a real one found online, or an openly licensed image (source in materials.md)`, m.index);
-  if (!media.length) add('warning', 'no-real-material', 'the film loads no image, video or logo file — if it is about a product, it is drawing the product instead of showing it. Collect the real material first (om grab <url|folder>) and build from it: the logo file, real screenshots or recordings, a rebuild only traced over a capture (SKILL.md step 1)');
-  else if (media.every((u) => /icon|logo|favicon|wordmark|avatar/i.test(u))) add('warning', 'only-logo', `the only files the film loads are icons or logos (${[...new Set(media)].slice(0, 3).join(', ')}) — the interface and pictures are drawn, not shown. Use real screenshots or recordings of the product (om grab), or rebuild only over a capture`);
-  else if (!existsSync(join(project.root, 'materials.md'))) add('warning', 'no-materials-list', 'no materials.md — list what the film is made of and where each piece came from (om grab writes it)');
+  if (!media.length) add('warning', 'no-real-material', 'the film loads no image, video or logo file — if it is about a product, it is drawing the product instead of showing it. Collect the real material first (srm grab <url|folder>) and build from it: the logo file, real screenshots or recordings, a rebuild only traced over a capture (SKILL.md step 1)');
+  else if (media.every((u) => /icon|logo|favicon|wordmark|avatar/i.test(u))) add('warning', 'only-logo', `the only files the film loads are icons or logos (${[...new Set(media)].slice(0, 3).join(', ')}) — the interface and pictures are drawn, not shown. Use real screenshots or recordings of the product (srm grab), or rebuild only over a capture`);
+  else if (!existsSync(join(project.root, 'materials.md'))) add('warning', 'no-materials-list', 'no materials.md — list what the film is made of and where each piece came from (srm grab writes it)');
   return found;
 }
 
@@ -274,7 +274,7 @@ export async function checkPage(project, { samples = 24, fps = 30, onLog = () =>
     const book = await film.evaluate(`(() => { const r = document.querySelector('[data-composition-id]'), tls = Object.values(window.__timelines || {}).filter((t) => t && t.duration); const a = document.getElementById('om-sound');
       return { root: r && parseFloat(r.getAttribute('data-duration')) || null, tl: tls.reduce((m, t) => Math.max(m, t.duration()), 0), sound: a ? parseFloat(a.getAttribute('data-duration')) : null }; })()`);
     if (book.root && book.tl > book.root + 0.05) add('warning', 'cut-off', `the timeline runs ${book.tl.toFixed(2)}s but the root says data-duration="${book.root}" — the end is cut off`);
-    if (book.sound != null && Math.abs(book.sound - dur) > 0.1) add('warning', 'stale-sound', `the soundtrack is ${book.sound.toFixed(2)}s, the film ${dur.toFixed(2)}s — run om sound`);
+    if (book.sound != null && Math.abs(book.sound - dur) > 0.1) add('warning', 'stale-sound', `the soundtrack is ${book.sound.toFixed(2)}s, the film ${dur.toFixed(2)}s — run srm sound`);
     for (const [k, v] of Object.entries(info.labels || {})) if (k.startsWith('scene:') && v >= dur) add('warning', 'scene-after-end', `${k} starts at ${v.toFixed(2)}s, at or after the end (${dur.toFixed(2)}s)`);
     // footage the renderer cannot use
     for (const m of await film.media()) {
@@ -325,7 +325,7 @@ export async function checkPage(project, { samples = 24, fps = 30, onLog = () =>
       await film.seek(t); await cold.seek(t);
       const a = decodePng(await film.shot({ format: 'png' })), b = decodePng(await cold.shot({ format: 'png' }));
       const d = meanDiff(a, b);
-      if (d > 0.5) add('warning', 'history-dependent', `the frame at ${t.toFixed(2)}s differs (${d.toFixed(1)} grey levels on average) when jumped to directly instead of played up to — a tween's start value comes from another tween, or a callback keeps state. Scrubbing, stills and om look show the jumped version; om render replays the timeline and matches playback`, t);
+      if (d > 0.5) add('warning', 'history-dependent', `the frame at ${t.toFixed(2)}s differs (${d.toFixed(1)} grey levels on average) when jumped to directly instead of played up to — a tween's start value comes from another tween, or a callback keeps state. Scrubbing, stills and srm look show the jumped version; srm render replays the timeline and matches playback`, t);
     }
     onLog(`compared ${probes.length} frames reached two ways`);
   } finally {

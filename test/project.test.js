@@ -44,6 +44,18 @@ test('setVariables keeps hand formatting of the declaration and inserts a missin
   assert.equal(readVariables(out)[1].default, 2);
 });
 
+test('setVariables keeps the stylesheet default of a colour custom property in step (:root only, whole names only)', () => {
+  const src = `<html data-composition-variables='[{"id":"accent","type":"color","label":"A","default":"#FFD23F"},{"id":"accentInk","type":"color","label":"B","default":"#0F1012"}]'>
+<head><style>
+  :root { --ground: #0F1012; --accent: #FFD23F; --accentInk: #0F1012; }
+  .x { --accent: #FFD23F; }
+</style></head><body></body></html>`;
+  const out = setVariables(src, { accent: '#E4007C' });
+  assert.match(out, /:root \{ --ground: #0F1012; --accent: #E4007C; --accentInk: #0F1012; \}/);
+  assert.match(out, /\.x \{ --accent: #FFD23F; \}/, 'a rule other than :root is the author’s own');
+  assert.match(setVariables(out, { accentInk: '#F3EFE6' }), /--accent: #E4007C; --accentInk: #F3EFE6;/);
+});
+
 test('setVariables validates types and ranges', () => {
   assert.throws(() => setVariables(HTML, { n: '11' }), OmError);
   assert.throws(() => setVariables(HTML, { n: 'abc' }), OmError);

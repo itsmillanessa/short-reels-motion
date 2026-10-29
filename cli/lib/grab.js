@@ -1,10 +1,10 @@
-// om grab — the product's real material into <project>/materials/, before any direction is drawn. A film about a
+// srm grab — the product's real material into <project>/materials/, before any direction is drawn. A film about a
 // product is made of the product: its logo as a file, its own colours and typefaces, its real interface. Agents that had
 // to collect these by hand drew grey boxes instead; this collects them in one command.
 //
-//   om grab <url> [dir]        a website or a GitHub repo page: screenshots down the page (2x), the images on it, logo
+//   srm grab <url> [dir]        a website or a GitHub repo page: screenshots down the page (2x), the images on it, logo
 //                              candidates (icons, og:image, inline SVG logos), the colours and typefaces it really uses
-//   om grab <folder> [dir]     the product's own project on this machine: README images, screenshots, media, icons, and
+//   srm grab <folder> [dir]     the product's own project on this machine: README images, screenshots, media, icons, and
 //                              the colours and fonts its stylesheets declare
 //
 // Every file gets a line in materials/manifest.json and materials.md saying where it came from.
@@ -217,7 +217,7 @@ export function grabLocal(root, folder, { maxFiles = 60, onLog = () => {} } = {}
   const colours = [...Object.entries(vars).slice(0, 24).map(([k, v]) => ({ role: `css ${k}`, hex: v })), ...Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([hex, c]) => ({ role: `used ${c}×`, hex }))];
   const fontList = Object.entries(fonts).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([family, n]) => ({ family, n }));
   const missing = [];
-  if (!files.some((f) => f.kind === 'logo')) missing.push('no logo or icon file found — look in the app bundle, the site (om grab <url>) or ask the user');
+  if (!files.some((f) => f.kind === 'logo')) missing.push('no logo or icon file found — look in the app bundle, the site (srm grab <url>) or ask the user');
   if (!files.some((f) => f.kind === 'screen' || f.kind === 'video')) missing.push('no screenshots or recordings — run the product and capture it');
   const source = { kind: 'local', from: src, at: new Date().toISOString(), files: files.map((f) => ({ ...f, file: relative(root, f.file).split('\\').join('/') })), colours, fonts: fontList, missing };
   L.add(source);
@@ -233,7 +233,7 @@ export async function grab(root, target, opts = {}) {
     `  ${rel(r.dir)}/  logo ${count('logo')} · screens ${count('screen')} · images ${count('image') + count('media')} · video ${count('video')}`,
     r.colours.length ? `  colours  ${r.colours.slice(0, 8).map((c) => `${c.hex} ${c.role}`).join(' · ')}` : '  colours  none found',
     r.fonts.length ? `  type     ${r.fonts.map((f) => f.family).join(' · ')}` : '  type     none found',
-    `  ${rel(r.md)}  updated — look at every file before choosing a direction (om still can't see them for you)`];
+    `  ${rel(r.md)}  updated — look at every file before choosing a direction (srm still can't see them for you)`];
   for (const m of r.missing.slice(0, 6)) lines.push(`  ! ${m}`);
   return lines.join('\n');
 }

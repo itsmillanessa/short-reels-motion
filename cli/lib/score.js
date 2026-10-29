@@ -104,7 +104,7 @@ export const DRUMS = {
   crash: (r) => mix([decay(biquad(noise(2.2, r), 'hp', 3500), 0.7)], [metal(2.2, 0.9, 4000), 0.6]),
 };
 
-// With the sample pack installed (om samples build), these voices play real recordings; without it, or
+// With the sample pack installed (srm samples build), these voices play real recordings; without it, or
 // for anything not listed, the synth voice above plays. Electronic styles keep their synths on purpose.
 const SAMPLED = {
   piano: ['piano', { release: 0.3 }], strings: ['strings', { release: 0.45, gain: 0.8 }], lowstr: ['strings', { release: 0.5, gain: 0.8 }],

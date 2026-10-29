@@ -1,6 +1,6 @@
-// om fork — copy a project into a new frame size. A new aspect ratio is a new layout, not a crop:
+// srm fork — copy a project into a new frame size. A new aspect ratio is a new layout, not a crop:
 // the copy keeps the source as is, changes the root size, and leaves a comment in its inbox so the
-// agent's `om inbox --wait` picks up the re-layout as its next job.
+// agent's `srm inbox --wait` picks up the re-layout as its next job.
 import { cpSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { addComment } from './inbox.js';
@@ -56,7 +56,7 @@ export function reflowNote(from, to) {
     landscape: '主体可以偏到三分线，信息放到另一侧，上下堆叠的元素改成左右并排；字号回到横屏常规（正文约 28–36px）；底部约 14% 留给字幕。',
     square: '焦点居中，内容收进中间约 80% 的区域；字号介于横竖屏之间；底部约 15% 留给字幕。',
   }[b] || '';
-  return `${head}${rules}逐个分镜看一遍关键帧（om look --at 秒），所有文字都在画面内、不压人物主体、不互相遮挡后再交付。`;
+  return `${head}${rules}逐个分镜看一遍关键帧（srm look --at 秒），所有文字都在画面内、不压人物主体、不互相遮挡后再交付。`;
 }
 
 export function fork(source, dest, size) {
@@ -67,7 +67,7 @@ export function fork(source, dest, size) {
   const project = openProject(target);
   const { html, token } = readSource(project);
   const r = resizeRoot(html, size.width, size.height);
-  writeSource(project, r.html, token, `om fork ${r.from.width ?? '?'}x${r.from.height ?? '?'} → ${size.width}x${size.height}`);
+  writeSource(project, r.html, token, `srm fork ${r.from.width ?? '?'}x${r.from.height ?? '?'} → ${size.width}x${size.height}`);
   const comment = addComment(project, { text: reflowNote(r.from, r.to) });
   return { project, from: r.from, to: r.to, comment };
 }
