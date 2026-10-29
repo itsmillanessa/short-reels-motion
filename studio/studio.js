@@ -501,7 +501,7 @@ function onSource(d) {
   if (S.playing) { player.pause(); S.playing = false; setPlayIcon(); }
   swapPlayer(); // assets may have changed even when index.html did not
 }
-function flash() { const f = $('#frame'); f.animate([{ boxShadow: '0 0 0 3px #2f855a, 0 20px 60px #00000059' }, { boxShadow: '0 0 0 0 #2f855a00, 0 20px 60px #00000059' }], { duration: 900, easing: 'ease-out' }); }
+function flash() { const f = $('#frame'); f.animate([{ boxShadow: '0 0 0 3px #3ddc97, 0 24px 70px #000000b3' }, { boxShadow: '0 0 0 0 #3ddc9700, 0 24px 70px #000000b3' }], { duration: 900, easing: 'ease-out' }); }
 async function refreshState() {
   const st = await (await fetch('/api/state')).json();
   onSource({ token: st.token, variables: st.variables, history: st.history, scan: st.scan });
