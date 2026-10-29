@@ -52,6 +52,23 @@ export const SFX = {
   shutter: { about: 'camera shutter: a photo, a screenshot', fn: (o, r) => ({ sig: peakTo(mix([decay(biquad(noise(0.03, r), 'bp', 2200, 1.2), 0.005)], [decay(biquad(noise(0.05, r), 'bp', 1500, 0.9), 0.012), 0.8, 0.07]), 0.5), lead: 0 }) },
 };
 
+// The effect a mistyped name most likely meant (swoosh → whoosh), or null when none is close.
+export function nearestSfx(name) {
+  const a = String(name).toLowerCase();
+  const dist = (b) => {
+    let row = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+      const next = [i];
+      for (let j = 1; j <= b.length; j++) next[j] = Math.min(row[j] + 1, next[j - 1] + 1, row[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      row = next;
+    }
+    return row[b.length];
+  };
+  let best = null, d = Infinity;
+  for (const k of Object.keys(SFX)) { const x = dist(k); if (x < d) { best = k; d = x; } }
+  return d <= Math.max(2, Math.floor(a.length / 3)) ? best : null;
+}
+
 // A noise sweep with a pan from left to right; peaks at `peak` (0..1) of its length, which is the hit.
 function sweep(dur, lo, hi, peak, r, gain) {
   const s = biquad(noise(dur, r), 'bp', (u) => lo + (hi - lo) * Math.sin(Math.PI * Math.min(1, u / peak / 2 + (u > peak ? (u - peak) / (1 - peak) / 2 : 0))), 1.1);
@@ -401,7 +418,7 @@ export function mixdown(p0, { voiced = false, words = [], voiceLufs = null, musi
   try { p = plan({ ...p0, voice: voiced }); } catch (e) { throw new OmError(e.message); }
   const hits = (p0.hits || []).filter((h) => h.at <= p.duration + 0.5);
   const unknown = [...new Set(hits.filter((h) => !SFX[h.name]).map((h) => h.name))];
-  if (unknown.length) throw new OmError(`unknown sound effect${unknown.length > 1 ? 's' : ''}: ${unknown.join(', ')} — available: ${Object.keys(SFX).join(', ')}`);
+  if (unknown.length) throw new OmError(`unknown sound effect${unknown.length > 1 ? 's' : ''}: ${unknown.map((u) => (nearestSfx(u) ? `${u} (did you mean ${nearestSfx(u)}?)` : u)).join(', ')} — available: ${Object.keys(SFX).join(', ')}`);
   const musicOn = !(p0.music?.off || musicOff);
 
   const music = new Track(p.duration), fxm = new Track(p.duration);

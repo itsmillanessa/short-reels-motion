@@ -47,13 +47,13 @@
     for (const q of spec.cues || []) {
       const own = +((Number(q.at) || 0) * p).toFixed(6);
       if (voiced && q.word) {
-        const t = resolve(q.word, q.nth || 1, q.edge);
+        const t = resolve(q.word, q.nth, q.edge);
         if (t == null) { q.at = own; problems.push(`cue「${q.word}」${q.nth > 1 ? `第 ${q.nth} 次` : ''}不在配音里，${q.kind} 用自带的 at=${+own.toFixed(2)}s`); }
         else { q.at = Math.max(0, t + (Number(q.offset) || 0)); anchored.push({ kind: q.kind, word: q.word, at: q.at }); }
       } else q.at = own;
       const d = q.data;
       if (d && (d.hit != null || d.hitWord)) {
-        const t = voiced && d.hitWord ? resolve(d.hitWord, d.hitNth || 1, d.hitEdge) : null;
+        const t = voiced && d.hitWord ? resolve(d.hitWord, d.hitNth, d.hitEdge) : null;
         if (t != null) d.hit = t + (Number(d.hitOffset) || 0);
         else {
           if (voiced && d.hitWord) problems.push(`hitWord「${d.hitWord}」不在配音里，用自带的 hit`);

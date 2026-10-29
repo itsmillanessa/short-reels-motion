@@ -1,8 +1,10 @@
 // om check: what can go wrong in a composition before it is rendered. Two layers:
 //   source   reads index.html without a browser (milliseconds): structure, scripts that do not parse, variables,
-//            files that are not there, motion that is not a function of time, layout properties being tweened
+//            files that are not there, motion that is not a function of time, layout properties being tweened,
+//            sound effects the library does not have, anchors to a word said twice that do not say which time
 //   page     opens the film in Chrome and samples frames: page errors, length bookkeeping, text that is cut off,
-//            covered or unreadable, blank first/last frames, and whether a frame depends on what was played before it
+//            covered or unreadable (judged on the part that can be seen), blank first/last frames, whether a frame
+//            depends on what was played before it, and the effects and anchors the film asked for while it ran
 // Errors stop a render from being right; warnings are things to look at. Layout findings can be waived per element
 // with data-layout-allow-occlusion, data-layout-allow-overflow, data-layout-allow-overlap and data-layout-allow-safe-zone.
 // Vertical films (9:16) are also judged against the safe zones of TikTok, Reels and Shorts (safezones.js).
@@ -15,15 +17,31 @@ import { openFilm } from './capture.js';
 import { isHdr, probeVideo } from './frames.js';
 import { OmError, readSource, readVariables } from './project.js';
 import { isVertical, platformsOf, unsafeText } from './safezones.js';
+import { SFX, nearestSfx } from './sound.js';
+import { cueMatches } from './voice.js';
 
 const GENERIC = new Set(['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 'ui-sans-serif', 'ui-serif', 'ui-monospace', 'ui-rounded', '-apple-system', 'blinkmacsystemfont', 'emoji', 'math', 'fangsong', 'inherit', 'initial', 'unset', 'revert', 'none']);
+
+// A sound effect the library does not have fails only later, at om sound / om render.
+const sfxMessage = (name) => `OM.sfx('${name}') — no such sound effect${nearestSfx(name) ? `; did you mean '${nearestSfx(name)}'?` : ''} (om sound --list shows them all)`;
+// An anchor that names no occurrence takes the first time the word is said, silently.
+const cueMessage = (word, at) => `cue('${word}') — "${word}" is said ${at.length} times (${at.map((t) => t.toFixed(2) + 's').join(', ')}) and an anchor that names no occurrence takes the first; say which: cue('${word}', 2), or nth: 2 in a step`;
+// A word as the anchors match it (runtime/om.js): no spaces or punctuation, any case.
+const wordKey = (s) => String(s).replace(/[\s\p{P}]+/gu, '').toLowerCase();
+// The source finding and the page finding of the same name or word are one finding (the source's has the line).
+const sameAs = (f) => (f.sfx != null ? 'sfx|' + f.sfx : f.cue != null ? 'cue|' + wordKey(f.cue) : null);
 
 export function checkSource(project) {
   const found = [];
   const { html } = readSource(project);
   const lineOf = (i) => html.slice(0, i).split('\n').length;
-  const add = (level, code, message, index) => found.push({ level, code, message, ...(index != null ? { line: lineOf(index) } : {}) });
+  const add = (level, code, message, index, extra) => found.push({ level, code, message, ...(index != null ? { line: lineOf(index) } : {}), ...extra });
   const noComments = html.replace(/<!--[\s\S]*?-->/g, (c) => c.replace(/[^\n]/g, ' '));
+  // the narration's words, when om voice has written them
+  let words = [];
+  const cues = /<script\b[^>]*\sid\s*=\s*["']om-cues["'][^>]*>([\s\S]*?)<\/script>/i.exec(noComments);
+  if (cues) try { words = JSON.parse(cues[1]).words || []; } catch { /* a broken om-cues shows up as a page error */ }
+  const warnedCue = new Set();
 
   // one composition at the root
   const roots = readdirSync(project.root).filter((n) => /\.html?$/i.test(n) && statSync(join(project.root, n)).isFile() && /\sdata-composition-id\s*=/.test(readFileSync(join(project.root, n), 'utf8')));
@@ -60,6 +78,15 @@ export function checkSource(project) {
       [/\bsetInterval\s*\(/g, 'interval', 'setInterval runs on the clock, not the timeline'],
     ];
     for (const [re, code2, msg] of rules) for (const x of code.matchAll(re)) add('warning', code2, msg, at + x.index);
+    // names and words written in the code (examples in comments are not calls; positions kept for the line)
+    const calls = code.replace(/\/\*[\s\S]*?\*\/|(^|[^:\\])\/\/.*$/gm, (c, pre = '') => pre + c.slice(pre.length).replace(/[^\n]/g, ' '));
+    for (const x of calls.matchAll(/\bOM\.sfx\(\s*(['"`])([^'"`$\\]+)\1/g)) if (!SFX[x[2]]) add('error', 'unknown-sfx', sfxMessage(x[2]), at + x.index, { sfx: x[2] });
+    if (words.length) for (const x of calls.matchAll(/\bcue\(\s*(['"`])((?:(?!\1).)+)\1\s*(,)?/g)) {
+      const word = x[2];
+      if (x[3] || /\$\{/.test(word) || warnedCue.has(wordKey(word))) continue;   // a second argument names the occurrence
+      const said = cueMatches(words, word);
+      if (said.length > 1) { warnedCue.add(wordKey(word)); add('warning', 'cue-repeated', cueMessage(word, said.map((w) => w.start)), at + x.index, { cue: word }); }
+    }
     for (const call of tweenCalls(code)) {
       const keys = [...call.text.matchAll(/(?:^|[{,]\s*)(left|top|right|bottom|width|height|margin(?:Left|Top|Right|Bottom)?|padding(?:Left|Top|Right|Bottom)?)\s*:/g)].map((k) => k[1]);
       // position tweens always have a transform equivalent; a size tween (a progress bar's width) sometimes is the intent
@@ -158,6 +185,20 @@ const LAYOUT = (t) => `(() => {
   const allow = (el, k) => !!el.closest('[data-layout-allow-' + k + ']');
   const visible = (el) => { for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const s = getComputedStyle(e); if (s.display === 'none' || s.visibility === 'hidden' || Number(s.opacity) < 0.05) return false; } return true; };
   const name = (el) => (el.getAttribute('data-om-id') ? '[' + el.getAttribute('data-om-id') + ']' : el.id ? '#' + el.id : el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\\s+/)[0] : ''));
+  // The part of a text that can be seen: its box inside every ancestor that clips it (a phone screen with overflow
+  // hidden, a clip-path). The frame itself is not one of them: running off the frame is text-cut.
+  const shown = (el, r) => {
+    let x0 = r.left, y0 = r.top, x1 = r.right, y1 = r.bottom;
+    for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+      const s = getComputedStyle(a), cx = s.overflowX !== 'visible', cy = s.overflowY !== 'visible', cp = s.clipPath !== 'none';
+      if (!cx && !cy && !cp) continue;
+      const b = a.getBoundingClientRect();
+      if (b.left <= 0 && b.top <= 0 && b.right >= W && b.bottom >= H) continue;
+      if (cx || cp) { x0 = Math.max(x0, b.left); x1 = Math.min(x1, b.right); }
+      if (cy || cp) { y0 = Math.max(y0, b.top); y1 = Math.min(y1, b.bottom); }
+    }
+    return { left: x0, top: y0, right: x1, bottom: y1, width: Math.max(0, x1 - x0), height: Math.max(0, y1 - y0) };
+  };
   const texts = [];
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   const seen = new Set();
@@ -172,16 +213,19 @@ const LAYOUT = (t) => `(() => {
     const range = document.createRange(); range.selectNodeContents(el);
     const r = range.getBoundingClientRect();
     if (r.width < 2 || r.height < 2) continue;
+    // clipped away completely (a message scrolled out of the phone screen): not on screen, nothing to judge
+    const v = shown(el, r);
+    if (v.width < 2 || v.height < 2) continue;
     const s = getComputedStyle(el);
     // a camera push (the text drawn larger than its layout size) crops on purpose: only contrast is judged then
     const box = el.getBoundingClientRect(), zoomed = el.offsetWidth > 0 && box.width / el.offsetWidth > 1.15;
-    texts.push({ el, r, zoomed, name: name(el), text: el.textContent.trim().slice(0, 24), size: parseFloat(s.fontSize), bold: Number(s.fontWeight) >= 600 });
+    texts.push({ el, r, v, zoomed, name: name(el), text: el.textContent.trim().slice(0, 24), size: parseFloat(s.fontSize), bold: Number(s.fontWeight) >= 600 });
   }
   const style = document.createElement('style'); style.textContent = '*{pointer-events:auto!important}'; document.head.appendChild(style);
   for (const t of texts) {
-    const { r, el } = t;
+    const { r, v, el } = t;
     if (t.zoomed) continue;
-    if ((r.left < -2 || r.top < -2 || r.right > W + 2 || r.bottom > H + 2) && r.right > 0 && r.bottom > 0 && r.left < W && r.top < H && !allow(el, 'overflow')) out.push({ code: 'text-cut', message: t.name + ' "' + t.text + '" runs off the frame' });
+    if ((v.left < -2 || v.top < -2 || v.right > W + 2 || v.bottom > H + 2) && v.right > 0 && v.bottom > 0 && v.left < W && v.top < H && !allow(el, 'overflow')) out.push({ code: 'text-cut', message: t.name + ' "' + t.text + '" runs off the frame' });
     // clipped by an ancestor that hides overflow
     for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
       const s = getComputedStyle(a);
@@ -191,7 +235,8 @@ const LAYOUT = (t) => `(() => {
       if (b.width > 0 && (r.left < b.left - 2 || r.right > b.right + 2 || r.top < b.top - 2 || r.bottom > b.bottom + 2) && r.left < b.right && r.right > b.left && r.top < b.bottom && r.bottom > b.top && !allow(el, 'overflow')) { out.push({ code: 'text-clipped', message: t.name + ' "' + t.text + '" is cut by ' + name(a) }); }
       break;
     }
-    const cx = Math.min(W - 1, Math.max(0, (r.left + r.right) / 2)), cy = Math.min(H - 1, Math.max(0, (r.top + r.bottom) / 2));
+    // what covers it is judged where it can be seen: the middle of the clipped part, not of the whole box
+    const cx = Math.min(W - 1, Math.max(0, (v.left + v.right) / 2)), cy = Math.min(H - 1, Math.max(0, (v.top + v.bottom) / 2));
     if (cx >= 0 && cy >= 0 && cx < W && cy < H && !allow(el, 'occlusion')) {
       for (const hit of document.elementsFromPoint(cx, cy)) {
         if (hit === el || el.contains(hit) || hit.contains(el)) break;
@@ -208,10 +253,11 @@ const LAYOUT = (t) => `(() => {
   for (let i = 0; i < texts.length; i++) for (let j = i + 1; j < texts.length; j++) {
     const a = texts[i], b = texts[j];
     if (a.zoomed || b.zoomed || a.el.contains(b.el) || b.el.contains(a.el) || allow(a.el, 'overlap') || allow(b.el, 'overlap')) continue;
-    const w = Math.min(a.r.right, b.r.right) - Math.max(a.r.left, b.r.left), h = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
-    if (w > 0 && h > 0 && w * h > 0.2 * Math.min(a.r.width * a.r.height, b.r.width * b.r.height)) out.push({ code: 'text-overlap', message: a.name + ' "' + a.text + '" overlaps ' + b.name + ' "' + b.text + '"' });
+    const w = Math.min(a.v.right, b.v.right) - Math.max(a.v.left, b.v.left), h = Math.min(a.v.bottom, b.v.bottom) - Math.max(a.v.top, b.v.top);
+    if (w > 0 && h > 0 && w * h > 0.2 * Math.min(a.v.width * a.v.height, b.v.width * b.v.height)) out.push({ code: 'text-overlap', message: a.name + ' "' + a.text + '" overlaps ' + b.name + ' "' + b.text + '"' });
   }
-  return { W, H, issues: out, boxes: texts.map((t) => ({ name: t.name, text: t.text, x: t.r.left, y: t.r.top, w: t.r.width, h: t.r.height, large: t.size >= 24 || (t.bold && t.size >= 18.66), safe: !t.zoomed && !allow(t.el, 'safe-zone') })) };
+  // the visible parts: safe zones and contrast are judged on what can be seen
+  return { W, H, issues: out, boxes: texts.map((t) => ({ name: t.name, text: t.text, x: t.v.left, y: t.v.top, w: t.v.width, h: t.v.height, large: t.size >= 24 || (t.bold && t.size >= 18.66), safe: !t.zoomed && !allow(t.el, 'safe-zone') })) };
 })()`;
 
 export async function checkPage(project, { samples = 24, fps = 30, onLog = () => {} } = {}) {
@@ -265,6 +311,11 @@ export async function checkPage(project, { samples = 24, fps = 30, onLog = () =>
     // the signature: the film is now at its last frame, where the engine has chosen a corner for it
     const sig = await film.evaluate('window.__omEngine.signature ? window.__omEngine.signature() : null');
     if (sig && sig.shown && !sig.shown.clear) add('warning', 'signature-covers', `the "Made with Short Reels Motion" signature finds no free corner in the last 1.2s and sits ${sig.shown.corner} over the film — leave one corner of the end frame clear, pin it with data-om-signature="top-left" (or another corner) on the root, or switch it off with data-om-signature="off"`, last);
+    // what the film asked for while it ran: helpers that wrap OM.sfx / OM.cue (W('chat')), names built in code.
+    // Runtimes older than 0.5.1 record no cues; their literal calls are still judged in the source.
+    const asked = await film.evaluate(`(() => { const o = window.__om || {}; return { sfx: o.sound ? [...new Set(o.sound().hits.map((h) => h.name))] : [], cues: o.cues ? o.cues() : [] }; })()`);
+    for (const n of asked.sfx) if (!SFX[n]) found.push({ level: 'error', code: 'unknown-sfx', message: sfxMessage(n), sfx: n });
+    for (const c of asked.cues) if (c.nth == null && c.at.length > 1) found.push({ level: 'warning', code: 'cue-repeated', message: cueMessage(c.word, c.at), cue: c.word });
     onLog(`sampled  ${list.length} frames`);
 
     // the same frame reached two ways: after everything above, and straight away in a fresh page
@@ -287,7 +338,8 @@ export async function checkPage(project, { samples = 24, fps = 30, onLog = () =>
 export async function check(project, { page = true, ...opts } = {}) {
   const found = checkSource(project);
   if (page && !found.some((f) => f.code === 'no-root' || f.code === 'script-syntax')) {
-    try { found.push(...(await checkPage(project, opts))); } catch (e) { found.push({ level: 'error', code: 'page', message: e instanceof OmError ? e.message : String(e.message || e) }); }
+    const known = new Set(found.map(sameAs).filter(Boolean));
+    try { found.push(...(await checkPage(project, opts)).filter((f) => !known.has(sameAs(f)))); } catch (e) { found.push({ level: 'error', code: 'page', message: e instanceof OmError ? e.message : String(e.message || e) }); }
   }
   return found;
 }

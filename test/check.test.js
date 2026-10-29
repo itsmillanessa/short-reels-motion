@@ -1,12 +1,23 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { findChrome } from '../cli/lib/browser.js';
-import { checkPage, checkSource } from '../cli/lib/check.js';
+import { check, checkPage, checkSource } from '../cli/lib/check.js';
 import { makeFilm } from './fixture-film.js';
 
+const PKG = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const codes = (found, level) => found.filter((f) => !level || f.level === level).map((f) => f.code);
+// the narration's words as om voice writes them: "chat" is said twice (once capitalised), "hola" once
+const CUES = '<script type="application/json" id="om-cues">{"words":[{"word":"Chat","start":0.4,"end":0.6},{"word":"el","start":0.9,"end":1},{"word":"chat,","start":1.1,"end":1.4},{"word":"hola","start":1.5,"end":1.7}]}</script>';
+// a film that loads the runtime (OM.sfx, OM.cue) from its vendor folder, as om new leaves it
+const withRuntime = (opts) => {
+  const f = makeFilm({ sound: false, video: false, ...opts, body: '<script src="vendor/om.js"></script>' + (opts.body || '') });
+  mkdirSync(join(f.dir, 'vendor'), { recursive: true });
+  copyFileSync(join(PKG, 'runtime', 'om.js'), join(f.dir, 'vendor', 'om.js'));
+  return f;
+};
 
 test('check (source): a clean film has no errors, and the om-score is not read as JavaScript', () => {
   const { project } = makeFilm({ sound: false });
@@ -67,4 +78,35 @@ test('check (page): whitespace between tags does not judge a parent by its hidde
   const { project } = makeFilm({ sound: false, video: false, body: '<div id="end">\n  <h1 style="position:absolute;left:200px;top:120px;margin:0;font-size:30px;white-space:nowrap;opacity:0">a long closing title</h1>\n  <p style="position:absolute;left:200px;top:150px;margin:0;opacity:0">and a subtitle</p>\n</div>' });
   const found = await checkPage(project, { samples: 4 });
   assert.deepEqual(found.filter((f) => /^text-|low-contrast/.test(f.code)), [], JSON.stringify(found));
+});
+
+test('check (source): a sound effect the library does not have is an error with the nearest name; one in a comment is not a call', () => {
+  const { project } = makeFilm({ sound: false, script: "OM.sfx('swoosh', 0.5); OM.sfx(\"whoosh\", 1);\n// OM.sfx('boing2', 1)\n/* OM.sfx('nope', 1) */" });
+  const f = checkSource(project).filter((x) => x.code === 'unknown-sfx');
+  assert.equal(f.length, 1, JSON.stringify(f));
+  assert.equal(f[0].level, 'error');
+  assert.match(f[0].message, /'swoosh'.*did you mean 'whoosh'/);
+  assert.ok(f[0].line > 10, 'points at the line');
+});
+
+test('check (source): an anchor to a word said twice that names no occurrence is a warning; a numbered one, or a word said once, is not', () => {
+  const { project } = makeFilm({ sound: false, body: CUES, script: "const a = OM.cue('chat'); const b = SRM.cue('chat', 2); const c = OM.cue('hola'); const n = 2; const d = OM.cue('chat', n); const e = OM.cue('CHAT');\n// OM.cue('el')" });
+  const f = checkSource(project).filter((x) => x.code === 'cue-repeated');
+  assert.equal(f.length, 1, JSON.stringify(f));
+  assert.equal(f[0].level, 'warning');
+  assert.match(f[0].message, /"chat" is said 2 times \(0\.40s, 1\.10s\).*cue\('chat', 2\)/);
+  // without narration there is nothing to compare with
+  assert.deepEqual(codes(checkSource(makeFilm({ sound: false, script: "const a = OM.cue('chat');" }).project)).filter((c) => c === 'cue-repeated'), []);
+});
+
+test('check: effects and anchors asked for through a helper are found in the page; a literal one is reported once, with its line', { skip: !findChrome() && 'no Chrome' }, async () => {
+  const { project } = withRuntime({ body: CUES, script: "const W = (w) => OM.cue(w); const S = (n, t) => OM.sfx(n, t); W('chat'); S('swoosh', 0.5); OM.sfx('clik', 1); OM.cue('chat', 2); OM.cue('hola');" });
+  const found = await check(project, { samples: 2 });
+  const sfx = found.filter((f) => f.code === 'unknown-sfx'), cue = found.filter((f) => f.code === 'cue-repeated');
+  assert.deepEqual(sfx.map((f) => f.sfx).sort(), ['clik', 'swoosh'], JSON.stringify(sfx));
+  assert.ok(sfx.find((f) => f.sfx === 'clik').line, 'the literal one keeps the line from the source');
+  assert.match(sfx.find((f) => f.sfx === 'swoosh').message, /did you mean 'whoosh'/);
+  assert.equal(cue.length, 1, JSON.stringify(cue));
+  assert.equal(cue[0].cue, 'chat');
+  assert.ok(sfx.every((f) => f.level === 'error') && cue[0].level === 'warning');
 });

@@ -82,3 +82,16 @@ test('check (page): a 16:9 film is not judged against the feeds', { skip: !findC
   const found = await checkPage({ root: dir, index: join(dir, 'index.html'), om: join(dir, '.om') }, { samples: 2 });
   assert.equal(found.filter((f) => f.code === 'unsafe-zone').length, 0);
 });
+
+test('check (page): text clipped inside a phone screen is judged on what shows; text scrolled out of it is not judged', { skip: !findChrome() && 'no Chrome' }, async () => {
+  // the screen ends at 330 px; the long message runs on past it, behind the keyboard and into the feeds' bottom band
+  const long = 'un mensaje largo que sigue y sigue hacia abajo, debajo de la pantalla del celular, con más palabras y más palabras, y todavía más palabras que ya nadie ve porque la pantalla las corta, y más, y más';
+  const project = film(`<div id="screen" style="position:absolute;left:30px;top:40px;width:210px;height:290px;overflow:hidden;background:#222">
+<p data-om-id="long" style="left:10px;top:230px;width:190px;white-space:normal;line-height:1.3">${long}</p>
+<p data-om-id="gone" style="left:10px;top:330px">ya no se ve</p></div>
+<div id="keys" style="position:absolute;left:0;top:345px;width:270px;height:135px;background:#555"></div>`);
+  const found = await checkPage(project, { samples: 2 });
+  const of = (id) => found.filter((f) => f.message.includes('[' + id + ']')).map((f) => f.code);
+  assert.deepEqual(of('gone'), [], 'a text clipped away completely is not on screen: ' + JSON.stringify(found));
+  assert.deepEqual([...new Set(of('long'))], ['text-clipped'], 'only that the screen cuts it, not covered or unsafe: ' + JSON.stringify(found));
+});

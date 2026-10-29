@@ -76,7 +76,9 @@ Pide las grabaciones **antes** de construir. Lo que llega del teléfono necesita
   sale con sus palabras y los huecos de más de un segundo reciben un pulso. Tú solo anclas cada frase o punto a la
   primera palabra que la dice (una que no se repita antes).
 - Ancla el movimiento a palabras: `OM.cue('receta')`, `OM.cue('paso', 2)` (la segunda vez), `OM.cue('listo', 1, 'end')`.
-  La coincidencia es de palabra completa (con acentos); si una palabra se repite, usa `nth` o una palabra única de la frase.
+  La coincidencia es de palabra completa (con acentos, sin importar mayúsculas); si una palabra se repite, usa `nth` o
+  una palabra única de la frase. Un ancla sin `nth` toma la primera vez, aunque pase por tu propia función: `srm check`
+  lo avisa como `cue-repeated`, con los segundos en que se dice cada vez.
   En las plantillas, los pasos aceptan `{ "word": "receta" }` en lugar de `{ "at": 5.0 }`.
 - Con narración el volumen final queda en −14 LUFS solo (donde normalizan las apps). La música baja bajo la voz sola.
 - Subtítulos: `srm voice` deja un `.srt` en `out/`. En videos de tipografía no hacen falta (las palabras grandes ya son
@@ -143,7 +145,8 @@ Detalles que ya costaron rondas:
 
 ## 8. Revisión antes de entregar (no es opcional)
 
-1. `srm check <dir>`: 0 errores y 0 `unsafe-zone`.
+1. `srm check <dir>`: 0 errores, 0 `unsafe-zone` y 0 `cue-repeated`. El texto que recorta un contenedor (la pantalla de
+   un celular con `overflow: hidden`) se juzga solo por la parte que se ve; `text-clipped` avisa que algo lo corta.
 2. `srm render <dir>` y `srm qa <dir>`: sin parpadeos de un cuadro, cuadro 0 lleno, nada quieto ≥ 1 s salvo el cierre.
 3. **Hoja de contacto, un cuadro por segundo**, y mírala completa:
    ```sh

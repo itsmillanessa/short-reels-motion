@@ -394,8 +394,19 @@ export function toSrt(sentences, { max = 16, offset = 0 } = {}) {
 export function cueTerms(html) {
   const out = [];
   const code = html.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1'); // examples in comments are not anchors
-  for (const m of code.matchAll(/\bcue\(\s*(['"`])((?:(?!\1).)+)\1\s*(?:,\s*(\d+))?/g)) out.push({ term: m[2], nth: Number(m[3] || 1) });
+  // explicit: a second argument names the occurrence (a number, or a variable that may hold one)
+  for (const m of code.matchAll(/\bcue\(\s*(['"`])((?:(?!\1).)+)\1\s*(,\s*(\d+)?)?/g)) out.push({ term: m[2], nth: Number(m[4] || 1), explicit: !!m[3] });
   return out;
+}
+
+// Anchors that name no occurrence of a word the narration says more than once: they take the first, silently.
+export function repeatedCues(words, terms) {
+  const out = new Map();
+  for (const { term, explicit } of terms) {
+    const said = cueMatches(words, term);
+    if (!explicit && said.length > 1 && !out.has(term)) out.set(term, said.map((w) => w.start));
+  }
+  return [...out].map(([term, at]) => ({ term, at }));
 }
 
 // Same matching rule as runtime/om.js OM.cue; returns the anchors that would throw.
@@ -621,6 +632,8 @@ export async function voice(project, opts = {}, log = () => {}) {
   else if (applied.rootDuration == null) lines.push(`length   the root has no data-duration, so the film is as long as its timeline — make it reach ${end.toFixed(2)}s, e.g. tl.to({}, { duration: 0.6 }, OM.words().at(-1).end)`);
   const missing = missingCues(applied.words, cueTerms(applied.html));
   if (missing.length) lines.push(`warning  OM.cue anchors not in the narration (they will throw): ${[...new Set(missing.map((m) => m.term + (m.nth > 1 ? ` #${m.nth}` : '')))].join(', ')}`);
+  const repeated = repeatedCues(applied.words, cueTerms(applied.html));
+  if (repeated.length) lines.push(`warning  OM.cue anchors said more than once take the first: ${repeated.map((r) => `"${r.term}" ×${r.at.length} (${r.at.map((t) => t.toFixed(2) + 's').join(', ')})`).join('; ')} — name the one you mean: OM.cue('${repeated[0].term}', 2)`);
   lines.push(`took     ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   return lines.join('\n');
 }

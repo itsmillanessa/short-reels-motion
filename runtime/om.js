@@ -68,15 +68,21 @@
   // Same rule as cueMatches() in cli/lib/voice.js.
   const norm = (s) => String(s).replace(/[\s\p{P}]+/gu, '').toLowerCase();
   const CJK = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
+  // What the film asked for (the word, the occurrence it named or null, when the narration says it): om check warns
+  // when a word said more than once is asked for without saying which time. Keyed, so a cue read every frame stays one entry.
+  const asked = new Map();
   OM.cue = function (word, nth, edge) {
     const target = norm(word), list = load();
     let hits = list.filter((w) => norm(w.word) === target);
     if (!hits.length && CJK.test(target)) hits = list.filter((w) => norm(w.word).includes(target));
+    const k = target + '|' + (nth == null ? '' : nth);
+    if (!asked.has(k)) asked.set(k, { word: String(word), nth: nth == null ? null : Number(nth), at: hits.map((h) => h.start) });
     const w = hits[(nth || 1) - 1];
     if (w) return edge === 'end' ? w.end : w.start;
     throw new Error(`short-reels-motion: no cue "${word}"${nth > 1 ? ` #${nth}` : ''} in om-cues (${list.length} words)`);
   };
   OM.words = () => load().slice();
+  window.__om.cues = () => [...asked.values()];
 
   // Sound. `om sound` reads what the composition declares here and renders the soundtrack
   // (assets/sound.wav, <audio id="om-sound">): music sectioned by the scene labels, effects on the hits.

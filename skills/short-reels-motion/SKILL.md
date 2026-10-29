@@ -6,7 +6,7 @@ metadata:
   homepage: "https://github.com/itsmillanessa"
   repository: "https://github.com/itsmillanessa/short-reels-motion"
   based-on: "huashu-motion by Huashu (https://github.com/alchaincyf/huashu-motion), MIT"
-  version: "0.5.0"
+  version: "0.5.1"
 ---
 
 # Short Reels Motion · director de shorts
@@ -86,8 +86,8 @@ saltes la revisión visual.
 7. **Sonido.** `srm sound`: música sin derechos de autor y un efecto en cada golpe que importa (`OM.sfx('pop', t)` en la
    línea donde aterriza el movimiento). Con narración el volumen final sale en −14 LUFS solo.
 
-8. **Revisa antes de enseñar** ([shorts.md §8](references/shorts.md), no es opcional): `srm check` sin errores ni
-   `unsafe-zone`, `srm render`, `srm qa` sin ✗, hoja de contacto de un cuadro por segundo mirada completa, y las tres notas
+8. **Revisa antes de enseñar** ([shorts.md §8](references/shorts.md), no es opcional): `srm check` sin errores, sin
+   `unsafe-zone` ni `cue-repeated`, `srm render`, `srm qa` sin ✗, hoja de contacto de un cuadro por segundo mirada completa, y las tres notas
    que daría un creador exigente, ya corregidas.
 
 9. **Entrega y studio.** Da la ruta del MP4, la portada (`srm still <dir> --at 0 --out out/portada.png`) y
@@ -111,7 +111,8 @@ y la [biblioteca de lenguajes de movimiento](references/library/README.md).
   canvas se registra con `OM.region(id, t => [x, y, w, h] | null, etiqueta)`.
 - **Las escenas son etiquetas** del timeline: `tl.addLabel('scene:gancho', 0)`; el studio las muestra abajo.
 - **El sonido se declara:** `OM.sfx(nombre, at, { gain })` en el golpe y `OM.music({ product, bpm })` (o una partitura
-  `om-score`); `srm sound` genera `assets/sound.wav`. Nunca se edita a mano.
+  `om-score`); `srm sound` genera `assets/sound.wav`. Nunca se edita a mano. Los nombres salen de `srm sound --list`;
+  `srm check` marca como error uno que no existe y sugiere el más parecido (`swoosh` → `whoosh`).
 - Un solo timeline GSAP pausado en `window.__timelines[<id de la composición>]`; sin `data-duration` en la raíz el video
   dura lo que el timeline.
 - Todo es función del tiempo: nada de `Date.now()`, azar sin semilla ni red. Fuentes y librerías viven en el proyecto.

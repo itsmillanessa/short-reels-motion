@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   splitSentences, tokenize, weight, placeWords, placeSentence, wordsOf, parseSilences, speechIntervals,
-  sentenceSpans, alignChars, charTimes, asrChars, captionLines, toSrt, cueTerms, cueMatches, missingCues, applyVoice, pickVoice, isSpanish, recordingLang,
+  sentenceSpans, alignChars, charTimes, asrChars, captionLines, toSrt, cueTerms, cueMatches, missingCues, repeatedCues, applyVoice, pickVoice, isSpanish, recordingLang,
 } from '../cli/lib/voice.js';
 
 const SCRIPT = 'huashu-motion，一句话出片。你只要说出想法，Agent就把画面做出来。\n哪里不满意，指着画面改，它当场重做！改完一键导出，配音和字幕都对齐。';
@@ -116,7 +116,7 @@ test('captions: ≤16 visible characters, cut at commas, never across sentences'
 
 test('cueTerms and missingCues mirror OM.cue', () => {
   const html = `tl.to(a, {}, OM.cue('一句话') - 0.2); tl.to(b, {}, OM.cue("画面", 2)); OM.cue(\`导出\`, 1, 'end'); OM.cue('缺席')`;
-  assert.deepEqual(cueTerms(html), [{ term: '一句话', nth: 1 }, { term: '画面', nth: 2 }, { term: '导出', nth: 1 }, { term: '缺席', nth: 1 }]);
+  assert.deepEqual(cueTerms(html), [{ term: '一句话', nth: 1, explicit: false }, { term: '画面', nth: 2, explicit: true }, { term: '导出', nth: 1, explicit: true }, { term: '缺席', nth: 1, explicit: false }]);
   const words = [{ word: '一句话' }, { word: '画面' }, { word: '导出' }];
   assert.deepEqual(missingCues(words, cueTerms(html)).map((m) => m.term), ['画面', '缺席']);
 });
@@ -242,4 +242,12 @@ test('a recording is transcribed in its own language: never assumed Chinese or E
   assert.equal(recordingLang('Hello, this is my honest opinion about it'), 'en');
   assert.equal(recordingLang('你好，这是我的看法'), 'zh');
   assert.equal(recordingLang('Olá, tudo bem', { lang: 'pt' }), 'pt', '--lang wins');
+});
+
+test('voice: anchors to a word said more than once that name no occurrence are found (they take the first)', () => {
+  const words = [{ word: 'Chat', start: 0.4 }, { word: 'el', start: 0.9 }, { word: 'chat,', start: 1.1 }, { word: 'hola', start: 1.5 }];
+  const terms = cueTerms("OM.cue('chat'); SRM.cue('chat', 2); OM.cue('hola'); OM.cue('chat', n); // OM.cue('el')");
+  assert.deepEqual(terms.map((t) => [t.term, t.explicit]), [['chat', false], ['chat', true], ['hola', false], ['chat', true]]);
+  assert.deepEqual(repeatedCues(words, terms), [{ term: 'chat', at: [0.4, 1.1] }]);
+  assert.deepEqual(repeatedCues(words, cueTerms("OM.cue('chat', 1); OM.cue('hola')")), [], 'naming the first on purpose is not a finding');
 });

@@ -10,10 +10,10 @@
   const SRM = (window.SRM = {});
 
   // The word of the narration at `at`: exact word, nth time, its start (or 'end'). Same rule as OM.cue.
-  SRM.cue = (word, nth = 1, edge) => OM.cue(word, nth, edge);
+  SRM.cue = (word, nth, edge) => OM.cue(word, nth, edge);
   // A time from a step: { word, nth, edge, offset } anchors to the narration when there is one, else { at } seconds.
   SRM.when = (step, fallback = 0) => {
-    if (step && step.word && OM.words && OM.words().length) { try { return Math.max(0, OM.cue(step.word, step.nth || 1, step.edge) + (Number(step.offset) || 0)); } catch (e) { console.warn('[srm] ' + e.message); } }
+    if (step && step.word && OM.words && OM.words().length) { try { return Math.max(0, OM.cue(step.word, step.nth, step.edge) + (Number(step.offset) || 0)); } catch (e) { console.warn('[srm] ' + e.message); } }
     return step && step.at != null ? Number(step.at) : fallback;
   };
 
