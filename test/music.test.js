@@ -10,7 +10,8 @@ import { DRUM_KITS } from '../cli/lib/composer.js';
 import { DRUMS } from '../cli/lib/score.js';
 
 const REF = join(dirname(fileURLToPath(import.meta.url)), '..', 'skills', 'short-reels-motion', 'references');
-const worlds = [...readFileSync(join(REF, 'music.md'), 'utf8').matchAll(/```abc\n([\s\S]*?)```/g)].map((m) => m[1]);
+// (\r?\n: a checkout made before .gitattributes, on Windows, has CRLF line endings)
+const worlds = [...readFileSync(join(REF, 'music.md'), 'utf8').matchAll(/```abc\r?\n([\s\S]*?)```/g)].map((m) => m[1]);
 const signal = readFileSync(join(REF, 'scores', 'signal.abc'), 'utf8');
 
 // the header every test film of October 2026 ended up with
