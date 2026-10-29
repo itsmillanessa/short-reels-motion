@@ -10,27 +10,32 @@
 #   2. Clona (o actualiza) Short Reels Motion en ~/short-reels-motion (o --dir / SRM_DIR).
 #   3. Instala el comando `srm` global con npm.
 #   4. Registra el skill «director de shorts» para Claude Code (~/.claude/skills) y, si usas Codex, en ~/.codex/skills.
-#   5. Con --whisper instala whisper-cpp (para usar tu propia grabación como voz, palabra por palabra).
+#   5. Con --whisper instala whisper-cpp (para usar tu propia grabación como voz, palabra por palabra); con --kokoro, la
+#      voz gratis Kokoro (`srm voice --setup`).
 #   6. Corre `srm doctor`.
 #
-# Opciones (después de `bash -s --` si lo corres con curl):
-#   --yes        instala lo que falte del sistema sin preguntar
-#   --whisper    instala también whisper-cpp
-#   --dir RUTA   dónde va Short Reels Motion (por defecto ~/short-reels-motion)
-#   --no-global  no instala el comando `srm` global (pruebas)
-#   --no-skill   no registra el skill
-# Variables: SRM_DIR, SRM_REPO, SRM_BRANCH (de dónde clonar), SRM_SRC (usar una copia local tal cual, sin clonar).
+# Opciones (después de `bash -s --` si lo corres con curl), o su variable de entorno (las mismas que en Windows):
+#   --yes        SRM_YES=1        instala lo que falte del sistema sin preguntar
+#   --whisper    SRM_WHISPER=1    instala también whisper-cpp
+#   --kokoro     SRM_KOKORO=1     instala también la voz gratis Kokoro (~400 MB, una vez)
+#   --dir RUTA   SRM_DIR          dónde va Short Reels Motion (por defecto ~/short-reels-motion)
+#   --no-global  SRM_NO_GLOBAL=1  no instala el comando `srm` global (pruebas)
+#   --no-skill   SRM_NO_SKILL=1   no registra el skill
+# Más variables: SRM_REPO, SRM_BRANCH (de dónde clonar), SRM_SRC (usar una copia local tal cual, sin clonar).
 set -euo pipefail
 
 SRM_REPO="${SRM_REPO:-https://github.com/itsmillanessa/short-reels-motion.git}"
 SRM_BRANCH="${SRM_BRANCH:-main}"
 SRM_DIR="${SRM_DIR:-$HOME/short-reels-motion}"
 SRM_SRC="${SRM_SRC:-}"
-YES=""; WHISPER=""; NO_GLOBAL=""; NO_SKILL=""
+flag() { case "${1:-}" in ''|0|false|no) ;; *) echo 1 ;; esac; }
+YES="$(flag "${SRM_YES:-}")"; WHISPER="$(flag "${SRM_WHISPER:-}")"; KOKORO="$(flag "${SRM_KOKORO:-}")"
+NO_GLOBAL="$(flag "${SRM_NO_GLOBAL:-}")"; NO_SKILL="$(flag "${SRM_NO_SKILL:-}")"
 while [ $# -gt 0 ]; do
   case "$1" in
     --yes|-y) YES=1 ;;
     --whisper) WHISPER=1 ;;
+    --kokoro) KOKORO=1 ;;
     --dir) SRM_DIR="$2"; shift ;;
     --no-global) NO_GLOBAL=1 ;;
     --no-skill) NO_SKILL=1 ;;
@@ -46,6 +51,11 @@ miss() { printf '  ✗ %s\n' "$*"; }
 has() { command -v "$1" >/dev/null 2>&1; }
 OS="$(uname -s)"
 MISSING=()
+case "$OS" in MINGW*|MSYS*|CYGWIN*)   # Git Bash on Windows: the Windows installer knows winget, junctions and srm.cmd
+  echo "En Windows usa el instalador de PowerShell:"
+  echo "  irm https://raw.githubusercontent.com/itsmillanessa/short-reels-motion/main/install.ps1 | iex"
+  exit 1 ;;
+esac
 
 # ---- 1. what the machine needs
 say "1/6 Lo que hace falta"
@@ -136,6 +146,10 @@ if [ -z "$NO_GLOBAL" ]; then
   if [ -n "$FOUND" ] && ! grep -q "short-reels-motion" "$FOUND" 2>/dev/null && [ "$(cd "$(dirname "$FOUND")" && pwd -P)" != "$(npm prefix -g)/bin" ]; then
     miss "otro programa responde a «srm» ($FOUND): usa el comando «short-reels-motion»"
   else ok "srm es Short Reels Motion"; fi
+fi
+if [ -n "$KOKORO" ]; then
+  say "Voz gratis Kokoro (srm voice --setup)"
+  node "$SRM_DIR/cli/om.js" voice --setup kokoro || miss "srm voice --setup no terminó; puedes repetirlo después"
 fi
 
 # ---- 6. check
