@@ -1,0 +1,18 @@
+{
+  "title": "Tipografía con voz (vertical)",
+  "summary": "Short vertical 9:16 sin grabación: la voz manda y cada frase es un golpe de palabras grandes a pantalla completa (cae, sube palabra por palabra, cuenta un número o tacha una palabra), con el acento en las palabras clave, gancho desde el cuadro 0, portada y cierre con tu @usuario. Todo el texto dentro de las zonas seguras.",
+  "best_for": [
+    "explicar una idea sin material grabado",
+    "opiniones y datos con voz en off",
+    "series de tips con tipografía",
+    "reels de frases fuertes"
+  ],
+  "aspect": "9:16",
+  "copy": {
+    "templates/blank/vendor": "vendor",
+    "runtime/srm-motion.js": "vendor/srm.js",
+    "fonts/Inter-var.woff": "assets/fonts/Inter-var.woff",
+    "fonts/OFL.txt": "assets/fonts/OFL.txt",
+    "fonts/LICENSES.md": "assets/fonts/LICENSES.md"
+  }
+}

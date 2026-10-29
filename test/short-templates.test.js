@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,9 +22,15 @@ test('short-pantalla: a new project carries the motion library and the sample re
   assert.deepEqual(checkSource(project).filter((f) => f.level === 'error'), []);
 });
 
-test('short-pantalla: no errors in the page, and no text under TikTok / Reels / Shorts interface', { skip: !findChrome() && 'no Chrome' }, async () => {
-  const project = fresh('short-pantalla');
-  const found = await checkPage(project, { samples: 12 });
-  assert.deepEqual(found.filter((f) => f.level === 'error'), [], JSON.stringify(found));
-  assert.deepEqual(found.filter((f) => f.code === 'unsafe-zone'), [], JSON.stringify(found));
-});
+// every vertical template (short-*): it starts clean and keeps its text out from under the feeds' interface
+const SHORTS = readdirSync(join(PKG, 'templates')).filter((t) => t.startsWith('short-'));
+test('short templates are found', () => assert.ok(SHORTS.length >= 2, SHORTS.join(',')));
+for (const t of SHORTS) {
+  test(`${t}: clean source, no page errors, no text under TikTok / Reels / Shorts interface`, { skip: !findChrome() && 'no Chrome' }, async () => {
+    const project = fresh(t);
+    assert.deepEqual(checkSource(project).filter((f) => f.level === 'error'), []);
+    const found = await checkPage(project, { samples: 12 });
+    assert.deepEqual(found.filter((f) => f.level === 'error'), [], JSON.stringify(found));
+    assert.deepEqual(found.filter((f) => f.code === 'unsafe-zone'), [], JSON.stringify(found));
+  });
+}
