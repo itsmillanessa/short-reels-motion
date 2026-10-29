@@ -130,6 +130,16 @@ select.lang { appearance: none; -webkit-appearance: none; background: transparen
 .mark { position: absolute; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px #fff; }
 .mark.working { background: var(--blue); } .mark.done { background: var(--green); }
 .playhead { position: absolute; top: 0; bottom: -4px; width: 2px; margin-left: -1px; background: var(--accent); pointer-events: none; }
+@media (max-height: 760px) {   /* a short window (half a laptop screen): less chrome, more room for the film */
+  body { grid-template-rows: 40px 1fr auto; }
+  .timeline { padding: 4px 14px 8px; }
+  .transport { height: 28px; }
+  .icon { width: 26px; height: 26px; }
+  .track { height: 54px; margin-top: 2px; }
+  .scenes { top: 20px; height: 32px; }
+  .scene { padding: 3px 8px; }
+  .scene small { display: none; }
+}
 .playhead span { position: absolute; top: -2px; left: -5px; width: 12px; height: 12px; background: var(--accent); clip-path: polygon(0 0, 100% 0, 100% 60%, 50% 100%, 0 60%); }
 
 .toast { position: fixed; left: 50%; bottom: 140px; transform: translateX(-50%); z-index: 50; max-width: 560px; padding: 10px 16px; border-radius: 8px; background: var(--ink); color: #fff; box-shadow: 0 12px 30px #0000004d; line-height: 1.5; }

@@ -175,7 +175,8 @@ function tick(force) {
 // ---------- geometry ----------
 function layout() {
   const stage = $('#stage').getBoundingClientRect();
-  const pad = 36, aw = stage.width - pad * 2, ah = stage.height - pad * 2;
+  const pad = S.h > S.w ? 14 : 36;   // a vertical film is limited by height: give it the room instead of a margin
+  const aw = stage.width - pad * 2, ah = stage.height - pad * 2;
   const scale = Math.min(aw / S.w, ah / S.h);
   const frame = $('#frame');
   frame.style.width = Math.max(10, S.w * scale) + 'px';
