@@ -44,3 +44,10 @@ test('browser: per-user installs on Windows (%LOCALAPPDATA%) are candidates too'
   assert.ok(paths.includes('C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe'));
   assert.ok(!chromeCandidates({ env: {} }).some((c) => /AppData/.test(c.path)));
 });
+
+test('Windows: a Chrome installed for the user (no admin rights, %LOCALAPPDATA%) comes before the Edge every Windows has', () => {
+  const order = chromeCandidates({ env: { LOCALAPPDATA: 'C:\\Users\\a\\AppData\\Local' } }).map((c) => c.path).filter((p) => p.startsWith('C:'));
+  const at = (re) => order.findIndex((p) => re.test(p));
+  assert.ok(at(/AppData\\Local\\Google\\Chrome/) >= 0 && at(/AppData\\Local\\Google\\Chrome/) < at(/Microsoft\\Edge/), order.join('\n'));
+  assert.ok(at(/Program Files\\Google\\Chrome/) < at(/AppData\\Local\\Google\\Chrome/), 'a machine-wide Chrome first');
+});

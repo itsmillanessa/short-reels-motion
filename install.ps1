@@ -54,6 +54,32 @@ function Say($t) { Write-Host ''; Write-Host "> $t" -ForegroundColor Cyan }
 function Ok($t) { Write-Host "  [ok] $t" }
 function Miss($t) { Write-Host "  [x]  $t" -ForegroundColor Yellow }
 function Has($c) { [bool](Get-Command $c -ErrorAction SilentlyContinue) }
+# A native command: what it writes to stderr is not a failure (hosts that capture stderr - the ISE, agents without a
+# console, remoting - turn each line into an error record, terminating under 'Stop'); its exit code says how it went.
+# And its output is decoded as UTF-8: piped to Out-Host, PowerShell reads node's UTF-8 with the console's code page
+# (437, 850) and doctor's marks and accents came out garbled. A host without a console refuses the setting: then as it is.
+function Run-Native([scriptblock]$cmd) {
+  $eap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+  $enc = $null
+  try { $enc = [Console]::OutputEncoding; [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false } catch { $enc = $null }
+  try { & $cmd | Out-Host }
+  finally {
+    $ErrorActionPreference = $eap
+    if ($enc) { try { [Console]::OutputEncoding = $enc } catch { } }
+  }
+}
+# A fresh Windows PowerShell (or PowerShell 7) without this process's policy or modules: what a new window would get
+# ("-ExecutionPolicy Bypass" and an agent's PowerShell set this process's policy, which Get-ExecutionPolicy reports).
+function Fresh-PS($exe, $command) {
+  $keep = @{}
+  foreach ($k in 'PSModulePath', 'PSExecutionPolicyPreference') { $keep[$k] = [Environment]::GetEnvironmentVariable($k, 'Process'); [Environment]::SetEnvironmentVariable($k, $null, 'Process') }
+  $eap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+  try { return ((& $exe -NoProfile -NonInteractive -Command $command 2>$null) | Out-String).Trim() } catch { return '' }
+  finally {
+    $ErrorActionPreference = $eap
+    foreach ($k in $keep.Keys) { [Environment]::SetEnvironmentVariable($k, $keep[$k], 'Process') }
+  }
+}
 # What winget just installed is on the machine's PATH, not yet on this window's: add what is missing (never replace it,
 # an agent's session can carry entries of its own).
 function Refresh-Path {
@@ -65,8 +91,8 @@ function Refresh-Path {
 $missing = New-Object System.Collections.Generic.List[string]
 function Install-Pkg($what, $wingetId) {
   if (-not $Yes) { $missing.Add($what); return }
-  if (-not (Has winget)) { Miss "${what}: falta winget (App Installer, de Microsoft Store)"; $missing.Add($what); return }
-  winget install --id $wingetId -e --silent --accept-source-agreements --accept-package-agreements | Out-Host
+  if (-not (Has winget)) { Miss "${what}: falta winget (App Installer, de Microsoft Store)"; return }   # the caller lists it
+  Run-Native { winget install --id $wingetId -e --silent --accept-source-agreements --accept-package-agreements }
   Refresh-Path
 }
 
@@ -94,7 +120,11 @@ try {
     (Join-Path $env:LOCALAPPDATA 'BraveSoftware\Brave-Browser\Application\brave.exe')
   )
   $browser = $browsers | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
-  if ($browser) { Ok "navegador: $browser" } else { Miss 'un navegador Chrome o Edge'; Install-Pkg 'Google Chrome' 'Google.Chrome' }
+  if ($browser) { Ok "navegador: $browser" }
+  else {
+    Miss 'un navegador Chrome o Edge'; Install-Pkg 'Google Chrome' 'Google.Chrome'
+    if ($Yes -and -not ($browsers | Where-Object { $_ -and (Test-Path $_) })) { $missing.Add('Google Chrome') }
+  }
   if ($missing.Count -gt 0) {
     throw ("falta: $($missing -join ', ')`n" +
       'Vuelve a correr el instalador con -Yes (o $env:SRM_YES = 1 antes del one-liner) para instalarlo con winget, o instalalo tu y repite.')
@@ -106,13 +136,13 @@ try {
     if (-not (Test-Path (Join-Path $Dir 'cli\om.js'))) { throw "SRM_SRC no parece Short Reels Motion: falta cli\om.js en $Dir" }
   } elseif (Test-Path (Join-Path $Dir '.git')) {
     Say "2/6 Actualizando $Dir"
-    git -C $Dir pull --quiet --ff-only origin $Branch
+    Run-Native { git -C $Dir pull --quiet --ff-only origin $Branch }
     if ($LASTEXITCODE -ne 0) { Miss 'no se pudo actualizar sin conflictos; sigo con lo que hay' }
   } elseif (Test-Path $Dir) {
     throw "$Dir ya existe y no es Short Reels Motion; usa -Dir (o SRM_DIR) para instalar en otra carpeta"
   } else {
     Say "2/6 Descargando Short Reels Motion en $Dir"
-    git clone --quiet --branch $Branch $Repo $Dir
+    Run-Native { git clone --quiet --branch $Branch $Repo $Dir }
     if ($LASTEXITCODE -ne 0) { throw "git clone fallo ($Repo, rama $Branch)" }
   }
   $cli = Join-Path $Dir 'cli\om.js'
@@ -121,20 +151,23 @@ try {
   Say '3/6 Comando srm'
   if ($NoGlobal) { Ok "omitido (-NoGlobal): node `"$cli`" funciona igual" }
   else {
-    npm.cmd install -g --loglevel=error --no-audit --no-fund $Dir
+    Run-Native { npm.cmd install -g --loglevel=error --no-audit --no-fund $Dir }
     if ($LASTEXITCODE -ne 0) { throw 'npm install -g fallo (mira el error de arriba)' }
     Refresh-Path
     Ok 'srm instalado'
-    # PowerShell runs npm's srm.ps1 only when scripts are allowed; a new Windows has them Restricted
-    # (only advice: a PowerShell that cannot load Get-ExecutionPolicy, like one started under PowerShell 7, goes on)
-    $policy = ''
-    try { $policy = [string](Get-ExecutionPolicy) } catch { }
-    if ($policy -match '^(Restricted|AllSigned)$') {
+    # PowerShell runs npm's srm.ps1 only when scripts are allowed, and a new Windows has them Restricted. Asked of a fresh
+    # PowerShell: this one's own policy is not what a new window gets ("-ExecutionPolicy Bypass", an agent's session), and
+    # Windows PowerShell and PowerShell 7 keep theirs apart. Group policy can forbid the change: then it is only said.
+    foreach ($ps in @(@('powershell.exe', 'Windows PowerShell'), @('pwsh', 'PowerShell 7'))) {
+      if (-not (Has $ps[0])) { continue }
+      $policy = Fresh-PS $ps[0] 'Get-ExecutionPolicy'
+      if ($policy -notmatch '^(Restricted|AllSigned)$') { continue }
       if ($Yes) {
-        try { Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force; Ok 'PowerShell ya puede correr srm (ExecutionPolicy RemoteSigned para tu usuario)' }
-        catch { Miss "PowerShell no deja correr srm.ps1 ($policy) y no se pudo cambiar: $($_.Exception.Message)" }
+        $after = Fresh-PS $ps[0] 'try { Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force -ErrorAction Stop } catch { }; Get-ExecutionPolicy'
+        if ($after -notmatch '^(Restricted|AllSigned)$') { Ok "$($ps[1]) ya puede correr srm (ExecutionPolicy RemoteSigned para tu usuario)" }
+        else { Miss "$($ps[1]) no deja correr srm.ps1 ($after) y no se pudo cambiar (politica de tu organizacion?): en cmd o Git Bash srm funciona" }
       } else {
-        Miss "PowerShell no deja correr srm.ps1 (ExecutionPolicy $policy): en cmd o Git Bash srm funciona; para PowerShell corre"
+        Miss "$($ps[1]) no deja correr srm.ps1 (ExecutionPolicy $policy): en cmd o Git Bash srm funciona; para PowerShell corre"
         Write-Host '       Set-ExecutionPolicy -Scope CurrentUser RemoteSigned'
       }
     }
@@ -164,17 +197,24 @@ try {
   if (-not $Kokoro -and -not $Whisper) {
     Ok 'la voz de Windows sirve desde ya; para la voz gratis Kokoro: srm voice --setup   (o -Kokoro / -Whisper aqui)'
   }
+  $partial = $false
+  if ($Kokoro -and -not (Has uv)) {
+    # kokoro-onnx installs on Python 3.10 to 3.13; uv brings its own (and is what srm uses first)
+    $py = ''
+    if (Has py) { $eap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'; try { $py = (& py -0 2>&1 | Out-String) } catch { } finally { $ErrorActionPreference = $eap } }
+    if ($py -notmatch '3\.1[0-3]') { Miss 'uv (la voz Kokoro necesita uv o Python 3.10-3.13)'; Install-Pkg 'uv (para la voz Kokoro)' 'astral-sh.uv' }
+  }
   foreach ($what in @(@('kokoro', $Kokoro), @('whisper', $Whisper))) {
     if (-not $what[1]) { continue }
-    node $cli voice --setup $what[0] | Out-Host
-    if ($LASTEXITCODE -ne 0) { Miss "srm voice --setup $($what[0]) no termino; puedes repetirlo despues" }
+    Run-Native { node $cli voice --setup $what[0] }
+    if ($LASTEXITCODE -ne 0) { Miss "srm voice --setup $($what[0]) no termino; puedes repetirlo despues"; $partial = $true }
   }
 
   # ---- 6. check
   Say '6/6 Revision final'
-  node $cli doctor | Out-Host
+  Run-Native { node $cli doctor }
   Write-Host ''
-  Write-Host 'Listo. Abre tu agente (Claude Code o Codex) y pidele un video, por ejemplo:'
+  Write-Host $(if ($partial -or $missing.Count) { 'Listo, salvo lo marcado con [x] arriba. Abre tu agente (Claude Code o Codex) y pidele un video, por ejemplo:' } else { 'Listo. Abre tu agente (Claude Code o Codex) y pidele un video, por ejemplo:' })
   Write-Host '  "Hazme un reel de 30 segundos sobre como usar la IA para resumir correos"'
   if (-not $NoGlobal -and -not (Has srm)) { Write-Host 'Abre una terminal nueva para usar el comando srm.' }
   Write-Host 'Para actualizar Short Reels Motion mas adelante, vuelve a correr este instalador.'
@@ -185,5 +225,7 @@ try {
   $global:LASTEXITCODE = 1
 }
 } @args
-# Run as a file (-File install.ps1), a failure is the exit code; through iex the window stays open.
-if ($MyInvocation.MyCommand.Path -and $LASTEXITCODE) { exit $LASTEXITCODE }
+# A failure is the exit code when this runs as a file (-File install.ps1) or in a PowerShell started just to run it (an
+# agent's `powershell -Command "irm ... | iex"`, which otherwise exits 0); typed into an open window (iex, or a window
+# started with -NoExit) the window stays open. No variables here: through iex nothing may stay behind in the session.
+if ($LASTEXITCODE -and ($MyInvocation.MyCommand.Path -or (([Environment]::GetCommandLineArgs() -match '^[-/](c|command|e|ec|encodedcommand)$') -and -not ([Environment]::GetCommandLineArgs() -match '^[-/]noexit$')))) { exit $LASTEXITCODE }

@@ -9,7 +9,6 @@ import { OmError, openProject, readSource, readVariables, scan, setVariables, un
 import { claim, comments, pending, resolve as resolveComment, setStatus } from './lib/inbox.js';
 import { findChrome, chromeVersion, NO_CHROME } from './lib/browser.js';
 import { render } from './lib/render.js';
-import { cacheDir } from './lib/brand.js';
 import { cliLang, tr } from './lib/lang.js';
 
 const PKG = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -402,7 +401,11 @@ async function main() {
         if (!['kokoro', 'whisper', 'all'].includes(what)) throw new OmError('usage: srm voice --setup [kokoro|whisper|all]   (kokoro: the free voice; whisper: your own recording, word by word)');
         const log = (l) => process.stderr.write(l + '\n'), done = [];
         if (what !== 'whisper') done.push(setupKokoro(log));
-        if (what !== 'kokoro') done.push(await setupWhisper(log));
+        if (what !== 'kokoro') {
+          // `all` sets up what it can here: on macOS and Linux whisper comes from the system's package manager, so the
+          // way to get it is reported next to the Kokoro that did install, not thrown over it
+          try { done.push(await setupWhisper(log)); } catch (e) { if (what === 'whisper' || !(e instanceof OmError)) throw e; done.push(`· ${e.message}`); }
+        }
         return out(done.join('\n'));
       }
       // the kit's voice and speed when no flag says otherwise: a generated voice (a script, or a voice engine's take with its
@@ -479,7 +482,7 @@ async function studio(dir, flags) {
 }
 
 async function doctor() {
-  const { kokoroPython, powershellEnv, sapiVoices, whisperCli, WHISPER_HINT } = await import('./lib/voice.js');
+  const { kokoroPython, kokoroReady, powershellEnv, sapiVoices, whisperCli, WHISPER_HINT } = await import('./lib/voice.js');
   const win = process.platform === 'win32', report = [];
   const major = Number(process.versions.node.split('.')[0]);
   report.push([major >= 22, `Node ${process.versions.node}`, major >= 22 ? '' : tr({ es: 'se necesita Node 22 o más nuevo — https://nodejs.org', en: 'need Node 22 or newer — https://nodejs.org' })]);
@@ -497,20 +500,25 @@ async function doctor() {
   // optional: not needed to make a short, but each one opens a way of working (· = not there yet)
   const home = homedir();
   const optional = [
-    [!!kokoroPython(), tr({ es: 'Kokoro (voz gratis, mejor que la del sistema)', en: 'Kokoro (free voice, better than the system one)' }), tr({ es: 'srm voice --setup (una vez, ~400 MB)', en: 'srm voice --setup (once, ~400 MB)' })],
+    // a venv that cannot import kokoro-onnx is a setup that stopped halfway: srm voice --setup completes it
+    kokoroPython() && !kokoroReady()
+      ? [false, tr({ es: 'Kokoro (a medias: falta kokoro-onnx en su venv)', en: 'Kokoro (half set up: its venv lacks kokoro-onnx)' }), tr({ es: 'srm voice --setup lo completa', en: 'srm voice --setup completes it' })]
+      : [!!kokoroPython(), tr({ es: 'Kokoro (voz gratis, mejor que la del sistema)', en: 'Kokoro (free voice, better than the system one)' }), tr({ es: 'srm voice --setup (una vez, ~400 MB)', en: 'srm voice --setup (once, ~400 MB)' })],
   ];
   if (win) {
     // Windows' own voices: the free voice with nothing to install (srm voice --voice win), and the fallback without Kokoro
-    const voices = sapiVoices(), es = voices.filter((v) => /^es-/i.test(v.culture));
-    optional.push([es.length > 0, `${tr({ es: 'voces de Windows', en: 'Windows voices' })}: ${voices.length ? voices.map((v) => `${v.name.replace(/^Microsoft | Desktop$/g, '')} (${v.culture})`).join(', ') : tr({ es: 'ninguna', en: 'none' })}`,
-      tr({ es: 'para una voz en español: Configuración → Hora e idioma → Voz → Agregar voces → Español (México)', en: 'for a Spanish voice: Settings → Time & language → Speech → Add voices → Spanish (Mexico)' })]);
+    // fine when there is one in the creator's language (the CLI's: SRM_LANG, the kit, the system), not only in Spanish
+    const voices = sapiVoices(), mine = cliLang(), theirs = voices.filter((v) => v.culture.toLowerCase().startsWith(mine + '-'));
+    optional.push([theirs.length > 0, `${tr({ es: 'voces de Windows', en: 'Windows voices' })}: ${voices.length ? voices.map((v) => `${v.name.replace(/^Microsoft | Desktop$/g, '')} (${v.culture})`).join(', ') : voices.error ? tr({ es: `no se pudieron leer (${voices.error})`, en: `could not be read (${voices.error})` }) : tr({ es: 'ninguna', en: 'none' })}`,
+      mine === 'es' ? tr({ es: 'para una voz en español: Configuración → Hora e idioma → Voz → Agregar voces → Español (México)', en: 'for a Spanish voice: Settings → Time & language → Speech → Add voices → Spanish (Mexico)' })
+        : tr({ es: 'para una voz en inglés: Configuración → Hora e idioma → Voz → Agregar voces → English (United States)', en: 'for an English voice: Settings → Time & language → Speech → Add voices → English (United States)' })]);
   }
   const whisper = whisperCli();
   optional.push([!!whisper, tr({ es: 'whisper (tu propia grabación como voz, palabra por palabra)', en: 'whisper (your own recording as the voice, word by word)' }), WHISPER_HINT[process.platform] || WHISPER_HINT.linux]);
   optional.push([existsSync(join(home, '.claude', 'skills', 'short-reels-motion')), tr({ es: 'skill para Claude Code', en: 'skill for Claude Code' }) + ' (~/.claude/skills/short-reels-motion)', tr({ es: 'corre el instalador, o enlaza ahí skills/short-reels-motion', en: 'run the installer, or link skills/short-reels-motion there' })]);
   optional.push([existsSync(join(home, '.codex', 'skills', 'short-reels-motion')), tr({ es: 'skill para Codex', en: 'skill for Codex' }) + ' (~/.codex/skills/short-reels-motion)', tr({ es: 'solo si usas Codex: corre el instalador', en: 'only if you use Codex: run the installer' })]);
   // another program called srm (the old secure-delete tool) earlier on PATH would run instead of this one
-  const which = spawnSync(win ? 'where' : 'which', ['srm'], { encoding: 'utf8' }).stdout.split(/\r?\n/)[0].trim();
+  const which = (spawnSync(win ? 'where' : 'which', ['srm'], { encoding: 'utf8' }).stdout || '').split(/\r?\n/)[0].trim();   // no `which` at all: nothing found
   let ours = !which;
   try { ours = !which || realpathSync(which).startsWith(realpathSync(PKG)) || readFileSync(which, 'utf8').includes('short-reels-motion'); } catch { /* not readable */ }
   if (!ours) report.push([false, tr({ es: `otro programa responde a «srm» (${which})`, en: `another program answers to "srm" (${which})` }), tr({ es: 'usa `short-reels-motion`, o pon primero en el PATH la carpeta global de npm', en: 'use `short-reels-motion` instead, or put the npm global bin first on PATH' })]);

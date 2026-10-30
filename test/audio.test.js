@@ -4,7 +4,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { FEED_LUFS, checkLoudness, encodeAudio, hasAudio, loudness, muxAudio } from '../cli/lib/audio.js';
+import { FEED_LUFS, atempo, checkLoudness, encodeAudio, hasAudio, loudness, muxAudio } from '../cli/lib/audio.js';
 import { HAS_FFMPEG } from './fixture-film.js';
 
 const skip = !HAS_FFMPEG && 'no ffmpeg';
@@ -76,4 +76,10 @@ test('audio: a narrated mix is levelled to feed loudness (-14 LUFS), and without
   assert.ok(Math.abs(got.lufs - FEED_LUFS) < 1, `levelled mix at ${got.lufs} LUFS`);
   assert.ok(got.peak <= -1, `peaks held under the limit: ${got.peak} dBFS`);
   assert.ok(loudness(plain).lufs < FEED_LUFS - 6, 'without lufs the mix is left where it was');
+});
+
+test('atempo chains for any speed: a clip played at 0.25 is two steps of 0.5, never one ffmpeg refuses', () => {
+  assert.equal(atempo(0.25), 'atempo=0.5,atempo=0.5');
+  assert.equal(atempo(4), 'atempo=2,atempo=2');
+  assert.equal(atempo(1.25), 'atempo=1.25');
 });

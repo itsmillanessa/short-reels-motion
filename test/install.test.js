@@ -31,8 +31,10 @@ const sandbox = () => {
   for (const d of [['.codex'], ['AppData', 'Local'], ['AppData', 'Roaming']]) mkdirSync(join(root, 'home', ...d), { recursive: true });
   return { root, env: { ...powershellEnv(), USERPROFILE: join(root, 'home'), npm_config_prefix: join(root, 'npm') } };
 };
-const iex = ({ root, env }) => spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-  `Get-Content -Raw -Encoding UTF8 '${join(PKG, 'install.ps1')}' | iex; Write-Host ('AFTER eap=' + $ErrorActionPreference + ' vars=' + [bool](Get-Variable Yes, Dir -ErrorAction SilentlyContinue) + ' fns=' + [bool](Get-Command Say -ErrorAction SilentlyContinue) + ' code=' + $LASTEXITCODE)`],
+// A window the creator typed the one-liner into: -NoExit (a PowerShell started with -Command alone is an agent's one-shot,
+// where a failure must be the exit code), ended by the test itself once it has looked at the session.
+const iex = ({ root, env }) => spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-NoExit', '-Command',
+  `Get-Content -Raw -Encoding UTF8 '${join(PKG, 'install.ps1')}' | iex; Write-Host ('AFTER eap=' + $ErrorActionPreference + ' vars=' + [bool](Get-Variable Yes, Dir -ErrorAction SilentlyContinue) + ' fns=' + [bool](Get-Command Say, Run-Native, Fresh-PS -ErrorAction SilentlyContinue) + ' code=' + $LASTEXITCODE); exit`],
 { encoding: 'utf8', env, cwd: root, timeout: 240_000 });
 
 test('install.ps1 through iex: installs srm and links the skill, leaves the session as it was', { skip: !win && 'Windows only', timeout: 300_000 }, () => {
@@ -54,6 +56,14 @@ test('install.ps1 through iex: a failure prints why and keeps the window open', 
   const r = iex({ root, env: { ...env, SRM_SRC: join(tmpdir(), 'no-such-short-reels-motion') } });
   assert.match(r.stdout, /No se pudo terminar la instalacion: SRM_SRC no parece Short Reels Motion/);
   assert.match(r.stdout, /AFTER eap=Continue vars=False fns=False code=1/, r.stdout + r.stderr);
+});
+
+test('install.ps1 by an agent (powershell -Command "irm | iex", no window to keep open): a failure is the exit code', { skip: !win && 'Windows only', timeout: 120_000 }, () => {
+  const { root, env } = sandbox();
+  const r = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', `Get-Content -Raw -Encoding UTF8 '${join(PKG, 'install.ps1')}' | iex`],
+    { encoding: 'utf8', env: { ...env, SRM_SRC: join(tmpdir(), 'no-such-short-reels-motion') }, cwd: root, timeout: 120_000 });
+  assert.match(r.stdout, /No se pudo terminar la instalacion/);
+  assert.equal(r.status, 1, r.stdout + r.stderr);
 });
 
 test('install.ps1 run as a file: a failure is the exit code', { skip: !win && 'Windows only', timeout: 120_000 }, () => {

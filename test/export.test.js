@@ -114,7 +114,8 @@ test('export writes every file, injects the runtime into the copy only, and zips
   assert.ok(page.includes('href="source.zip" download'));
   assert.ok(page.includes('--ar: 1080 / 1920'), 'aspect ratio comes from the composition');
   assert.ok(page.includes('Q3 &amp; more') && page.includes('one line'));
-  assert.ok(page.includes('npx short-reels-motion demo'));
+  assert.ok(page.includes('srm demo') && page.includes('/main/install.sh | bash') && page.includes('/main/install.ps1 | iex'));
+  assert.ok(!page.includes('npx short-reels-motion'), 'never the unpublished npm name: whoever registered it would run their code');
   for (const [, code] of page.matchAll(/<script>([\s\S]*?)<\/script>/g)) new Function(code); // the inline scripts parse
 });
 
@@ -149,7 +150,9 @@ for (const example of ['showcase', 'voice-demo']) {
       const rel = relative(dir, f), text = readFileSync(f, 'utf8');
       if (/LICENSE/i.test(rel)) continue; // license documents are read by people, not loaded by the page
       if (rel === 'index.html' || rel === 'film/index.html') {
-        for (const u of urls(text)) assert.ok(u === REPO_URL || NEVER_FETCHED.some((r) => r.test(u)), `${rel} links to ${u}`);
+        // the repository, and the installers as commands to copy (text in a <pre>, never loaded by the page)
+        const installer = (u) => /^https:\/\/raw\.githubusercontent\.com\/itsmillanessa\/short-reels-motion\/main\/install\.(sh|ps1)$/.test(u) && !new RegExp(`(src|href)\\s*=\\s*["']?${u.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(text);
+        for (const u of urls(text)) assert.ok(u === REPO_URL || installer(u) || NEVER_FETCHED.some((r) => r.test(u)), `${rel} links to ${u}`);
         continue;
       }
       for (const u of urls(text)) {

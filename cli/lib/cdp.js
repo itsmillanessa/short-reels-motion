@@ -31,11 +31,15 @@ export const LOCAL_STATE = { password_manager: { os_password_blank: false, os_pa
 
 // Ctrl-C or a kill does not run 'exit' handlers: what must not be left behind (browsers, temp profiles, a render's
 // scratch folder) registers here and is cleaned up on SIGINT / SIGTERM before the process exits.
-const leftovers = new Set();
-const onSignal = (sig) => { for (const fn of leftovers) { try { fn(); } catch { /* best effort */ } } process.exit(sig === 'SIGINT' ? 130 : 143); };
-export function cleanupOnInterrupt(fn) {
+// `first`: kills (every browser goes before any folder is removed, so a render's other workers stop at once).
+const leftovers = new Map();
+const onSignal = (sig) => {
+  for (const pass of [true, false]) for (const [fn, first] of leftovers) if (first === pass) { try { fn(); } catch { /* best effort */ } }
+  process.exit(sig === 'SIGINT' ? 130 : 143);
+};
+export function cleanupOnInterrupt(fn, { first = false } = {}) {
   if (!leftovers.size) for (const s of ['SIGINT', 'SIGTERM']) process.on(s, onSignal);
-  leftovers.add(fn);
+  leftovers.set(fn, first);
   return () => { leftovers.delete(fn); if (!leftovers.size) for (const s of ['SIGINT', 'SIGTERM']) process.off(s, onSignal); };
 }
 
@@ -51,8 +55,17 @@ function reapOnExit(fn) {
 
 // A temp profile is removed once its browser is gone. On Windows Chrome keeps its files open for a moment after it is
 // killed: removing at once failed (EBUSY / EPERM), silently, and every launch left a folder in %TEMP% — hundreds of them.
-// Wait for the exit, then retry the removal for a few seconds.
-const RM_RETRY = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 };
+// Wait for the exit, then retry the whole removal for up to `ms`. A flat loop with a deadline, not rm's maxRetries: Node
+// restarts a child's retries inside every retry of its parent, so one file a scanner keeps open deep in the profile held
+// close() for minutes (66 s at the root, ~12 min a level down). Still locked after that: the folder stays in the temp.
+export async function removeLater(dir, ms = 3000) {
+  const end = Date.now() + ms;
+  for (;;) {
+    try { await rm(dir, { recursive: true, force: true }); return true; } catch { /* locked */ }
+    if (Date.now() >= end) return false;
+    await new Promise((r) => setTimeout(r, 150));
+  }
+}
 
 // Start Chrome and return a connection: { send, on, off, once, close, transport, pid }.
 //   conn.send('Page.navigate', { url }, sessionId?) → Promise<result>
@@ -65,14 +78,17 @@ export async function launch(exe, { transport = 'pipe', args = [], timeout = 30_
   const flags = [...CHROME_FLAGS, ...root, `--user-data-dir=${profile}`, ...args, 'about:blank'];
   const conn = transport === 'websocket' ? await viaWebSocket(exe, flags, timeout) : viaPipe(exe, flags);
   conn.profile = profile;
-  const forget = cleanupOnInterrupt(() => { conn._reap(); try { rmSync(profile, RM_RETRY); } catch { /* best effort */ } });
+  // on Ctrl-C every browser is killed first, then each profile gets one try (no waiting: the user asked to stop)
+  const forgetKill = cleanupOnInterrupt(() => conn._reap(), { first: true });
+  const forgetRm = cleanupOnInterrupt(() => { try { rmSync(profile, { recursive: true, force: true }); } catch { /* left in the temp */ } });
+  const forget = () => { forgetKill(); forgetRm(); };
   const close = conn.close;
   // fast: a throwaway browser (a render worker) is killed at once instead of asked to shut down; its temp profile goes either way
   conn.close = async ({ fast = false } = {}) => {
     forget();
     await close({ fast });
     await Promise.race([conn._exited, new Promise((r) => setTimeout(r, 3000).unref())]);
-    try { await rm(profile, RM_RETRY); } catch { /* still locked after the retries: nothing else to do */ }
+    await removeLater(profile);
   };
   return conn;
 }

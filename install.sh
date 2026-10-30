@@ -28,7 +28,8 @@ SRM_REPO="${SRM_REPO:-https://github.com/itsmillanessa/short-reels-motion.git}"
 SRM_BRANCH="${SRM_BRANCH:-main}"
 SRM_DIR="${SRM_DIR:-$HOME/short-reels-motion}"
 SRM_SRC="${SRM_SRC:-}"
-flag() { case "${1:-}" in ''|0|false|no) ;; *) echo 1 ;; esac; }
+# any case, like install.ps1: SRM_YES=False or NO is off
+flag() { case "$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]')" in ''|0|false|no) ;; *) echo 1 ;; esac; }
 YES="$(flag "${SRM_YES:-}")"; WHISPER="$(flag "${SRM_WHISPER:-}")"; KOKORO="$(flag "${SRM_KOKORO:-}")"
 NO_GLOBAL="$(flag "${SRM_NO_GLOBAL:-}")"; NO_SKILL="$(flag "${SRM_NO_SKILL:-}")"
 while [ $# -gt 0 ]; do
@@ -149,6 +150,13 @@ if [ -z "$NO_GLOBAL" ]; then
 fi
 if [ -n "$KOKORO" ]; then
   say "Voz gratis Kokoro (srm voice --setup)"
+  # kokoro-onnx installs on Python 3.10 to 3.13: uv brings its own (and is what srm uses first); with --yes it comes too
+  PY_OK=""; for v in 3.12 3.13 3.11 3.10; do has "python$v" && PY_OK=1 && break; done
+  if ! has uv && [ -z "$PY_OK" ]; then
+    if [ -z "$YES" ]; then miss "Kokoro necesita uv o Python 3.10–3.13: vuelve a correr con --yes, o instala uv (https://docs.astral.sh/uv/)"
+    elif [ "$OS" = "Darwin" ] && has brew; then brew install uv || true
+    else curl -LsSf https://astral.sh/uv/install.sh | sh || true; export PATH="$HOME/.local/bin:$PATH"; fi
+  fi
   node "$SRM_DIR/cli/om.js" voice --setup kokoro || miss "srm voice --setup no terminó; puedes repetirlo después"
 fi
 

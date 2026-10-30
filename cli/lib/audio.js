@@ -25,6 +25,16 @@ const amixNormalizes = () => /normalize/.test(spawnSync('ffmpeg', ['-hide_banner
 // How ffmpeg reads the tracks: the inputs and either the one stream as it is (mode 'direct') or a filter graph that
 // places and sums them (mode 'mix'). `first` is the input index of the first track.
 // tracks: [{ file, start, duration, mediaStart, rate, volume }] (seconds; duration may be Infinity)
+// ffmpeg's atempo takes 0.5–2 per instance (older builds): chained for any speed (a script's 0.3–3, a clip's playback rate).
+export function atempo(speed) {
+  const f = [];
+  let s = speed;
+  while (s > 2) { f.push('atempo=2'); s /= 2; }
+  while (s < 0.5) { f.push('atempo=0.5'); s /= 0.5; }
+  f.push(`atempo=${Math.round(s * 1000) / 1000}`);
+  return f.join(',');
+}
+
 function placeTracks(tracks, duration, first) {
   const plain = (t) => t.start === 0 && !t.mediaStart && (t.rate || 1) === 1 && (t.volume ?? 1) === 1;
   const limit = (t) => (Number.isFinite(t.duration) ? Math.min(t.duration, duration) : duration);
@@ -34,7 +44,7 @@ function placeTracks(tracks, duration, first) {
     const f = [];
     const rate = t.rate || 1;
     f.push(`atrim=start=${r3(t.mediaStart || 0)}${Number.isFinite(t.duration) ? `:end=${r3((t.mediaStart || 0) + t.duration * rate)}` : ''}`, 'asetpts=PTS-STARTPTS');
-    if (rate !== 1) f.push(`atempo=${rate}`);
+    if (rate !== 1) f.push(atempo(rate));
     if ((t.volume ?? 1) !== 1) f.push(`volume=${t.volume}`);
     if (t.start > 0) f.push(`adelay=${Math.round(t.start * 1000)}:all=1`);
     return `[${i + first}:a:0]${f.join(',')}[a${i}]`;
