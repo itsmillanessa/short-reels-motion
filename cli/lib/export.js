@@ -11,6 +11,9 @@ const PKG = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 import { REPO_URL } from './brand.js';
 export { REPO_URL };
 const SKILL = REPO_URL.replace(/^https:\/\/github\.com\//, '');
+// the one-line installers (install.sh / install.ps1 at the root of the repository): the share page says how to get srm,
+// never `npx short-reels-motion`, a name that is not published on npm and anyone could register
+const INSTALL = `${REPO_URL.replace('https://github.com/', 'https://raw.githubusercontent.com/')}/main/install`;
 
 // ---------- what ships ----------
 // Tool state and render output stay home: the film copy and the zip carry only what the film needs.
@@ -287,7 +290,9 @@ footer a:hover { color: var(--ink); }
   <div class="code prompt"><pre id="prompt"></pre><button class="copy" data-copy="prompt"></button></div>
   <div class="label"><span data-l="en">First time with Short Reels Motion</span><span data-l="zh">第一次用 Short Reels Motion</span></div>
   <div class="code cmd"><pre id="skill">npx skills add ${esc(SKILL)}</pre><button class="copy" data-copy="skill"></button></div>
-  <div class="code cmd"><pre id="demo">npx short-reels-motion demo</pre><button class="copy" data-copy="demo"></button></div>
+  <div class="code cmd"><pre id="install">curl -fsSL ${INSTALL}.sh | bash</pre><button class="copy" data-copy="install"></button></div>
+  <div class="code cmd"><pre id="install-win">irm ${INSTALL}.ps1 | iex</pre><button class="copy" data-copy="install-win"></button></div>
+  <div class="code cmd"><pre id="demo">srm demo</pre><button class="copy" data-copy="demo"></button></div>
   <div class="dl"><span><span data-l="en">The whole project, ready for <code>srm studio</code></span><span data-l="zh">完整工程，解压即可 <code>srm studio</code></span></span><a href="source.zip" download>source.zip ↓</a></div>
 </div>
 
@@ -300,8 +305,8 @@ footer a:hover { color: var(--ink); }
   const $ = (id) => document.getElementById(id);
   const root = document.documentElement, player = $('player'), sheet = $('sheet'), remix = $('remix'), stage = $('stage');
   const T = {
-    en: { copy: 'Copy', copied: 'Copied', prompt: (t, url) => 'Remix this film with Short Reels Motion: "' + t + '".\\nSource: ' + url + ' (download and unzip it, then run \`npx short-reels-motion studio ' + D.name + '\` so I can watch and point at the frame while you work).\\nKeep what works, and change it to: ' },
-    zh: { copy: '复制', copied: '已复制', prompt: (t, url) => '用 Short Reels Motion 复刻这部片：《' + t + '》。\\n源码：' + url + '（下载解压后运行 \`npx short-reels-motion studio ' + D.name + '\`，我边看边指着画面改）。\\n保留好的部分，把它改成：' },
+    en: { copy: 'Copy', copied: 'Copied', prompt: (t, url) => 'Remix this film with Short Reels Motion: "' + t + '".\\nSource: ' + url + ' (download and unzip it, install Short Reels Motion if you do not have it — ' + D.repo + ' — then run \`srm studio ' + D.name + '\` so I can watch and point at the frame while you work).\\nKeep what works, and change it to: ' },
+    zh: { copy: '复制', copied: '已复制', prompt: (t, url) => '用 Short Reels Motion 复刻这部片：《' + t + '》。\\n源码：' + url + '（下载解压，没装 Short Reels Motion 的话先装上：' + D.repo + '，再运行 \`srm studio ' + D.name + '\`，我边看边指着画面改）。\\n保留好的部分，把它改成：' },
   };
   const store = (k, v) => { try { return v === undefined ? localStorage.getItem(k) : localStorage.setItem(k, v); } catch { return null; } };
   const setLang = (l) => {

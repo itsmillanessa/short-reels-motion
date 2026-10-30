@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { findChrome } from '../cli/lib/browser.js';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CdpError, LOCAL_STATE, launch, newPage } from '../cli/lib/cdp.js';
+import { CdpError, LOCAL_STATE, launch, newPage, removeLater } from '../cli/lib/cdp.js';
 
 const skip = !findChrome() && 'no Chrome';
 
@@ -56,4 +56,31 @@ test('cdp: closing a browser that never started takes no wait, and removes its p
   await conn.close();
   assert.ok(Date.now() - t0 < 1000, `close took ${Date.now() - t0} ms`);
   assert.ok(!existsSync(conn.profile), `${conn.profile} is still there`);
+});
+
+test('removeLater: a folder that cannot go is given up after its deadline, not after rm\'s nested retries', { skip: process.platform === 'win32' && 'chmod does not lock a folder on Windows' }, async () => {
+  const { chmodSync, mkdirSync, mkdtempSync, writeFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const dir = mkdtempSync(join(tmpdir(), 'srm-locked-')), deep = join(dir, 'Default', 'GPUCache');
+  mkdirSync(deep, { recursive: true });
+  writeFileSync(join(deep, 'data_0'), 'x');
+  chmodSync(deep, 0o500);   // its file cannot be removed: what a scanner holding it open does on Windows
+  try {
+    const t0 = Date.now();
+    assert.equal(await removeLater(dir, 400), false);
+    assert.ok(Date.now() - t0 < 2000, `gave up after ${Date.now() - t0} ms`);
+  } finally { chmodSync(deep, 0o700); }
+  assert.equal(await removeLater(dir, 400), true);
+  assert.ok(!existsSync(dir));
+});
+
+test('Ctrl-C: every browser is killed before any profile is removed', { skip: process.platform === 'win32' && 'no SIGINT to send to oneself on Windows' }, async () => {
+  const { spawnSync } = await import('node:child_process');
+  const url = new URL('../cli/lib/cdp.js', import.meta.url).href;
+  const r = spawnSync(process.execPath, ['--input-type=module', '-e', `
+    const { cleanupOnInterrupt } = await import(${JSON.stringify(url)});
+    for (const n of [1, 2]) { cleanupOnInterrupt(() => console.log('rm ' + n)); cleanupOnInterrupt(() => console.log('kill ' + n), { first: true }); }
+    process.kill(process.pid, 'SIGINT'); setTimeout(() => {}, 2000);`], { encoding: 'utf8' });
+  assert.deepEqual(r.stdout.trim().split('\n'), ['kill 1', 'kill 2', 'rm 1', 'rm 2']);
+  assert.equal(r.status, 130);
 });

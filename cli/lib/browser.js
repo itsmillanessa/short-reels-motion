@@ -19,15 +19,20 @@ const APPS = [
   'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe',
 ];
 
-// Windows also installs Chrome and Brave per user, without admin rights, under %LOCALAPPDATA%.
+// Windows also installs Chrome and Brave per user, without admin rights, under %LOCALAPPDATA%: a Chrome there comes before
+// the Edge every Windows has (the one the installer just put there with winget, and the one it reports).
 const userApps = (env) => (env.LOCALAPPDATA ? [
   `${env.LOCALAPPDATA}\\Google\\Chrome\\Application\\chrome.exe`,
-  `${env.LOCALAPPDATA}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`,
   `${env.LOCALAPPDATA}\\Chromium\\Application\\chrome.exe`,
+  `${env.LOCALAPPDATA}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`,
 ] : []);
+const defaultApps = (env) => {
+  const edge = APPS.findIndex((p) => /Microsoft\\Edge\\Application/.test(p));
+  return [...APPS.slice(0, edge), ...userApps(env).slice(0, 2), ...APPS.slice(edge), ...userApps(env).slice(2)];
+};
 
 // Where a browser would be looked for, in order, with what was found. `env` and `apps` are injectable for tests.
-export function chromeCandidates({ env = process.env, apps = [...APPS, ...userApps(env)] } = {}) {
+export function chromeCandidates({ env = process.env, apps = defaultApps(env) } = {}) {
   const list = [];
   if (env.OM_CHROME) list.push({ source: 'OM_CHROME', path: env.OM_CHROME });
   for (const p of apps) list.push({ source: 'installed', path: p });

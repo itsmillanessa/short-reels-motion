@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   splitSentences, tokenize, weight, placeWords, placeSentence, wordsOf, parseSilences, speechIntervals,
   sentenceSpans, alignChars, charTimes, asrChars, captionLines, toSrt, cueTerms, cueMatches, missingCues, repeatedCues, applyVoice, pickVoice, isSpanish, recordingLang,
-  engineTimes, placeExact, levels, voice, systemVoice, atempo, venvPython, basePython, sapiVoices, powershellEnv,
+  engineTimes, placeExact, levels, voice, systemVoice, atempo, venvPython, basePython, sapiVoices, powershellEnv, clixmlErrors, kokoroReady,
 } from '../cli/lib/voice.js';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -224,6 +224,25 @@ test('atempo: the speeds a script may ask for, in steps ffmpeg takes (0.5–2 ea
 
 test('Windows PowerShell gets its own module path, never the one PowerShell 7 hands down (any spelling)', () => {
   assert.deepEqual(powershellEnv({ Path: 'C:\\bin', PSModulePath: 'C:\\Program Files\\PowerShell\\7\\Modules', PSMODULEPATH: 'x', SRM_LANG: 'es' }), { Path: 'C:\\bin', SRM_LANG: 'es' });
+  // nor the policy "-ExecutionPolicy Bypass" leaves to children: doctor asks what a new window gets
+  assert.deepEqual(powershellEnv({ Path: 'C:\\bin', PSExecutionPolicyPreference: 'Bypass' }), { Path: 'C:\\bin' });
+});
+
+test('a PowerShell failure says why: the error records inside its CLIXML stderr are read, the progress records dropped', () => {
+  const stderr = '#< CLIXML\r\n<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04"><Obj S="progress" RefId="0"><TN RefId="0"><T>System.Management.Automation.PSCustomObject</T></TN><MS><I64 N="SourceId">1</I64></MS></Obj>'
+    + '<S S="Error">Exception calling &quot;SetOutputToWaveFile&quot; with &quot;1&quot; argument(s): &quot;Access to the path is denied.&quot;_x000D__x000A_</S><S S="Error">At line:12 char:3_x000D__x000A_</S></Objs>';
+  assert.equal(clixmlErrors(stderr), 'Exception calling "SetOutputToWaveFile" with "1" argument(s): "Access to the path is denied."\nAt line:12 char:3');
+  assert.equal(clixmlErrors('#< CLIXML\r\n<Objs><Obj S="progress" RefId="0"></Obj></Objs>'), '', 'progress only: nothing to say');
+  assert.equal(clixmlErrors(''), '');
+});
+
+test('--voice without a name says what to pass, instead of a TypeError', () => {
+  assert.throws(() => pickVoice(true, 'hola'), /--voice needs a voice/);
+});
+
+test('Kokoro is ready only when its python imports kokoro-onnx: a missing or bare python is a setup to finish', () => {
+  assert.equal(kokoroReady(null), false);
+  assert.equal(kokoroReady(join(tmpdir(), 'no-such-venv', 'bin', 'python')), false);
 });
 
 test('Kokoro\'s venv: python in Scripts\\ on Windows, bin/ elsewhere; a Python 3.10–3.13 is picked to build it', () => {

@@ -6,7 +6,7 @@ metadata:
   homepage: "https://github.com/itsmillanessa"
   repository: "https://github.com/itsmillanessa/short-reels-motion"
   based-on: "huashu-motion by Huashu (https://github.com/alchaincyf/huashu-motion), MIT"
-  version: "0.7.0"
+  version: "0.7.1"
 ---
 
 # Short Reels Motion · director de shorts
@@ -25,8 +25,10 @@ La guía práctica completa está en [references/shorts.md](references/shorts.md
 ## La herramienta
 
 El comando es `srm` (también `short-reels-motion`). Las referencias del motor escriben `om`: es el mismo comando, usa `srm`.
-Si `srm` no está en el PATH, este skill trae `bin/srm` (macOS, Linux, Git Bash) y `bin\srm.cmd` (Windows: PowerShell y
-cmd): corren el CLI que viene junto al skill.
+Si `srm` no está en el PATH, este skill trae `bin/srm` (macOS, Linux, Git Bash) y `bin/srm.mjs`, que corren el CLI que
+viene junto al skill. En Windows, desde PowerShell: `node "<skill>\bin\srm.mjs" …` (no `bin\srm.cmd`: cmd.exe vuelve a
+leer los argumentos y un `&` dentro de una URL corta el comando y corre lo que sigue). `bin\srm.cmd` es para cmd, con las
+URLs entre comillas dobles.
 
 ```sh
 srm doctor                                # la primera vez: Node, Chrome, FFmpeg, voces

@@ -11,6 +11,8 @@ import { OmError, readSource, sha, writeSource } from './project.js';
 import { fileURLToPath } from 'node:url';
 import { nextOutput } from './render.js';
 import { cacheDir } from './brand.js';
+import { cleanupOnInterrupt } from './cdp.js';
+import { atempo } from './audio.js';
 
 const r3 = (x) => Math.round(x * 1000) / 1000;
 const sum = (xs) => xs.reduce((n, x) => n + x, 0);
@@ -649,29 +651,45 @@ const PYTHON_HINT = {
   linux: 'curl -LsSf https://astral.sh/uv/install.sh | sh   (or your distribution\'s python3.12 with venv)',
 };
 
+// A venv is a finished Kokoro only when its python imports kokoro-onnx and soundfile: a setup that stopped halfway (a pip
+// that failed on a proxy, a Ctrl-C, a Python without venv support) leaves a python that cannot, and it is completed, never
+// taken as done (srm doctor asks the same).
+export const kokoroReady = (python = kokoroPython()) => !!python && spawnSync(python, ['-c', 'import kokoro_onnx, soundfile'], { stdio: 'ignore', windowsHide: true, timeout: 60_000 }).status === 0;
+
 // srm voice --setup: Kokoro in one step. A venv with kokoro-onnx (uv when it is there — it fetches a Python 3.12 if the
 // machine has none — otherwise the machine's own Python 3.10–3.13), the model files, and one sentence spoken to prove it.
 export function setupKokoro(log = () => {}) {
   let python = kokoroPython();
-  if (python) log(`Kokoro venv already there: ${python}`);
-  else {
-    const uv = which('uv'), base = uv ? null : basePython();
+  const uv = which('uv');
+  const install = () => {
+    log('installing kokoro-onnx and soundfile…');
+    if (uv) step(uv, ['pip', 'install', '-p', python, 'kokoro-onnx', 'soundfile'], 'uv pip install');
+    else step(python, ['-m', 'pip', 'install', '--disable-pip-version-check', 'kokoro-onnx', 'soundfile'], 'pip install');
+  };
+  if (python && kokoroReady(python)) log(`Kokoro venv already there: ${python}`);
+  else if (python) {
+    log(`the Kokoro venv is missing kokoro-onnx (a setup that stopped halfway): completing ${python}`);
+    try { install(); } catch (e) {
+      throw new OmError(`${e.message}\nThe venv cannot be completed (${python}): delete its folder and run srm voice --setup again${uv ? '' : `, with uv or a Python 3.10–3.13 that has venv and pip:\n  ${PYTHON_HINT[process.platform] || PYTHON_HINT.linux}`}`);
+    }
+  } else {
+    const base = uv ? null : basePython();
     if (!uv && !base) throw new OmError(`Kokoro needs uv or Python 3.10–3.13 (kokoro-onnx has no wheels for newer ones). Install one and run srm voice --setup again:\n  ${PYTHON_HINT[process.platform] || PYTHON_HINT.linux}`);
     mkdirSync(CACHE, { recursive: true });
     python = venvPython(KOKORO_VENV);
     log(`creating the Kokoro venv: ${KOKORO_VENV} (${uv ? 'uv, Python 3.12' : [base.cmd, ...base.args].join(' ')})`);
     if (uv) step(uv, ['venv', '-p', '3.12', KOKORO_VENV], 'uv venv');
     else step(base.cmd, [...base.args, '-m', 'venv', KOKORO_VENV], 'python -m venv');
-    log('installing kokoro-onnx and soundfile…');
-    if (uv) step(uv, ['pip', 'install', '-p', python, 'kokoro-onnx', 'soundfile'], 'uv pip install');
-    else step(python, ['-m', 'pip', 'install', '--disable-pip-version-check', 'kokoro-onnx', 'soundfile'], 'pip install');
+    install();
   }
   const tmp = mkdtempSync(join(tmpdir(), 'om-voice-'));
-  const txt = join(tmp, 'listo.txt'), wav = join(tmp, 'listo.wav');
-  writeFileSync(txt, 'Listo: ya tengo voz.');
-  kokoro(txt, wav, 'ef_dora', 1, log);   // downloads the model files the first time
-  const seconds = probe(wav);
-  rmSync(tmp, { recursive: true, force: true });
+  let seconds;
+  try {
+    const txt = join(tmp, 'listo.txt'), wav = join(tmp, 'listo.wav');
+    writeFileSync(txt, 'Listo: ya tengo voz.');
+    kokoro(txt, wav, 'ef_dora', 1, log);   // downloads the model files the first time
+    seconds = probe(wav);
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
   return [`✓ Kokoro is ready  (${python})`, `  a test sentence came out in ef_dora: ${seconds.toFixed(2)} s`,
     '  srm voice <dir> --text guion.txt uses it now: ef_dora for Spanish, af_heart for English (--voice to pick another)'].join('\n');
 }
@@ -732,8 +750,19 @@ const CULTURE = { es: 'es-MX', en: 'en-US', zh: 'zh-CN' };
 
 // Windows PowerShell started by a program that runs under PowerShell 7 (srm from a pwsh window; every step on GitHub's
 // runners) inherits pwsh's module path, finds pwsh's modules first and cannot load them ("Get-ExecutionPolicy … the
-// module could not be loaded"). Without PSModulePath it builds its own.
-export const powershellEnv = (env = process.env) => Object.fromEntries(Object.entries(env).filter(([k]) => k.toUpperCase() !== 'PSMODULEPATH'));
+// module could not be loaded"). Without PSModulePath it builds its own. And without PSExecutionPolicyPreference — what
+// "-ExecutionPolicy Bypass" leaves to child processes — it sees the policy a new window gets (srm doctor asks for it).
+export const powershellEnv = (env = process.env) => Object.fromEntries(Object.entries(env).filter(([k]) => !['PSMODULEPATH', 'PSEXECUTIONPOLICYPREFERENCE'].includes(k.toUpperCase())));
+
+// The error records a non-interactive PowerShell serializes into stderr as CLIXML (<S S="Error">…</S>, in the same <Objs>
+// block as its progress records): their text, so a failure says why instead of "exit 1".
+export function clixmlErrors(stderr) {
+  const xml = (t) => t.replace(/_x000D__x000A_/g, '\n').replace(/_x([0-9A-F]{4})_/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+  return [...String(stderr || '').matchAll(/<S S="Error">([\s\S]*?)<\/S>/g)].map((m) => xml(m[1])).join('').trim();
+}
+// stderr without PowerShell's CLIXML: plain lines, then the text of any error record
+const psStderr = (stderr) => [String(stderr || '').replace(/#< CLIXML\r?\n?/g, '').replace(/<Objs[\s\S]*?<\/Objs>/g, '').trim(), clixmlErrors(stderr)].filter(Boolean).join('\n');
 
 function powershell(script, env) {
   return spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')],
@@ -741,10 +770,12 @@ function powershell(script, env) {
 }
 
 // The voices Windows has for speech: [{ name, culture }] (empty elsewhere). srm doctor lists them.
+// When PowerShell itself fails, the list is empty and carries why (.error), so doctor does not report "no voices" instead.
 export function sapiVoices() {
   if (process.platform !== 'win32') return [];
   const r = powershell(SAPI_PS, { SRM_TTS_LIST: '1' });
-  return r.status === 0 ? r.stdout.split(/\r?\n/).filter((l) => l.includes('|')).map((l) => { const [name, culture] = l.split('|'); return { name, culture }; }) : [];
+  if (r.status === 0) return r.stdout.split(/\r?\n/).filter((l) => l.includes('|')).map((l) => { const [name, culture] = l.split('|'); return { name, culture }; });
+  return Object.assign([], { error: r.error?.message || psStderr(r.stderr).split(/\r?\n/).pop() || `exit ${r.status}` });
 }
 
 // Speaks each job ({ text: file, out: wav }) with one voice; returns the voice's full name.
@@ -753,22 +784,14 @@ function sapi(jobs, voice, lang) {
   const list = join(dirname(jobs[0].out), 'sapi-jobs.json');
   writeFileSync(list, JSON.stringify(jobs));
   const r = powershell(SAPI_PS, { SRM_TTS_JOBS: list, SRM_TTS_VOICE: voice || '', SRM_TTS_LANG: lang, SRM_TTS_CULTURE: CULTURE[lang] || '' });
-  const err = (r.stderr || '').replace(/#< CLIXML\r?\n?/g, '').replace(/<Objs[\s\S]*?<\/Objs>/g, '').trim();   // PowerShell's progress records
+  const err = psStderr(r.stderr);
   const none = /NOVOICE\|(.*)/.exec(err);
-  if (none) throw new OmError(`no Windows voice ${voice ? `named like "${voice}"` : `in ${CULTURE[lang] || lang}`} — installed: ${none[1].trim() || 'none'}. Add one in Settings → Time & language → Speech → Add voices, or set up Kokoro: ${KOKORO_SETUP}`);
+  if (none) throw new OmError(`no Windows voice ${voice ? `named like "${voice}"` : `in ${CULTURE[lang] || lang}`} — installed: ${none[1].trim() || 'none'}. Pick one with --voice win:<name>${voice ? '' : ' or say the script\'s language with --lang'}, add one in Settings → Time & language → Speech → Add voices, or set up Kokoro: ${KOKORO_SETUP}`);
   if (r.error || r.status !== 0 || jobs.some((j) => !existsSync(j.out))) throw new OmError(`Windows speech failed: ${r.error?.message || err.split(/\r?\n/).pop() || `exit ${r.status}`}`);
   return /VOICE\|([^|\r\n]+)/.exec(r.stdout)?.[1] || voice;
 }
 
-// ffmpeg's atempo takes 0.5–2 per instance (older builds): chained for the 0.3–3 a script may ask for.
-export function atempo(speed) {
-  const f = [];
-  let s = speed;
-  while (s > 2) { f.push('atempo=2'); s /= 2; }
-  while (s < 0.5) { f.push('atempo=0.5'); s /= 0.5; }
-  f.push(`atempo=${r3(s)}`);
-  return f.join(',');
-}
+export { atempo };
 
 // voice id → engine. Default: Chinese on macOS → say:Tingting (Kokoro's Chinese goes through espeak
 // without tones and is hard to understand); Spanish → Kokoro ef_dora (macOS fallback say:Paulina, es-MX);
@@ -780,6 +803,7 @@ export const isSpanish = (text) => !HAN.test(text) && (ES.test(text) || (String(
 const sayFor = (text) => (HAN.test(text) ? 'Tingting' : isSpanish(text) ? 'Paulina' : 'Samantha');
 
 export function pickVoice(voice, text, platform = process.platform) {
+  if (voice === true) throw new OmError('--voice needs a voice: ef_dora, af_heart (Kokoro), win:Sabina (Windows), say:Paulina (macOS)');
   const zh = HAN.test(text);
   if (!voice) return platform === 'darwin' && zh ? { engine: 'say', id: 'Tingting' } : { engine: 'kokoro', id: zh ? 'zf_xiaobei' : isSpanish(text) ? 'ef_dora' : 'af_heart' };
   if (voice === 'say') return { engine: 'say', id: sayFor(text) };
@@ -809,6 +833,7 @@ export async function voice(project, opts = {}, log = () => {}) {
   const { html } = readSource(project);
   const keep = cueTerms(html).map((c) => c.term);
   const tmp = mkdtempSync(join(tmpdir(), 'om-voice-'));
+  const forget = cleanupOnInterrupt(() => rmSync(tmp, { recursive: true, force: true }));   // a Ctrl-C runs no finally
   try {
     const t0 = Date.now();
     // the JSON ElevenLabs returns with timestamps carries the audio too (audio_base64): it is the take when no --audio is given
@@ -864,6 +889,7 @@ export async function voice(project, opts = {}, log = () => {}) {
     lines.push(`took     ${((Date.now() - t0) / 1000).toFixed(1)}s`);
     return lines.join('\n');
   } finally {
+    forget();
     try { rmSync(tmp, { recursive: true, force: true, maxRetries: 5 }); } catch { /* a temp folder left behind is not worth failing the take */ }
   }
 }
@@ -884,7 +910,7 @@ function fromScript(text, keep, tmp, opts, log) {
   const pause = opts.pause == null ? 0.25 : Number(opts.pause);
   let v = pickVoice(opts.voice, text);
   if (v.engine === 'kokoro' && HAN.test(text)) log('note: Kokoro reads Chinese through espeak without tones — whisper could not understand it in our tests. Prefer say:Tingting (macOS) or your own recording (--audio).');
-  const lang = recordingLang(text);
+  const lang = recordingLang(text, opts);
   const txts = sentences.map((s, i) => { const f = join(tmp, `s${i}.txt`); writeFileSync(f, s); return f; });
   const rawOf = (i) => join(tmp, `s${i}.${v.engine === 'say' ? 'aiff' : 'wav'}`);
   // one engine call per sentence; Windows' voices take all the sentences still to speak in one call
@@ -948,9 +974,14 @@ export async function setupWhisper(log = () => {}, { platform = process.platform
   if (have) return `✓ whisper is ready  (${have})`;
   if (platform !== 'win32') throw new OmError(`whisper on this system: ${WHISPER_HINT[platform] || WHISPER_HINT.linux}`);
   const asset = arch === 'arm64' ? 'whisper-bin-win-cpu-arm64.zip' : 'whisper-bin-x64.zip';
-  const res = await fetch('https://api.github.com/repos/ggml-org/whisper.cpp/releases?per_page=20', { headers: { accept: 'application/vnd.github+json', 'user-agent': 'short-reels-motion' } });
-  if (!res.ok) throw new OmError(`could not list whisper.cpp releases (GitHub answered ${res.status}) — download ${asset} from https://github.com/ggml-org/whisper.cpp/releases and unpack it into ${WHISPER_BIN}`);
-  const release = (await res.json()).find((r) => (r.assets || []).some((a) => a.name === asset));
+  // the list through curl, like the download: curl follows HTTPS_PROXY and the system's certificates (a proxy, Zscaler),
+  // Node's fetch does neither
+  const manual = `download ${asset} from https://github.com/ggml-org/whisper.cpp/releases and unpack it into ${WHISPER_BIN}`;
+  const res = spawnSync('curl', ['-fsSL', '--retry', '2', '-H', 'accept: application/vnd.github+json', '-A', 'short-reels-motion', 'https://api.github.com/repos/ggml-org/whisper.cpp/releases?per_page=20'], { encoding: 'utf8', maxBuffer: 64 << 20, windowsHide: true });
+  let releases = null;
+  try { releases = res.status === 0 ? JSON.parse(res.stdout) : null; } catch { /* not JSON: a proxy's page */ }
+  if (!Array.isArray(releases)) throw new OmError(`could not list whisper.cpp releases (${res.error ? `curl: ${res.error.message}` : (res.stderr || '').trim().split('\n').pop() || `curl exit ${res.status}`}) — ${manual}`);
+  const release = releases.find((r) => (r.assets || []).some((a) => a.name === asset));
   if (!release) throw new OmError(`no whisper.cpp release has ${asset} — build it: https://github.com/ggml-org/whisper.cpp`);
   const archive = join(CACHE, 'whisper', asset);
   download(release.assets.find((a) => a.name === asset).browser_download_url, archive, log, `whisper.cpp ${release.tag_name} for Windows (${asset}, ~9 MB)`);
@@ -997,7 +1028,7 @@ function fromRecording(file, text, keep, tmp, opts, log) {
     } else if (ratio < 0.96 && said - timing.span > 1) note = `the timing ends at ${timing.span.toFixed(2)}s but the voice runs to ${said.toFixed(2)}s — is it this take's timing?`;
   }
   const wav = join(tmp, 'voice.wav');
-  ffmpeg(['-i', file, '-vn', ...(speed !== 1 ? ['-af', `atempo=${speed}`] : []), '-ac', '1', '-ar', '48000', '-c:a', 'pcm_s16le', wav], `reading ${extname(file) || 'the recording'}`);
+  ffmpeg(['-i', file, '-vn', ...(speed !== 1 ? ['-af', atempo(speed)] : []), '-ac', '1', '-ar', '48000', '-c:a', 'pcm_s16le', wav], `reading ${extname(file) || 'the recording'}`);
   const duration = probe(wav);
   const source = `recording:${opts.audioLabel || file.split(/[\\/]/).pop()}${speed !== 1 ? ` ×${speed}` : ''}`;
   if (timing) {
